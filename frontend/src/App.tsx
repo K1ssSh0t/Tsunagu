@@ -5,14 +5,17 @@ import {
   ToggleMod,
   ActivateSingleMod,
   AddMod,
+  AddModFromZip,
   RemoveMod,
+  OpenModFolder,
   IsConfigured,
   SaveConfig,
-  SelectDirectory
+  SelectDirectory,
+  SelectFile
 } from '../wailsjs/go/main/App';
 import { main } from '../wailsjs/go/models';
 import { ModeToggle } from './components/mode-toggle';
-import { Trash2, Folder } from 'lucide-react';
+import { Trash2, Folder, File } from 'lucide-react';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -113,7 +116,12 @@ const App: React.FC = () => {
     if (!selectedCharacter || !newModName || !newModPath) return;
 
     try {
-      await AddMod(selectedCharacter, newModName, newModPath);
+      // Check if the path is a ZIP file
+      if (newModPath.toLowerCase().endsWith('.zip')) {
+        await AddModFromZip(selectedCharacter, newModName, newModPath);
+      } else {
+        await AddMod(selectedCharacter, newModName, newModPath);
+      }
       setShowAddMod(false);
       setNewModName('');
       setNewModPath('');
@@ -137,6 +145,15 @@ const App: React.FC = () => {
         console.error('Error removing mod:', error);
         toast.error('Error al eliminar el mod');
       }
+    }
+  };
+
+  const handleOpenModFolder = async (modPath: string) => {
+    try {
+      await OpenModFolder(modPath);
+    } catch (error) {
+      console.error('Error opening mod folder:', error);
+      toast.error('Error al abrir la carpeta del mod');
     }
   };
 
@@ -173,6 +190,18 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error selecting mod directory:', error);
       toast.error('Error al seleccionar la carpeta del mod');
+    }
+  };
+
+  const handleSelectModFile = async () => {
+    try {
+      const selectedFile = await SelectFile();
+      if (selectedFile) {
+        setNewModPath(selectedFile);
+      }
+    } catch (error) {
+      console.error('Error selecting mod file:', error);
+      toast.error('Error al seleccionar el archivo del mod');
     }
   };
 
@@ -362,7 +391,7 @@ const App: React.FC = () => {
                               <Input
                                 id="modPath"
                                 type="text"
-                                placeholder="Ruta completa del mod..."
+                                placeholder="Ruta del mod (carpeta o archivo .zip)"
                                 value={newModPath}
                                 onChange={(e) => setNewModPath(e.target.value)}
                                 className="flex-1"
@@ -374,6 +403,14 @@ const App: React.FC = () => {
                                 className="px-3"
                               >
                                 <Folder className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleSelectModFile}
+                                className="px-3"
+                              >
+                                <File className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -444,6 +481,13 @@ const App: React.FC = () => {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenModFolder(mod.fullPath)}
+                                >
+                                  Abrir Carpeta
+                                </Button>
                                 <Button
                                   variant={mod.isActive ? 'secondary' : 'default'}
                                   size="sm"

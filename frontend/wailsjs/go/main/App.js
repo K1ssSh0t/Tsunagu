@@ -10,6 +10,10 @@ export function AddMod(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddMod'](arg1, arg2, arg3);
 }
 
+export function AddModFromZip(arg1, arg2, arg3) {
+  return window['go']['main']['App']['AddModFromZip'](arg1, arg2, arg3);
+}
+
 export function GetCharacters() {
   return window['go']['main']['App']['GetCharacters']();
 }
@@ -30,6 +34,10 @@ export function LoadCharactersList() {
   return window['go']['main']['App']['LoadCharactersList']();
 }
 
+export function OpenModFolder(arg1) {
+  return window['go']['main']['App']['OpenModFolder'](arg1);
+}
+
 export function RemoveMod(arg1, arg2) {
   return window['go']['main']['App']['RemoveMod'](arg1, arg2);
 }
@@ -40,6 +48,10 @@ export function SaveConfig(arg1) {
 
 export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
+}
+
+export function SelectFile() {
+  return window['go']['main']['App']['SelectFile']();
 }
 
 export function ToggleMod(arg1, arg2) {

@@ -6,6 +6,8 @@ export function ActivateSingleMod(arg1:string,arg2:string):Promise<void>;
 
 export function AddMod(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function AddModFromZip(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function GetCharacters():Promise<Array<main.Character>>;
 
 export function GetModsForCharacter(arg1:string):Promise<Array<main.Mod>>;
@@ -16,10 +18,14 @@ export function IsConfigured():Promise<boolean>;
 
 export function LoadCharactersList():Promise<Array<string>>;
 
+export function OpenModFolder(arg1:string):Promise<void>;
+
 export function RemoveMod(arg1:string,arg2:string):Promise<void>;
 
 export function SaveConfig(arg1:string):Promise<void>;
 
 export function SelectDirectory():Promise<string>;
+
+export function SelectFile():Promise<string>;
 
 export function ToggleMod(arg1:string,arg2:string):Promise<void>;

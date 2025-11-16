@@ -2,15 +2,19 @@
 package main
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -75,16 +79,61 @@ func (a *App) SaveConfig(modsPath string) error {
 
 // SelectDirectory abre el selector de carpetas del sistema
 func (a *App) SelectDirectory() (string, error) {
-	dialogOptions := runtime.OpenDialogOptions{
+	dialogOptions := wailsruntime.OpenDialogOptions{
 		Title: "Seleccionar carpeta de mods de 3DMigoto",
 	}
 
-	selectedDirectory, err := runtime.OpenDirectoryDialog(a.ctx, dialogOptions)
+	selectedDirectory, err := wailsruntime.OpenDirectoryDialog(a.ctx, dialogOptions)
 	if err != nil {
 		return "", err
 	}
 
 	return selectedDirectory, nil
+}
+
+// SelectFile abre el selector de archivos del sistema
+func (a *App) SelectFile() (string, error) {
+	dialogOptions := wailsruntime.OpenDialogOptions{
+		Title:           "Seleccionar archivo de mod comprimido",
+		DefaultFilename: "",
+		Filters: []wailsruntime.FileFilter{
+			{
+				DisplayName: "Archivos Comprimidos (*.zip, *.rar, *.7z)",
+				Pattern:     "*.zip;*.rar;*.7z",
+			},
+		},
+	}
+
+	selectedFile, err := wailsruntime.OpenFileDialog(a.ctx, dialogOptions)
+	if err != nil {
+		return "", err
+	}
+
+	return selectedFile, nil
+}
+
+// OpenModFolder abre la carpeta del mod en el explorador de archivos del sistema
+func (a *App) OpenModFolder(modPath string) error {
+
+	// Verificar que la carpeta existe
+	if _, err := os.Stat(modPath); os.IsNotExist(err) {
+		return fmt.Errorf("la carpeta del mod no existe: %s", modPath)
+	}
+
+	// Abrir en el explorador de archivos del sistema usando comandos del SO
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("explorer", modPath)
+	case "darwin":
+		cmd = exec.Command("open", modPath)
+	case "linux":
+		cmd = exec.Command("xdg-open", modPath)
+	default:
+		return fmt.Errorf("sistema operativo no soportado: %s", runtime.GOOS)
+	}
+
+	return cmd.Start()
 }
 
 // IsConfigured verifica si la aplicación está configurada
@@ -293,6 +342,91 @@ func (a *App) AddMod(characterName string, modName string, sourcePath string) er
 	return a.copyModFiles(sourcePath, targetPath)
 }
 
+// AddModFromZip agrega un nuevo mod desde un archivo comprimido
+func (a *App) AddModFromZip(characterName string, modName string, zipFilePath string) error {
+	characterPath := filepath.Join(a.modsPath, characterName)
+	targetPath := filepath.Join(characterPath, modName)
+
+	// Crear directorio del personaje si no existe
+	if err := os.MkdirAll(characterPath, 0755); err != nil {
+		return err
+	}
+
+	// Crear directorio temporal para descomprimir
+	tempDir, err := os.MkdirTemp("", "mod-temp-*")
+	if err != nil {
+		return fmt.Errorf("error creating temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Descomprimir archivo ZIP en directorio temporal
+	if err := a.unzipFile(zipFilePath, tempDir); err != nil {
+		return fmt.Errorf("error unzipping file: %v", err)
+	}
+
+	// Encontrar el directorio principal del mod dentro del ZIP
+	modSourceDir := a.findModRootDirectory(tempDir)
+	if modSourceDir == "" {
+		return fmt.Errorf("no mod directory found in zip file")
+	}
+
+	// Copiar archivos del mod descomprimido
+	return a.copyModFiles(modSourceDir, targetPath)
+}
+
+// findModRootDirectory encuentra el directorio principal del mod
+func (a *App) findModRootDirectory(tempDir string) string {
+	// Buscar directorio que contenga .JASM_ModConfig.json u otros archivos de mod
+	files, err := os.ReadDir(tempDir)
+	if err != nil {
+		return ""
+	}
+
+	// Si hay un solo directorio, usar ese como raíz
+	if len(files) == 1 && files[0].IsDir() {
+		return filepath.Join(tempDir, files[0].Name())
+	}
+
+	// Si hay múltiples archivos/directorios, buscar el que contenga archivos de mod
+	for _, file := range files {
+		if file.IsDir() {
+			dirPath := filepath.Join(tempDir, file.Name())
+			if a.hasModFiles(dirPath) {
+				return dirPath
+			}
+		}
+	}
+
+	// Si no hay subdirectorios, usar el directorio temporal directamente
+	if a.hasModFiles(tempDir) {
+		return tempDir
+	}
+
+	return ""
+}
+
+// hasModFiles verifica si un directorio contiene archivos de mod
+func (a *App) hasModFiles(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+		// Buscar archivos típicos de mods
+		if strings.HasSuffix(name, ".JASM_ModConfig.json") ||
+			strings.HasSuffix(name, ".ini") ||
+			strings.HasSuffix(name, ".dds") ||
+			strings.Contains(name, "GenshinImpact_Data") ||
+			strings.Contains(name, "StreamingAssets") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // RemoveMod elimina un mod
 func (a *App) RemoveMod(characterName string, modName string) error {
 	characterPath := filepath.Join(a.modsPath, characterName)
@@ -348,7 +482,71 @@ func (a *App) copyModFiles(sourcePath, targetPath string) error {
 	})
 }
 
-// Función auxiliar para verificar si es un directorio
+// unzipFile descomprime un archivo ZIP en el directorio especificado
+func (a *App) unzipFile(source, destination string) error {
+	reader, err := zip.OpenReader(source)
+	if err != nil {
+		return fmt.Errorf("error opening zip file: %v", err)
+	}
+	defer reader.Close()
+
+	destination, err = filepath.Abs(destination)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path: %v", err)
+	}
+
+	for _, f := range reader.File {
+		err := a.extractFile(f, destination)
+		if err != nil {
+			fmt.Printf("Error extracting file %s: %v\n", f.Name, err)
+			continue
+		}
+	}
+
+	return nil
+}
+
+// extractFile extrae un archivo individual del ZIP
+func (a *App) extractFile(f *zip.File, destination string) error {
+	filePath := filepath.Join(destination, f.Name)
+
+	// Verificar vulnerabilidad Zip Slip
+	if !strings.HasPrefix(filePath, filepath.Clean(destination)+string(os.PathSeparator)) {
+		return fmt.Errorf("invalid file path: %s", filePath)
+	}
+
+	if f.FileInfo().IsDir() {
+		if err := os.MkdirAll(filePath, f.Mode()); err != nil {
+			return fmt.Errorf("error creating directory: %v", err)
+		}
+		return nil
+	}
+
+	// Crear directorio padre si no existe
+	if err := os.MkdirAll(filepath.Dir(filePath), f.Mode()); err != nil {
+		return fmt.Errorf("error creating parent directory: %v", err)
+	}
+
+	// Crear archivo destino
+	destinationFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+	if err != nil {
+		return fmt.Errorf("error creating destination file: %v", err)
+	}
+	defer destinationFile.Close()
+
+	// Extraer contenido
+	zippedFile, err := f.Open()
+	if err != nil {
+		return fmt.Errorf("error opening zipped file: %v", err)
+	}
+	defer zippedFile.Close()
+
+	if _, err := io.Copy(destinationFile, zippedFile); err != nil {
+		return fmt.Errorf("error copying file content: %v", err)
+	}
+
+	return nil
+}
 func isDirectory(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
