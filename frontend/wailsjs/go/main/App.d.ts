@@ -20,4 +20,6 @@ export function RemoveMod(arg1:string,arg2:string):Promise<void>;
 
 export function SaveConfig(arg1:string):Promise<void>;
 
+export function SelectDirectory():Promise<string>;
+
 export function ToggleMod(arg1:string,arg2:string):Promise<void>;

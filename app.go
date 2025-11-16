@@ -4,10 +4,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
@@ -68,6 +71,20 @@ func (a *App) SaveConfig(modsPath string) error {
 	}
 
 	return os.WriteFile(a.configPath, data, 0644)
+}
+
+// SelectDirectory abre el selector de carpetas del sistema
+func (a *App) SelectDirectory() (string, error) {
+	dialogOptions := runtime.OpenDialogOptions{
+		Title: "Seleccionar carpeta de mods de 3DMigoto",
+	}
+
+	selectedDirectory, err := runtime.OpenDirectoryDialog(a.ctx, dialogOptions)
+	if err != nil {
+		return "", err
+	}
+
+	return selectedDirectory, nil
 }
 
 // IsConfigured verifica si la aplicación está configurada
@@ -294,7 +311,9 @@ func (a *App) RemoveMod(characterName string, modName string) error {
 func (a *App) copyModFiles(sourcePath, targetPath string) error {
 	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			// Si hay error al acceder a un archivo, lo registramos pero continuamos
+			fmt.Printf("Error accediendo a %s: %v\n", path, err)
+			return nil
 		}
 
 		relPath, err := filepath.Rel(sourcePath, path)
@@ -305,14 +324,27 @@ func (a *App) copyModFiles(sourcePath, targetPath string) error {
 		targetFilePath := filepath.Join(targetPath, relPath)
 
 		if info.IsDir() {
-			return os.MkdirAll(targetFilePath, 0755)
+			// Si es una carpeta vacía, la creamos pero no fallamos si hay error
+			if err := os.MkdirAll(targetFilePath, 0755); err != nil {
+				fmt.Printf("Error creando directorio %s: %v\n", targetFilePath, err)
+				return nil
+			}
+			return nil
 		} else {
+			// Intentar copiar el archivo, pero si falla continuamos con el siguiente
 			input, err := os.ReadFile(path)
 			if err != nil {
-				return err
+				fmt.Printf("Error leyendo archivo %s: %v\n", path, err)
+				return nil
 			}
-			return os.WriteFile(targetFilePath, input, 0644)
+
+			if err := os.WriteFile(targetFilePath, input, 0644); err != nil {
+				fmt.Printf("Error escribiendo archivo %s: %v\n", targetFilePath, err)
+				return nil
+			}
 		}
+
+		return nil
 	})
 }
 

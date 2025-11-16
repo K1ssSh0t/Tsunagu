@@ -7,11 +7,12 @@ import {
   AddMod,
   RemoveMod,
   IsConfigured,
-  SaveConfig
+  SaveConfig,
+  SelectDirectory
 } from '../wailsjs/go/main/App';
 import { main } from '../wailsjs/go/models';
 import { ModeToggle } from './components/mode-toggle';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Folder } from 'lucide-react';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,7 @@ const App: React.FC = () => {
       toast.success(`Mod ${newModName} agregado correctamente`);
     } catch (error) {
       console.error('Error adding mod:', error);
-      toast.error('Error al agregar el mod');
+      toast.error('Error al agregar el mod' + error);
     }
   };
 
@@ -148,6 +149,30 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error saving config:', error);
       toast.error('Error al guardar la configuración');
+    }
+  };
+
+  const handleSelectDirectory = async () => {
+    try {
+      const selectedPath = await SelectDirectory();
+      if (selectedPath) {
+        setConfigPath(selectedPath);
+      }
+    } catch (error) {
+      console.error('Error selecting directory:', error);
+      toast.error('Error al seleccionar la carpeta');
+    }
+  };
+
+  const handleSelectModDirectory = async () => {
+    try {
+      const selectedPath = await SelectDirectory();
+      if (selectedPath) {
+        setNewModPath(selectedPath);
+      }
+    } catch (error) {
+      console.error('Error selecting mod directory:', error);
+      toast.error('Error al seleccionar la carpeta del mod');
     }
   };
 
@@ -184,14 +209,24 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="modsPath">Ruta de la carpeta 'mods' de 3DMigoto:</Label>
-                <Input
-                  id="modsPath"
-                  type="text"
-                  value={configPath}
-                  onChange={(e) => setConfigPath(e.target.value)}
-                  placeholder="Ej: C:\\Genshin Impact\\3DMigoto\\mods"
-                  className="w-full"
-                />
+                <div className="flex space-x-2">
+                  <Input
+                    id="modsPath"
+                    type="text"
+                    value={configPath}
+                    onChange={(e) => setConfigPath(e.target.value)}
+                    placeholder="Ej: C:\\Genshin Impact\\3DMigoto\\mods"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSelectDirectory}
+                    className="px-3"
+                  >
+                    <Folder className="h-4 w-4" />
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Esta es la carpeta donde se crearán las carpetas de personajes
                 </p>
@@ -237,9 +272,9 @@ const App: React.FC = () => {
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Sidebar - Character List */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Personajes</CardTitle>
@@ -323,13 +358,24 @@ const App: React.FC = () => {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="modPath">Ruta de los archivos</Label>
-                            <Input
-                              id="modPath"
-                              type="text"
-                              placeholder="Ruta completa del mod..."
-                              value={newModPath}
-                              onChange={(e) => setNewModPath(e.target.value)}
-                            />
+                            <div className="flex space-x-2">
+                              <Input
+                                id="modPath"
+                                type="text"
+                                placeholder="Ruta completa del mod..."
+                                value={newModPath}
+                                onChange={(e) => setNewModPath(e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleSelectModDirectory}
+                                className="px-3"
+                              >
+                                <Folder className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -474,13 +520,24 @@ const App: React.FC = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="configPath">Ruta de la carpeta 'mods'</Label>
-                  <Input
-                    id="configPath"
-                    type="text"
-                    value={configPath}
-                    onChange={(e) => setConfigPath(e.target.value)}
-                    placeholder="Ej: C:\\Genshin Impact\\3DMigoto\\mods"
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      id="configPath"
+                      type="text"
+                      value={configPath}
+                      onChange={(e) => setConfigPath(e.target.value)}
+                      placeholder="Ej: C:\\Genshin Impact\\3DMigoto\\mods"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSelectDirectory}
+                      className="px-3"
+                    >
+                      <Folder className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     Esta es la carpeta donde se crearán las carpetas de personajes
                   </p>

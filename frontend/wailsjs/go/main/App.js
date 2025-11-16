@@ -38,6 +38,10 @@ export function SaveConfig(arg1) {
   return window['go']['main']['App']['SaveConfig'](arg1);
 }
 
+export function SelectDirectory() {
+  return window['go']['main']['App']['SelectDirectory']();
+}
+
 export function ToggleMod(arg1, arg2) {
   return window['go']['main']['App']['ToggleMod'](arg1, arg2);
 }
