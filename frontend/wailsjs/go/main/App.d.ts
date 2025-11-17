@@ -8,9 +8,15 @@ export function AddMod(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function AddModFromZip(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function AddModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+
+export function CleanupTempDirectory():Promise<void>;
+
 export function GetCharacters():Promise<Array<main.Character>>;
 
 export function GetModsForCharacter(arg1:string):Promise<Array<main.Mod>>;
+
+export function GetZipStructure(arg1:string):Promise<Array<main.ZipFile>>;
 
 export function Greet(arg1:string):Promise<string>;
 

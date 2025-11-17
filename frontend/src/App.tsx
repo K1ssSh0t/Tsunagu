@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   GetCharacters,
   GetModsForCharacter,
@@ -6,6 +6,9 @@ import {
   ActivateSingleMod,
   AddMod,
   AddModFromZip,
+  AddModFromZipWithRoot,
+  CleanupTempDirectory,
+  GetZipStructure,
   RemoveMod,
   OpenModFolder,
   IsConfigured,
@@ -15,7 +18,7 @@ import {
 } from '../wailsjs/go/main/App';
 import { main } from '../wailsjs/go/models';
 import { ModeToggle } from './components/mode-toggle';
-import { Trash2, Folder, File } from 'lucide-react';
+import { Trash2, Folder, File, ChevronRight, ChevronDown } from 'lucide-react';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,7 @@ import { toast } from "sonner";
 
 type Character = main.Character;
 type Mod = main.Mod;
+type ZipFile = main.ZipFile;
 
 const App: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -41,6 +45,10 @@ const App: React.FC = () => {
   const [newModPath, setNewModPath] = useState('');
   const [newModName, setNewModName] = useState('');
   const [configPath, setConfigPath] = useState('');
+  const [showZipModal, setShowZipModal] = useState(false);
+  const [zipStructure, setZipStructure] = useState<ZipFile[]>([]);
+  const [selectedRoot, setSelectedRoot] = useState('');
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     checkConfiguration();
@@ -118,20 +126,172 @@ const App: React.FC = () => {
     try {
       // Check if the path is a ZIP file
       if (newModPath.toLowerCase().endsWith('.zip')) {
-        await AddModFromZip(selectedCharacter, newModName, newModPath);
+        // Reset all ZIP-related states first
+        setZipStructure([]);
+        setSelectedRoot('');
+        setExpandedFolders(new Set());
+
+        try {
+          // Show ZIP structure modal
+          const structure = await GetZipStructure(newModPath);
+          console.log('ZIP structure received:', structure);
+
+          // Ensure we have valid structure before proceeding
+          if (!structure || structure.length === 0) {
+            toast.error('El archivo ZIP no contiene archivos o está vacío');
+            return;
+          }
+
+          // Prepare expanded folders
+          const initialExpanded = new Set<string>();
+          structure.forEach(file => {
+            if (file.isDir) {
+              initialExpanded.add(file.path);
+            }
+          });
+
+          // Update states in sequence
+          setZipStructure(structure);
+          setExpandedFolders(initialExpanded);
+          setSelectedRoot('');
+
+          // Show modal after a short delay to ensure states are updated
+          setTimeout(() => {
+            setShowZipModal(true);
+          }, 100);
+
+        } catch (zipError) {
+          console.error('Error reading ZIP structure:', zipError);
+          toast.error('Error al leer la estructura del ZIP: ' + (zipError as Error).message);
+        }
       } else {
         await AddMod(selectedCharacter, newModName, newModPath);
+        setShowAddMod(false);
+        setNewModName('');
+        setNewModPath('');
+        await loadCharacterMods(selectedCharacter);
+        await loadCharacters();
+        toast.success(`Mod ${newModName} agregado correctamente`);
       }
+    } catch (error) {
+      console.error('Error adding mod:', error);
+      toast.error('Error al agregar el mod: ' + (error as Error).message);
+    }
+  };
+
+  const handleZipModalConfirm = async () => {
+    if (!selectedRoot) {
+      toast.error('Por favor selecciona una carpeta raíz');
+      return;
+    }
+
+    try {
+      await AddModFromZipWithRoot(selectedCharacter, newModName, newModPath, selectedRoot);
+      setShowZipModal(false);
       setShowAddMod(false);
       setNewModName('');
       setNewModPath('');
+      setSelectedRoot('');
+      setZipStructure([]);
+      setExpandedFolders(new Set());
       await loadCharacterMods(selectedCharacter);
       await loadCharacters();
       toast.success(`Mod ${newModName} agregado correctamente`);
     } catch (error) {
-      console.error('Error adding mod:', error);
-      toast.error('Error al agregar el mod' + error);
+      console.error('Error adding mod from ZIP:', error);
+      toast.error('Error al agregar el mod desde ZIP: ' + error);
     }
+  };
+
+  const handleZipModalCancel = async () => {
+    // Limpiar el directorio temporal en el backend
+    try {
+      await CleanupTempDirectory();
+    } catch (error) {
+      console.error('Error cleaning up temp directory:', error);
+    }
+
+    setShowZipModal(false);
+    setZipStructure([]);
+    setSelectedRoot('');
+    setExpandedFolders(new Set());
+    setNewModPath('');
+  };
+
+  // ZIP Modal state management
+  useEffect(() => {
+    if (showZipModal && zipStructure.length > 0) {
+      console.log('ZIP modal shown with structure:', zipStructure);
+    }
+  }, [showZipModal, zipStructure]);
+
+  const toggleFolder = (path: string) => {
+    const newExpanded = new Set(expandedFolders);
+    if (newExpanded.has(path)) {
+      newExpanded.delete(path);
+    } else {
+      newExpanded.add(path);
+    }
+    setExpandedFolders(newExpanded);
+  };
+
+  const selectRootFolder = (path: string) => {
+    setSelectedRoot(path);
+  };
+
+  // Component to render ZIP file tree
+  const ZipFileTree: React.FC<{ files: ZipFile[], level: number }> = ({ files, level }) => {
+    // Early return if no files
+    if (!files || files.length === 0) {
+      return <div className="text-gray-500 text-sm p-2">No hay archivos para mostrar</div>;
+    }
+
+    return (
+      <div key={`zip-tree-${level}-${Date.now()}`}>
+        {files.map((file) => (
+          <div key={`${file.path}-${file.isDir}`} style={{ paddingLeft: `${level * 20}px` }}>
+            <div
+              className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedRoot === file.path ? 'bg-blue-100 dark:bg-blue-900' : ''
+                }`}
+              onClick={() => {
+                console.log(`Clicked on: ${file.path}, isDir: ${file.isDir}, children:`, file.children?.length || 0);
+                if (file.isDir) {
+                  toggleFolder(file.path);
+                  selectRootFolder(file.path);
+                }
+              }}
+            >
+              {file.isDir && (
+                <span className="mr-1">
+                  {expandedFolders.has(file.path) ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </span>
+              )}
+              {file.isDir ? (
+                <Folder className="w-4 h-4 mr-2 text-blue-500" />
+              ) : (
+                <File className="w-4 h-4 mr-2 text-gray-500" />
+              )}
+              <span className="text-sm">{file.name}</span>
+              {file.isDir && (
+                <span className="ml-2 text-xs text-gray-500">
+                  ({file.children ? file.children.length : 0} items)
+                </span>
+              )}
+            </div>
+            {file.isDir &&
+              expandedFolders.has(file.path) &&
+              file.children &&
+              file.children.length > 0 && (
+                <ZipFileTree files={file.children} level={level + 1} />
+              )}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   const handleRemoveMod = async (character: string, modName: string) => {
@@ -431,6 +591,53 @@ const App: React.FC = () => {
                         </Button>
                       </CardFooter>
                     </Card>
+                  )}
+
+                  {/* ZIP Structure Modal */}
+                  {showZipModal && (
+                    <div key={`zip-modal-${newModPath}-${Date.now()}`} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Folder className="w-5 h-5" />
+                            Seleccionar raíz del mod
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          <div className="mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Selecciona la carpeta raíz del mod dentro del archivo ZIP:
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              {newModPath}
+                            </p>
+                          </div>
+
+                          <ScrollArea className="h-50 border rounded-md p-2">
+                            <ZipFileTree files={zipStructure} level={0} />
+                          </ScrollArea>
+
+                          {selectedRoot && (
+                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                              <p className="text-sm">
+                                <span className="font-medium">Raíz seleccionada:</span> {selectedRoot}
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                        <CardFooter className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={handleZipModalCancel}>
+                            Cancelar
+                          </Button>
+                          <Button
+                            onClick={handleZipModalConfirm}
+                            disabled={!selectedRoot}
+                          >
+                            Confirmar
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </div>
                   )}
 
                   {/* Mods List */}

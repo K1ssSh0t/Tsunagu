@@ -14,12 +14,24 @@ export function AddModFromZip(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddModFromZip'](arg1, arg2, arg3);
 }
 
+export function AddModFromZipWithRoot(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['AddModFromZipWithRoot'](arg1, arg2, arg3, arg4);
+}
+
+export function CleanupTempDirectory() {
+  return window['go']['main']['App']['CleanupTempDirectory']();
+}
+
 export function GetCharacters() {
   return window['go']['main']['App']['GetCharacters']();
 }
 
 export function GetModsForCharacter(arg1) {
   return window['go']['main']['App']['GetModsForCharacter'](arg1);
+}
+
+export function GetZipStructure(arg1) {
+  return window['go']['main']['App']['GetZipStructure'](arg1);
 }
 
 export function Greet(arg1) {

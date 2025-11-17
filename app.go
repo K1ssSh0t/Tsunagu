@@ -19,9 +19,10 @@ import (
 
 type App struct {
 	ctx        context.Context
-	modsPath   string // Ruta de la carpeta 'mods' de 3DMigoto
-	configPath string // Ruta para guardar la configuración
-	charsPath  string // Ruta del archivo characters.json
+	configPath string
+	modsPath   string
+	charsPath  string
+	tempZipDir string // Nuevo campo para almacenar el directorio temporal del ZIP
 }
 
 type Config struct {
@@ -40,6 +41,13 @@ type Mod struct {
 	Name      string `json:"name"`
 	IsActive  bool   `json:"isActive"`
 	FullPath  string `json:"fullPath"`
+}
+
+type ZipFile struct {
+	Name     string    `json:"name"`
+	IsDir    bool      `json:"isDir"`
+	Path     string    `json:"path"`
+	Children []ZipFile `json:"children,omitempty"`
 }
 
 func NewApp() *App {
@@ -353,7 +361,7 @@ func (a *App) AddModFromZip(characterName string, modName string, zipFilePath st
 	}
 
 	// Crear directorio temporal para descomprimir
-	tempDir, err := os.MkdirTemp("", "mod-temp-*")
+	tempDir, err := os.MkdirTemp(".", "mod-temp-*")
 	if err != nil {
 		return fmt.Errorf("error creating temp directory: %v", err)
 	}
@@ -446,8 +454,7 @@ func (a *App) copyModFiles(sourcePath, targetPath string) error {
 	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// Si hay error al acceder a un archivo, lo registramos pero continuamos
-			fmt.Printf("Error accediendo a %s: %v\n", path, err)
-			return nil
+			return fmt.Errorf("error accediendo a %s: %v", path, err)
 		}
 
 		relPath, err := filepath.Rel(sourcePath, path)
@@ -460,21 +467,18 @@ func (a *App) copyModFiles(sourcePath, targetPath string) error {
 		if info.IsDir() {
 			// Si es una carpeta vacía, la creamos pero no fallamos si hay error
 			if err := os.MkdirAll(targetFilePath, 0755); err != nil {
-				fmt.Printf("Error creando directorio %s: %v\n", targetFilePath, err)
-				return nil
+				return fmt.Errorf("error creando directorio %s: %v", targetFilePath, err)
 			}
 			return nil
 		} else {
 			// Intentar copiar el archivo, pero si falla continuamos con el siguiente
 			input, err := os.ReadFile(path)
 			if err != nil {
-				fmt.Printf("Error leyendo archivo %s: %v\n", path, err)
-				return nil
+				return fmt.Errorf("error leyendo archivo %s: %v", path, err)
 			}
 
 			if err := os.WriteFile(targetFilePath, input, 0644); err != nil {
-				fmt.Printf("Error escribiendo archivo %s: %v\n", targetFilePath, err)
-				return nil
+				return fmt.Errorf("error escribiendo archivo %s: %v", targetFilePath, err)
 			}
 		}
 
@@ -555,6 +559,250 @@ func isDirectory(path string) bool {
 	return info.IsDir()
 }
 
+// GetZipStructure obtiene la estructura de archivos de un ZIP extrayéndolo a una carpeta temporal
+func (a *App) GetZipStructure(zipFilePath string) ([]ZipFile, error) {
+	// Limpiar directorio temporal anterior si existe
+	if a.tempZipDir != "" {
+		os.RemoveAll(a.tempZipDir)
+	}
+
+	// Crear directorio temporal para extraer el ZIP en el mismo directorio de ejecución
+	tempDir, err := os.MkdirTemp(".", "zip-structure-*")
+	if err != nil {
+		return nil, fmt.Errorf("error creating temp directory: %v", err)
+	}
+
+	// Guardar la ruta temporal para uso posterior
+	a.tempZipDir = tempDir
+
+	// Extraer todo el ZIP al directorio temporal
+	err = a.unzipFile(zipFilePath, tempDir)
+	if err != nil {
+		os.RemoveAll(tempDir)
+		a.tempZipDir = ""
+		return nil, fmt.Errorf("error extracting zip to temp directory: %v", err)
+	}
+
+	// Leer la estructura desde el sistema de archivos
+	structure, err := a.buildStructureFromPath(tempDir)
+	if err != nil {
+		os.RemoveAll(tempDir)
+		a.tempZipDir = ""
+		return nil, fmt.Errorf("error building structure from temp directory: %v", err)
+	}
+
+	// NO limpiamos el directorio temporal aquí porque lo necesitaremos para AddModFromZipWithRoot
+
+	return structure, nil
+}
+
+// buildStructureFromPath construye la estructura ZipFile desde una ruta del sistema de archivos
+func (a *App) buildStructureFromPath(rootPath string) ([]ZipFile, error) {
+	var result []ZipFile
+
+	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Obtener la ruta relativa desde el directorio raíz
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+
+		// Normalizar separadores a /
+		normalizedPath := filepath.ToSlash(relPath)
+
+		// Construir la entrada ZipFile
+		zipFile := ZipFile{
+			Name:     info.Name(),
+			IsDir:    info.IsDir(),
+			Path:     normalizedPath,
+			Children: []ZipFile{}, // Se llenará después
+		}
+
+		// Si es el directorio raíz, agregarlo al resultado
+		if relPath == "." {
+			return nil // Saltar el directorio raíz
+		}
+
+		result = append(result, zipFile)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Construir la estructura jerárquica
+	return a.buildHierarchicalStructure(result), nil
+}
+func (a *App) buildHierarchicalStructure(files []ZipFile) []ZipFile {
+	// Crear un mapa para acceso rápido
+	fileMap := make(map[string]*ZipFile)
+
+	// Primero, crear todas las entradas y guardar referencias
+	for i := range files {
+		fileMap[files[i].Path] = &files[i]
+		fmt.Printf("DEBUG: Added to map: %s (isDir: %v)\n", files[i].Path, files[i].IsDir)
+	}
+
+	// Luego, construir la jerarquía
+	var root []*ZipFile // Usar punteros para mantener las referencias
+	for _, file := range files {
+		if !strings.Contains(file.Path, "/") {
+			// Es un archivo/directorio raíz - agregar la referencia del mapa
+			root = append(root, fileMap[file.Path])
+			fmt.Printf("DEBUG: Root item: %s\n", file.Path)
+		} else {
+			// Tiene un padre
+			parentPath := file.Path[:strings.LastIndex(file.Path, "/")]
+			if parent, exists := fileMap[parentPath]; exists {
+				// Agregar la referencia del mapa en lugar de la copia
+				parent.Children = append(parent.Children, *fileMap[file.Path])
+				fmt.Printf("DEBUG: Added %s as child of %s\n", file.Path, parentPath)
+			} else {
+				fmt.Printf("DEBUG: Parent not found for %s (parent: %s)\n", file.Path, parentPath)
+			}
+		}
+	}
+
+	// Imprimir estructura final para depuración
+	fmt.Printf("DEBUG: Final structure:\n")
+	for _, item := range root {
+		a.printZipFileStructure(*item, 0)
+	}
+
+	// Convertir a []ZipFile para el retorno
+	result := make([]ZipFile, len(root))
+	for i, item := range root {
+		result[i] = *item
+	}
+
+	// Ordenar
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].IsDir != result[j].IsDir {
+			return result[i].IsDir // Directorios primero
+		}
+		return result[i].Name < result[j].Name
+	})
+
+	// Ordenar recursivamente
+	for i := range result {
+		sortZipFileChildren(&result[i])
+	}
+
+	return result
+}
+
+// printZipFileStructure imprime la estructura para depuración
+func (a *App) printZipFileStructure(file ZipFile, level int) {
+	indent := strings.Repeat("  ", level)
+	fmt.Printf("%s- %s (isDir: %v, children: %d)\n", indent, file.Path, file.IsDir, len(file.Children))
+	for _, child := range file.Children {
+		a.printZipFileStructure(child, level+1)
+	}
+}
+
+// sortZipFileChildren ordena recursivamente los hijos de un archivo ZIP
+func sortZipFileChildren(file *ZipFile) {
+	if len(file.Children) > 0 {
+		sort.Slice(file.Children, func(i, j int) bool {
+			if file.Children[i].IsDir != file.Children[j].IsDir {
+				return file.Children[i].IsDir // Directorios primero
+			}
+			return file.Children[i].Name < file.Children[j].Name
+		})
+
+		// Ordenar recursivamente los hijos de cada hijo
+		for i := range file.Children {
+			sortZipFileChildren(&file.Children[i])
+		}
+	}
+}
+
+// AddModFromZipWithRoot agrega un mod desde ZIP usando una raíz específica
+func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string) error {
+	// Verificar que tenemos un directorio temporal disponible
+	if a.tempZipDir == "" {
+		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
+	}
+
+	characterPath := filepath.Join(a.modsPath, characterName)
+	targetPath := filepath.Join(characterPath, modName)
+
+	// Crear directorio del personaje si no existe
+	if err := os.MkdirAll(characterPath, 0755); err != nil {
+		return err
+	}
+
+	// Construir la ruta completa al directorio raíz seleccionado en el temp
+	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
+
+	// Verificar que el directorio seleccionado existe
+	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
+		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
+	}
+
+	// Copiar archivos desde el directorio temporal ya extraído
+	err := a.copyModFiles(selectedRootPath, targetPath)
+
+	// Limpiar el directorio temporal después de usarlo
+	defer os.RemoveAll(a.tempZipDir)
+	a.tempZipDir = ""
+
+	return err
+}
+
+// unzipFileWithRoot descomprime solo los archivos de un directorio raíz específico
+func (a *App) unzipFileWithRoot(source, destination string, selectedRoot string) error {
+	reader, err := zip.OpenReader(source)
+	if err != nil {
+		return fmt.Errorf("error opening zip file: %v", err)
+	}
+	defer reader.Close()
+
+	destination, err = filepath.Abs(destination)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path: %v", err)
+	}
+
+	for _, f := range reader.File {
+		// Solo extraer archivos que pertenecen al directorio raíz seleccionado
+		if strings.HasPrefix(f.Name, selectedRoot+"/") || f.Name == selectedRoot {
+			// Remover el prefijo del directorio raíz seleccionado
+			newPath := strings.TrimPrefix(f.Name, selectedRoot)
+			if newPath == "" {
+				newPath = "/"
+			}
+			newPath = strings.TrimPrefix(newPath, "/")
+
+			// Crear un nuevo archivo con la ruta modificada
+			modifiedFile := *f
+			modifiedFile.Name = newPath
+
+			err := a.extractFile(&modifiedFile, destination)
+			if err != nil {
+				fmt.Printf("Error extracting file %s: %v\n", f.Name, err)
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
 func (a *App) Greet(name string) (string, error) {
 	return "Hello " + name, nil
+}
+
+// CleanupTempDirectory limpia el directorio temporal del ZIP
+func (a *App) CleanupTempDirectory() error {
+	if a.tempZipDir != "" {
+		err := os.RemoveAll(a.tempZipDir)
+		a.tempZipDir = ""
+		return err
+	}
+	return nil
 }
