@@ -47,7 +47,7 @@ type ZipFile struct {
 	Name     string    `json:"name"`
 	IsDir    bool      `json:"isDir"`
 	Path     string    `json:"path"`
-	Children []ZipFile `json:"children,omitempty"`
+	Children []*ZipFile `json:"children,omitempty"`
 }
 
 func NewApp() *App {
@@ -619,7 +619,7 @@ func (a *App) buildStructureFromPath(rootPath string) ([]ZipFile, error) {
 			Name:     info.Name(),
 			IsDir:    info.IsDir(),
 			Path:     normalizedPath,
-			Children: []ZipFile{}, // Se llenará después
+			Children: []*ZipFile{}, // Se llenará después
 		}
 
 		// Si es el directorio raíz, agregarlo al resultado
@@ -650,17 +650,18 @@ func (a *App) buildHierarchicalStructure(files []ZipFile) []ZipFile {
 
 	// Luego, construir la jerarquía
 	var root []*ZipFile // Usar punteros para mantener las referencias
-	for _, file := range files {
+	for i := range files {
+		file := &files[i]
 		if !strings.Contains(file.Path, "/") {
 			// Es un archivo/directorio raíz - agregar la referencia del mapa
-			root = append(root, fileMap[file.Path])
+			root = append(root, file)
 			fmt.Printf("DEBUG: Root item: %s\n", file.Path)
 		} else {
 			// Tiene un padre
 			parentPath := file.Path[:strings.LastIndex(file.Path, "/")]
 			if parent, exists := fileMap[parentPath]; exists {
 				// Agregar la referencia del mapa en lugar de la copia
-				parent.Children = append(parent.Children, *fileMap[file.Path])
+				parent.Children = append(parent.Children, file)
 				fmt.Printf("DEBUG: Added %s as child of %s\n", file.Path, parentPath)
 			} else {
 				fmt.Printf("DEBUG: Parent not found for %s (parent: %s)\n", file.Path, parentPath)
@@ -701,7 +702,7 @@ func (a *App) printZipFileStructure(file ZipFile, level int) {
 	indent := strings.Repeat("  ", level)
 	fmt.Printf("%s- %s (isDir: %v, children: %d)\n", indent, file.Path, file.IsDir, len(file.Children))
 	for _, child := range file.Children {
-		a.printZipFileStructure(child, level+1)
+		a.printZipFileStructure(*child, level+1)
 	}
 }
 
@@ -717,7 +718,7 @@ func sortZipFileChildren(file *ZipFile) {
 
 		// Ordenar recursivamente los hijos de cada hijo
 		for i := range file.Children {
-			sortZipFileChildren(&file.Children[i])
+			sortZipFileChildren(file.Children[i])
 		}
 	}
 }
