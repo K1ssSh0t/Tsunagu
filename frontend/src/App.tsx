@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   GetCharacters,
   GetModsForCharacter,
@@ -14,20 +14,27 @@ import {
   IsConfigured,
   SaveConfig,
   SelectDirectory,
-  SelectFile
-} from '../wailsjs/go/main/App';
-import { main } from '../wailsjs/go/models';
-import { ModeToggle } from './components/mode-toggle';
-import { Trash2, Folder, File, ChevronRight, ChevronDown } from 'lucide-react';
+  SelectFile,
+} from "../wailsjs/go/main/App";
+import { main } from "../wailsjs/go/models";
+import { ModeToggle } from "./components/mode-toggle";
+import { Trash2, Folder, File, ChevronRight, ChevronDown } from "lucide-react";
 
 // UI Components
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -37,18 +44,20 @@ type ZipFile = main.ZipFile;
 
 const App: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
-  const [selectedCharacter, setSelectedCharacter] = useState<string>('');
+  const [selectedCharacter, setSelectedCharacter] = useState<string>("");
   const [characterMods, setCharacterMods] = useState<Mod[]>([]);
   const [showConfig, setShowConfig] = useState(false);
   const [isAppConfigured, setIsAppConfigured] = useState<boolean | null>(null);
   const [showAddMod, setShowAddMod] = useState(false);
-  const [newModPath, setNewModPath] = useState('');
-  const [newModName, setNewModName] = useState('');
-  const [configPath, setConfigPath] = useState('');
+  const [newModPath, setNewModPath] = useState("");
+  const [newModName, setNewModName] = useState("");
+  const [configPath, setConfigPath] = useState("");
   const [showZipModal, setShowZipModal] = useState(false);
   const [zipStructure, setZipStructure] = useState<ZipFile[]>([]);
-  const [selectedRoot, setSelectedRoot] = useState('');
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [selectedRoot, setSelectedRoot] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     checkConfiguration();
@@ -62,7 +71,7 @@ const App: React.FC = () => {
         loadCharacters();
       }
     } catch (error) {
-      console.error('Error checking configuration:', error);
+      console.error("Error checking configuration:", error);
     }
   };
 
@@ -71,8 +80,8 @@ const App: React.FC = () => {
       const chars = await GetCharacters();
       setCharacters(chars);
     } catch (error) {
-      console.error('Error loading characters:', error);
-      toast.error('Error al cargar los personajes');
+      console.error("Error loading characters:", error);
+      toast.error("Error al cargar los personajes");
     }
   };
 
@@ -81,8 +90,8 @@ const App: React.FC = () => {
       const mods = await GetModsForCharacter(characterName);
       setCharacterMods(mods);
     } catch (error) {
-      console.error('Error loading character mods:', error);
-      toast.error('Error al cargar los mods del personaje');
+      console.error("Error loading character mods:", error);
+      toast.error("Error al cargar los mods del personaje");
       setCharacterMods([]);
     }
   };
@@ -98,13 +107,15 @@ const App: React.FC = () => {
       await loadCharacterMods(character);
       await loadCharacters();
       // Get the current state of the mod to show the correct message
-      const mod = characterMods.find(m => m.name === modName);
+      const mod = characterMods.find((m) => m.name === modName);
       if (mod) {
-        toast.success(`Mod ${modName} ${mod.isActive ? 'activado' : 'desactivado'} correctamente`);
+        toast.success(
+          `Mod ${modName} ${mod.isActive ? "activado" : "desactivado"} correctamente`,
+        );
       }
     } catch (error) {
-      console.error('Error toggling mod:', error);
-      toast.error('Error al cambiar el estado del mod');
+      console.error("Error toggling mod:", error);
+      toast.error("Error al cambiar el estado del mod");
     }
   };
 
@@ -115,8 +126,8 @@ const App: React.FC = () => {
       await loadCharacters();
       toast.success(`Mod ${modName} activado como único`);
     } catch (error) {
-      console.error('Error activating mod:', error);
-      toast.error('Error al activar el mod');
+      console.error("Error activating mod:", error);
+      toast.error("Error al activar el mod");
     }
   };
 
@@ -125,26 +136,26 @@ const App: React.FC = () => {
 
     try {
       // Check if the path is a ZIP file
-      if (newModPath.toLowerCase().endsWith('.zip')) {
+      if (newModPath.toLowerCase().endsWith(".zip")) {
         // Reset all ZIP-related states first
         setZipStructure([]);
-        setSelectedRoot('');
+        setSelectedRoot("");
         setExpandedFolders(new Set());
 
         try {
           // Show ZIP structure modal
           const structure = await GetZipStructure(newModPath);
-          console.log('ZIP structure received:', structure);
+          console.log("ZIP structure received:", structure);
 
           // Ensure we have valid structure before proceeding
           if (!structure || structure.length === 0) {
-            toast.error('El archivo ZIP no contiene archivos o está vacío');
+            toast.error("El archivo ZIP no contiene archivos o está vacío");
             return;
           }
 
           // Prepare expanded folders
           const initialExpanded = new Set<string>();
-          structure.forEach(file => {
+          structure.forEach((file) => {
             if (file.isDir) {
               initialExpanded.add(file.path);
             }
@@ -153,53 +164,60 @@ const App: React.FC = () => {
           // Update states in sequence
           setZipStructure(structure);
           setExpandedFolders(initialExpanded);
-          setSelectedRoot('');
+          setSelectedRoot("");
 
           // Show modal after a short delay to ensure states are updated
           setTimeout(() => {
             setShowZipModal(true);
           }, 100);
-
         } catch (zipError) {
-          console.error('Error reading ZIP structure:', zipError);
-          toast.error('Error al leer la estructura del ZIP: ' + (zipError as Error).message);
+          console.error("Error reading ZIP structure:", zipError);
+          toast.error(
+            "Error al leer la estructura del ZIP: " +
+              (zipError as Error).message,
+          );
         }
       } else {
         await AddMod(selectedCharacter, newModName, newModPath);
         setShowAddMod(false);
-        setNewModName('');
-        setNewModPath('');
+        setNewModName("");
+        setNewModPath("");
         await loadCharacterMods(selectedCharacter);
         await loadCharacters();
         toast.success(`Mod ${newModName} agregado correctamente`);
       }
     } catch (error) {
-      console.error('Error adding mod:', error);
-      toast.error('Error al agregar el mod: ' + (error as Error).message);
+      console.error("Error adding mod:", error);
+      toast.error("Error al agregar el mod: " + (error as Error).message);
     }
   };
 
   const handleZipModalConfirm = async () => {
     if (!selectedRoot) {
-      toast.error('Por favor selecciona una carpeta raíz');
+      toast.error("Por favor selecciona una carpeta raíz");
       return;
     }
 
     try {
-      await AddModFromZipWithRoot(selectedCharacter, newModName, newModPath, selectedRoot);
+      await AddModFromZipWithRoot(
+        selectedCharacter,
+        newModName,
+        newModPath,
+        selectedRoot,
+      );
       setShowZipModal(false);
       setShowAddMod(false);
-      setNewModName('');
-      setNewModPath('');
-      setSelectedRoot('');
+      setNewModName("");
+      setNewModPath("");
+      setSelectedRoot("");
       setZipStructure([]);
       setExpandedFolders(new Set());
       await loadCharacterMods(selectedCharacter);
       await loadCharacters();
       toast.success(`Mod ${newModName} agregado correctamente`);
     } catch (error) {
-      console.error('Error adding mod from ZIP:', error);
-      toast.error('Error al agregar el mod desde ZIP: ' + error);
+      console.error("Error adding mod from ZIP:", error);
+      toast.error("Error al agregar el mod desde ZIP: " + error);
     }
   };
 
@@ -208,20 +226,20 @@ const App: React.FC = () => {
     try {
       await CleanupTempDirectory();
     } catch (error) {
-      console.error('Error cleaning up temp directory:', error);
+      console.error("Error cleaning up temp directory:", error);
     }
 
     setShowZipModal(false);
     setZipStructure([]);
-    setSelectedRoot('');
+    setSelectedRoot("");
     setExpandedFolders(new Set());
-    setNewModPath('');
+    setNewModPath("");
   };
 
   // ZIP Modal state management
   useEffect(() => {
     if (showZipModal && zipStructure.length > 0) {
-      console.log('ZIP modal shown with structure:', zipStructure);
+      console.log("ZIP modal shown with structure:", zipStructure);
     }
   }, [showZipModal, zipStructure]);
 
@@ -240,29 +258,44 @@ const App: React.FC = () => {
   };
 
   // Component to render ZIP file tree
-  const ZipFileTree: React.FC<{ files: ZipFile[], level: number }> = ({ files, level }) => {
+  const ZipFileTree: React.FC<{ files: ZipFile[]; level: number }> = ({
+    files,
+    level,
+  }) => {
     // Early return if no files
     if (!files || files.length === 0) {
-      return <div className="text-gray-500 text-sm p-2">No hay archivos para mostrar</div>;
+      return (
+        <div className="text-gray-500 text-sm p-2">
+          No hay archivos para mostrar
+        </div>
+      );
     }
 
     return (
       <div key={`zip-tree-${level}-${Date.now()}`}>
         {files.map((file) => (
-          <div key={`${file.path}-${file.isDir}`} style={{ paddingLeft: `${level * 20}px` }}>
+          <div
+            key={`${file.path}-${file.isDir}`}
+            style={{ paddingLeft: `${level * 20}px` }}
+          >
             <div
-              className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedRoot === file.path ? 'bg-blue-100 dark:bg-blue-900' : ''
-                }`}
+              className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                selectedRoot === file.path ? "bg-blue-100 dark:bg-blue-900" : ""
+              }`}
               onClick={() => {
-                console.log(`Clicked on: ${file.path}, isDir: ${file.isDir}, children:`, file.children?.length || 0);
                 if (file.isDir) {
-                  toggleFolder(file.path);
                   selectRootFolder(file.path);
                 }
               }}
             >
               {file.isDir && (
-                <span className="mr-1">
+                <span
+                  className="mr-1 p-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFolder(file.path);
+                  }}
+                >
                   {expandedFolders.has(file.path) ? (
                     <ChevronDown className="w-4 h-4" />
                   ) : (
@@ -295,15 +328,19 @@ const App: React.FC = () => {
   };
 
   const handleRemoveMod = async (character: string, modName: string) => {
-    if (confirm(`¿Estás seguro de que quieres eliminar el mod "${modName}" de ${character}?`)) {
+    if (
+      confirm(
+        `¿Estás seguro de que quieres eliminar el mod "${modName}" de ${character}?`,
+      )
+    ) {
       try {
         await RemoveMod(character, modName);
         await loadCharacterMods(character);
         await loadCharacters();
         toast.success(`Mod ${modName} eliminado correctamente`);
       } catch (error) {
-        console.error('Error removing mod:', error);
-        toast.error('Error al eliminar el mod');
+        console.error("Error removing mod:", error);
+        toast.error("Error al eliminar el mod");
       }
     }
   };
@@ -312,8 +349,8 @@ const App: React.FC = () => {
     try {
       await OpenModFolder(modPath);
     } catch (error) {
-      console.error('Error opening mod folder:', error);
-      toast.error('Error al abrir la carpeta del mod');
+      console.error("Error opening mod folder:", error);
+      toast.error("Error al abrir la carpeta del mod");
     }
   };
 
@@ -324,8 +361,8 @@ const App: React.FC = () => {
       setShowConfig(false);
       await loadCharacters();
     } catch (error) {
-      console.error('Error saving config:', error);
-      toast.error('Error al guardar la configuración');
+      console.error("Error saving config:", error);
+      toast.error("Error al guardar la configuración");
     }
   };
 
@@ -336,8 +373,8 @@ const App: React.FC = () => {
         setConfigPath(selectedPath);
       }
     } catch (error) {
-      console.error('Error selecting directory:', error);
-      toast.error('Error al seleccionar la carpeta');
+      console.error("Error selecting directory:", error);
+      toast.error("Error al seleccionar la carpeta");
     }
   };
 
@@ -348,8 +385,8 @@ const App: React.FC = () => {
         setNewModPath(selectedPath);
       }
     } catch (error) {
-      console.error('Error selecting mod directory:', error);
-      toast.error('Error al seleccionar la carpeta del mod');
+      console.error("Error selecting mod directory:", error);
+      toast.error("Error al seleccionar la carpeta del mod");
     }
   };
 
@@ -360,8 +397,8 @@ const App: React.FC = () => {
         setNewModPath(selectedFile);
       }
     } catch (error) {
-      console.error('Error selecting mod file:', error);
-      toast.error('Error al seleccionar el archivo del mod');
+      console.error("Error selecting mod file:", error);
+      toast.error("Error al seleccionar el archivo del mod");
     }
   };
 
@@ -389,7 +426,9 @@ const App: React.FC = () => {
         </div>
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Configuración Inicial</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              Configuración Inicial
+            </CardTitle>
             <CardDescription className="text-center">
               Configura la ruta de la carpeta de mods para comenzar
             </CardDescription>
@@ -397,7 +436,9 @@ const App: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="modsPath">Ruta de la carpeta 'mods' de 3DMigoto:</Label>
+                <Label htmlFor="modsPath">
+                  Ruta de la carpeta 'mods' de 3DMigoto:
+                </Label>
                 <div className="flex space-x-2">
                   <Input
                     id="modsPath"
@@ -445,15 +486,16 @@ const App: React.FC = () => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-3xl font-bold">Genshin Impact Mod Manager</CardTitle>
-                <CardDescription>Administra tus mods de 3DMigoto</CardDescription>
+                <CardTitle className="text-3xl font-bold">
+                  Genshin Impact Mod Manager
+                </CardTitle>
+                <CardDescription>
+                  Administra tus mods de 3DMigoto
+                </CardDescription>
               </div>
               <div className="flex items-center space-x-2">
                 <ModeToggle />
-                <Button
-                  variant="outline"
-                  onClick={() => setShowConfig(true)}
-                >
+                <Button variant="outline" onClick={() => setShowConfig(true)}>
                   Configuración
                 </Button>
               </div>
@@ -474,19 +516,31 @@ const App: React.FC = () => {
                     {characters.map((character) => (
                       <Button
                         key={character.name}
-                        variant={selectedCharacter === character.name ? 'secondary' : 'ghost'}
+                        variant={
+                          selectedCharacter === character.name
+                            ? "secondary"
+                            : "ghost"
+                        }
                         onClick={() => handleCharacterSelect(character.name)}
-                        className={`w-full justify-between h-auto py-3 ${!character.hasFolder ? 'opacity-70' : ''}`}
-                      // disabled={!character.hasFolder}
+                        className={`w-full justify-between h-auto py-3 ${!character.hasFolder ? "opacity-70" : ""}`}
+                        // disabled={!character.hasFolder}
                       >
-                        <span className="font-medium capitalize">{character.name}</span>
+                        <span className="font-medium capitalize">
+                          {character.name}
+                        </span>
                         <div className="flex items-center space-x-2">
                           {!character.hasFolder && (
                             <Badge variant="outline" className="text-xs">
                               Sin carpeta
                             </Badge>
                           )}
-                          <Badge variant={selectedCharacter === character.name ? 'default' : 'secondary'}>
+                          <Badge
+                            variant={
+                              selectedCharacter === character.name
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
                             {character.mods.length} mods
                           </Badge>
                         </div>
@@ -509,10 +563,10 @@ const App: React.FC = () => {
                         Mods de {selectedCharacter}
                       </CardTitle>
                       <CardDescription>
-                        {characters.find(c => c.name === selectedCharacter)?.hasFolder
+                        {characters.find((c) => c.name === selectedCharacter)
+                          ?.hasFolder
                           ? `${characterMods.length} mods encontrados`
-                          : 'La carpeta se creará al agregar el primer mod'
-                        }
+                          : "La carpeta se creará al agregar el primer mod"}
                       </CardDescription>
                     </div>
                     <Button
@@ -531,7 +585,9 @@ const App: React.FC = () => {
                   {showAddMod && (
                     <Card className="mb-6">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">Agregar Nuevo Mod</CardTitle>
+                        <CardTitle className="text-lg">
+                          Agregar Nuevo Mod
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -546,7 +602,9 @@ const App: React.FC = () => {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="modPath">Ruta de los archivos</Label>
+                            <Label htmlFor="modPath">
+                              Ruta de los archivos
+                            </Label>
                             <div className="flex space-x-2">
                               <Input
                                 id="modPath"
@@ -595,7 +653,10 @@ const App: React.FC = () => {
 
                   {/* ZIP Structure Modal */}
                   {showZipModal && (
-                    <div key={`zip-modal-${newModPath}-${Date.now()}`} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div
+                      key={`zip-modal-${newModPath}-${Date.now()}`}
+                      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+                    >
                       <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden">
                         <CardHeader>
                           <CardTitle className="flex items-center gap-2">
@@ -606,7 +667,8 @@ const App: React.FC = () => {
                         <CardContent className="p-6">
                           <div className="mb-4">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Selecciona la carpeta raíz del mod dentro del archivo ZIP:
+                              Selecciona la carpeta raíz del mod dentro del
+                              archivo ZIP:
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                               {newModPath}
@@ -620,13 +682,19 @@ const App: React.FC = () => {
                           {selectedRoot && (
                             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
                               <p className="text-sm">
-                                <span className="font-medium">Raíz seleccionada:</span> {selectedRoot}
+                                <span className="font-medium">
+                                  Raíz seleccionada:
+                                </span>{" "}
+                                {selectedRoot}
                               </p>
                             </div>
                           )}
                         </CardContent>
                         <CardFooter className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={handleZipModalCancel}>
+                          <Button
+                            variant="outline"
+                            onClick={handleZipModalCancel}
+                          >
                             Cancelar
                           </Button>
                           <Button
@@ -645,13 +713,17 @@ const App: React.FC = () => {
                     {characterMods.length === 0 ? (
                       <Alert className="text-center">
                         <AlertTitle className="mb-2">
-                          {characters.find(c => c.name === selectedCharacter)?.hasFolder
-                            ? 'No hay mods para este personaje'
-                            : 'Este personaje no tiene carpeta'}
+                          {characters.find((c) => c.name === selectedCharacter)
+                            ?.hasFolder
+                            ? "No hay mods para este personaje"
+                            : "Este personaje no tiene carpeta"}
                         </AlertTitle>
                         <AlertDescription>
-                          {!characters.find(c => c.name === selectedCharacter)?.hasFolder && (
-                            <p className="mb-2">Agrega un mod para crear la carpeta.</p>
+                          {!characters.find((c) => c.name === selectedCharacter)
+                            ?.hasFolder && (
+                            <p className="mb-2">
+                              Agrega un mod para crear la carpeta.
+                            </p>
                           )}
                           <Button
                             variant="outline"
@@ -666,24 +738,35 @@ const App: React.FC = () => {
                       characterMods.map((mod) => (
                         <Card
                           key={mod.id}
-                          className={`overflow-hidden ${mod.isActive ? 'border-green-200 dark:border-green-900' : ''
-                            }`}
+                          className={`overflow-hidden ${
+                            mod.isActive
+                              ? "border-green-200 dark:border-green-900"
+                              : ""
+                          }`}
                         >
                           <CardContent className="p-4">
                             <div className="flex justify-between items-center">
                               <div className="flex items-center space-x-3">
-                                <div className={`w-3 h-3 rounded-full ${mod.isActive ? 'bg-green-500' : 'bg-muted-foreground/50'
-                                  }`} />
+                                <div
+                                  className={`w-3 h-3 rounded-full ${
+                                    mod.isActive
+                                      ? "bg-green-500"
+                                      : "bg-muted-foreground/50"
+                                  }`}
+                                />
                                 <div>
                                   <p className="font-medium">{mod.name}</p>
                                   <Badge
-                                    variant={mod.isActive ? 'default' : 'outline'}
-                                    className={`text-xs ${mod.isActive
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                      : ''
-                                      }`}
+                                    variant={
+                                      mod.isActive ? "default" : "outline"
+                                    }
+                                    className={`text-xs ${
+                                      mod.isActive
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                        : ""
+                                    }`}
                                   >
-                                    {mod.isActive ? 'ACTIVO' : 'INACTIVO'}
+                                    {mod.isActive ? "ACTIVO" : "INACTIVO"}
                                   </Badge>
                                 </div>
                               </div>
@@ -691,22 +774,33 @@ const App: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleOpenModFolder(mod.fullPath)}
+                                  onClick={() =>
+                                    handleOpenModFolder(mod.fullPath)
+                                  }
                                 >
                                   Abrir Carpeta
                                 </Button>
                                 <Button
-                                  variant={mod.isActive ? 'secondary' : 'default'}
+                                  variant={
+                                    mod.isActive ? "secondary" : "default"
+                                  }
                                   size="sm"
-                                  onClick={() => handleToggleMod(mod.character, mod.name)}
+                                  onClick={() =>
+                                    handleToggleMod(mod.character, mod.name)
+                                  }
                                   className="min-w-[100px]"
                                 >
-                                  {mod.isActive ? 'Desactivar' : 'Activar'}
+                                  {mod.isActive ? "Desactivar" : "Activar"}
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => handleActivateSingle(mod.character, mod.name)}
+                                  onClick={() =>
+                                    handleActivateSingle(
+                                      mod.character,
+                                      mod.name,
+                                    )
+                                  }
                                   className="hidden sm:inline-flex"
                                 >
                                   Activar Único
@@ -715,7 +809,9 @@ const App: React.FC = () => {
                                   variant="outline"
                                   size="icon"
                                   className="text-destructive hover:text-destructive"
-                                  onClick={() => handleRemoveMod(mod.character, mod.name)}
+                                  onClick={() =>
+                                    handleRemoveMod(mod.character, mod.name)
+                                  }
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -790,22 +886,17 @@ const App: React.FC = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Esta es la carpeta donde se crearán las carpetas de personajes
+                    Esta es la carpeta donde se crearán las carpetas de
+                    personajes
                   </p>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowConfig(false)}
-              >
+              <Button variant="outline" onClick={() => setShowConfig(false)}>
                 Cancelar
               </Button>
-              <Button
-                onClick={handleSaveConfig}
-                disabled={!configPath}
-              >
+              <Button onClick={handleSaveConfig} disabled={!configPath}>
                 Guardar Cambios
               </Button>
             </CardFooter>
