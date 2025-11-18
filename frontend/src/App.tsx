@@ -5,7 +5,6 @@ import {
   ToggleMod,
   ActivateSingleMod,
   AddMod,
-  AddModFromZip,
   AddModFromZipWithRoot,
   CleanupTempDirectory,
   GetZipStructure,

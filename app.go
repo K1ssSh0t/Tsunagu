@@ -350,89 +350,89 @@ func (a *App) AddMod(characterName string, modName string, sourcePath string) er
 }
 
 // AddModFromZip agrega un nuevo mod desde un archivo comprimido
-func (a *App) AddModFromZip(characterName string, modName string, zipFilePath string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
+// func (a *App) AddModFromZip(characterName string, modName string, zipFilePath string) error {
+// 	characterPath := filepath.Join(a.modsPath, characterName)
+// 	targetPath := filepath.Join(characterPath, modName)
 
-	// Crear directorio del personaje si no existe
-	if err := os.MkdirAll(characterPath, 0755); err != nil {
-		return err
-	}
+// 	// Crear directorio del personaje si no existe
+// 	if err := os.MkdirAll(characterPath, 0755); err != nil {
+// 		return err
+// 	}
 
-	// Crear directorio temporal para descomprimir
-	tempDir, err := os.MkdirTemp(".", "mod-temp-*")
-	if err != nil {
-		return fmt.Errorf("error creating temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+// 	// Crear directorio temporal para descomprimir
+// 	tempDir, err := os.MkdirTemp(".", "mod-temp-*")
+// 	if err != nil {
+// 		return fmt.Errorf("error creating temp directory: %v", err)
+// 	}
+// 	defer os.RemoveAll(tempDir)
 
-	// Descomprimir archivo en directorio temporal
-	if err := a.extractArchive(zipFilePath, tempDir); err != nil {
-		return fmt.Errorf("error unzipping file: %v", err)
-	}
+// 	// Descomprimir archivo en directorio temporal
+// 	if err := a.extractArchive(zipFilePath, tempDir); err != nil {
+// 		return fmt.Errorf("error unzipping file: %v", err)
+// 	}
 
-	// Encontrar el directorio principal del mod dentro del ZIP
-	modSourceDir := a.findModRootDirectory(tempDir)
-	if modSourceDir == "" {
-		return fmt.Errorf("no mod directory found in zip file")
-	}
+// 	// Encontrar el directorio principal del mod dentro del ZIP
+// 	modSourceDir := a.findModRootDirectory(tempDir)
+// 	if modSourceDir == "" {
+// 		return fmt.Errorf("no mod directory found in zip file")
+// 	}
 
-	// Copiar archivos del mod descomprimido
-	return a.copyModFiles(modSourceDir, targetPath)
-}
+// 	// Copiar archivos del mod descomprimido
+// 	return a.copyModFiles(modSourceDir, targetPath)
+// }
 
 // findModRootDirectory encuentra el directorio principal del mod
-func (a *App) findModRootDirectory(tempDir string) string {
-	// Buscar directorio que contenga .JASM_ModConfig.json u otros archivos de mod
-	files, err := os.ReadDir(tempDir)
-	if err != nil {
-		return ""
-	}
+// func (a *App) findModRootDirectory(tempDir string) string {
+// 	// Buscar directorio que contenga .JASM_ModConfig.json u otros archivos de mod
+// 	files, err := os.ReadDir(tempDir)
+// 	if err != nil {
+// 		return ""
+// 	}
 
-	// Si hay un solo directorio, usar ese como raíz
-	if len(files) == 1 && files[0].IsDir() {
-		return filepath.Join(tempDir, files[0].Name())
-	}
+// 	// Si hay un solo directorio, usar ese como raíz
+// 	if len(files) == 1 && files[0].IsDir() {
+// 		return filepath.Join(tempDir, files[0].Name())
+// 	}
 
-	// Si hay múltiples archivos/directorios, buscar el que contenga archivos de mod
-	for _, file := range files {
-		if file.IsDir() {
-			dirPath := filepath.Join(tempDir, file.Name())
-			if a.hasModFiles(dirPath) {
-				return dirPath
-			}
-		}
-	}
+// 	// Si hay múltiples archivos/directorios, buscar el que contenga archivos de mod
+// 	for _, file := range files {
+// 		if file.IsDir() {
+// 			dirPath := filepath.Join(tempDir, file.Name())
+// 			if a.hasModFiles(dirPath) {
+// 				return dirPath
+// 			}
+// 		}
+// 	}
 
-	// Si no hay subdirectorios, usar el directorio temporal directamente
-	if a.hasModFiles(tempDir) {
-		return tempDir
-	}
+// 	// Si no hay subdirectorios, usar el directorio temporal directamente
+// 	if a.hasModFiles(tempDir) {
+// 		return tempDir
+// 	}
 
-	return ""
-}
+// 	return ""
+// }
 
 // hasModFiles verifica si un directorio contiene archivos de mod
-func (a *App) hasModFiles(dir string) bool {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return false
-	}
+// func (a *App) hasModFiles(dir string) bool {
+// 	entries, err := os.ReadDir(dir)
+// 	if err != nil {
+// 		return false
+// 	}
 
-	for _, entry := range entries {
-		name := entry.Name()
-		// Buscar archivos típicos de mods
-		if strings.HasSuffix(name, ".JASM_ModConfig.json") ||
-			strings.HasSuffix(name, ".ini") ||
-			strings.HasSuffix(name, ".dds") ||
-			strings.Contains(name, "GenshinImpact_Data") ||
-			strings.Contains(name, "StreamingAssets") {
-			return true
-		}
-	}
+// 	for _, entry := range entries {
+// 		name := entry.Name()
+// 		// Buscar archivos típicos de mods
+// 		if strings.HasSuffix(name, ".JASM_ModConfig.json") ||
+// 			strings.HasSuffix(name, ".ini") ||
+// 			strings.HasSuffix(name, ".dds") ||
+// 			strings.Contains(name, "GenshinImpact_Data") ||
+// 			strings.Contains(name, "StreamingAssets") {
+// 			return true
+// 		}
+// 	}
 
-	return false
-}
+// 	return false
+// }
 
 // RemoveMod elimina un mod
 func (a *App) RemoveMod(characterName string, modName string) error {
