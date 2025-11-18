@@ -227,11 +227,11 @@ func (a *App) GetCharacters() ([]Character, error) {
 // getModsForCharacter obtiene los mods de un personaje específico
 func (a *App) getModsForCharacter(characterName string) ([]Mod, error) {
 	characterPath := filepath.Join(a.modsPath, characterName)
-	var mods []Mod
+	mods := []Mod{}
 
 	entries, err := os.ReadDir(characterPath)
 	if err != nil {
-		return mods, err
+		return nil, err
 	}
 
 	for _, modEntry := range entries {
