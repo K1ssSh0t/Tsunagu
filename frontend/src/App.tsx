@@ -136,7 +136,11 @@ const App: React.FC = () => {
 
     try {
       // Check if the path is a ZIP file
-      if (newModPath.toLowerCase().endsWith(".zip")) {
+      if (
+        newModPath.toLowerCase().endsWith(".zip") ||
+        newModPath.toLowerCase().endsWith(".rar") ||
+        newModPath.toLowerCase().endsWith(".7z")
+      ) {
         // Reset all ZIP-related states first
         setZipStructure([]);
         setSelectedRoot("");

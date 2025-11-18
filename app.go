@@ -2,11 +2,9 @@
 package main
 
 import (
-	"archive/zip"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,6 +13,7 @@ import (
 	"strings"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"golift.io/xtractr"
 )
 
 type App struct {
@@ -367,8 +366,8 @@ func (a *App) AddModFromZip(characterName string, modName string, zipFilePath st
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Descomprimir archivo ZIP en directorio temporal
-	if err := a.unzipFile(zipFilePath, tempDir); err != nil {
+	// Descomprimir archivo en directorio temporal
+	if err := a.extractArchive(zipFilePath, tempDir); err != nil {
 		return fmt.Errorf("error unzipping file: %v", err)
 	}
 
@@ -486,71 +485,32 @@ func (a *App) copyModFiles(sourcePath, targetPath string) error {
 	})
 }
 
-// unzipFile descomprime un archivo ZIP en el directorio especificado
-func (a *App) unzipFile(source, destination string) error {
-	reader, err := zip.OpenReader(source)
+// extractArchive descomprime un archivo (zip, rar, 7z) en el directorio especificado
+func (a *App) extractArchive(source, destination string) error {
+	// Asegurarse de que el destino sea una ruta absoluta
+	dest, err := filepath.Abs(destination)
 	if err != nil {
-		return fmt.Errorf("error opening zip file: %v", err)
-	}
-	defer reader.Close()
-
-	destination, err = filepath.Abs(destination)
-	if err != nil {
-		return fmt.Errorf("error getting absolute path: %v", err)
+		return fmt.Errorf("error getting absolute path for destination: %v", err)
 	}
 
-	for _, f := range reader.File {
-		err := a.extractFile(f, destination)
-		if err != nil {
-			fmt.Printf("Error extracting file %s: %v\n", f.Name, err)
-			continue
-		}
+	// Configurar la extracción
+	xfile := &xtractr.XFile{
+		FilePath:  source,
+		OutputDir: dest,
+		FileMode:  0644, // Permisos para archivos extraídos
+		DirMode:   0755, // Permisos para directorios extraídos
+	}
+
+	// Extraer el archivo
+	_,files,arch, err := xtractr.ExtractFile(xfile)
+	if err != nil || files == nil || arch == nil {
+		return fmt.Errorf("error extracting archive: %v", err)
 	}
 
 	return nil
 }
 
-// extractFile extrae un archivo individual del ZIP
-func (a *App) extractFile(f *zip.File, destination string) error {
-	filePath := filepath.Join(destination, f.Name)
 
-	// Verificar vulnerabilidad Zip Slip
-	if !strings.HasPrefix(filePath, filepath.Clean(destination)+string(os.PathSeparator)) {
-		return fmt.Errorf("invalid file path: %s", filePath)
-	}
-
-	if f.FileInfo().IsDir() {
-		if err := os.MkdirAll(filePath, f.Mode()); err != nil {
-			return fmt.Errorf("error creating directory: %v", err)
-		}
-		return nil
-	}
-
-	// Crear directorio padre si no existe
-	if err := os.MkdirAll(filepath.Dir(filePath), f.Mode()); err != nil {
-		return fmt.Errorf("error creating parent directory: %v", err)
-	}
-
-	// Crear archivo destino
-	destinationFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-	if err != nil {
-		return fmt.Errorf("error creating destination file: %v", err)
-	}
-	defer destinationFile.Close()
-
-	// Extraer contenido
-	zippedFile, err := f.Open()
-	if err != nil {
-		return fmt.Errorf("error opening zipped file: %v", err)
-	}
-	defer zippedFile.Close()
-
-	if _, err := io.Copy(destinationFile, zippedFile); err != nil {
-		return fmt.Errorf("error copying file content: %v", err)
-	}
-
-	return nil
-}
 func isDirectory(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
@@ -576,7 +536,7 @@ func (a *App) GetZipStructure(zipFilePath string) ([]ZipFile, error) {
 	a.tempZipDir = tempDir
 
 	// Extraer todo el ZIP al directorio temporal
-	err = a.unzipFile(zipFilePath, tempDir)
+	err = a.extractArchive(zipFilePath, tempDir)
 	if err != nil {
 		os.RemoveAll(tempDir)
 		a.tempZipDir = ""
@@ -756,43 +716,7 @@ func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFil
 	return err
 }
 
-// unzipFileWithRoot descomprime solo los archivos de un directorio raíz específico
-func (a *App) unzipFileWithRoot(source, destination string, selectedRoot string) error {
-	reader, err := zip.OpenReader(source)
-	if err != nil {
-		return fmt.Errorf("error opening zip file: %v", err)
-	}
-	defer reader.Close()
 
-	destination, err = filepath.Abs(destination)
-	if err != nil {
-		return fmt.Errorf("error getting absolute path: %v", err)
-	}
-
-	for _, f := range reader.File {
-		// Solo extraer archivos que pertenecen al directorio raíz seleccionado
-		if strings.HasPrefix(f.Name, selectedRoot+"/") || f.Name == selectedRoot {
-			// Remover el prefijo del directorio raíz seleccionado
-			newPath := strings.TrimPrefix(f.Name, selectedRoot)
-			if newPath == "" {
-				newPath = "/"
-			}
-			newPath = strings.TrimPrefix(newPath, "/")
-
-			// Crear un nuevo archivo con la ruta modificada
-			modifiedFile := *f
-			modifiedFile.Name = newPath
-
-			err := a.extractFile(&modifiedFile, destination)
-			if err != nil {
-				fmt.Printf("Error extracting file %s: %v\n", f.Name, err)
-				continue
-			}
-		}
-	}
-
-	return nil
-}
 
 func (a *App) Greet(name string) (string, error) {
 	return "Hello " + name, nil
