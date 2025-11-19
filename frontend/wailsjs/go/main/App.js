@@ -14,6 +14,10 @@ export function AddModFromZipWithRoot(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['AddModFromZipWithRoot'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function CleanupTempDirectory() {
   return window['go']['main']['App']['CleanupTempDirectory']();
 }
@@ -44,6 +48,10 @@ export function LoadCharactersList() {
 
 export function OpenModFolder(arg1) {
   return window['go']['main']['App']['OpenModFolder'](arg1);
+}
+
+export function OpenUrl(arg1) {
+  return window['go']['main']['App']['OpenUrl'](arg1);
 }
 
 export function RemoveMod(arg1, arg2) {

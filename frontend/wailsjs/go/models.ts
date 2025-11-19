@@ -55,6 +55,26 @@ export namespace main {
 		}
 	}
 	
+	export class ModUpdate {
+	    characterName: string;
+	    modName: string;
+	    modUrl: string;
+	    localDate: string;
+	    remoteDate: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModUpdate(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.characterName = source["characterName"];
+	        this.modName = source["modName"];
+	        this.modUrl = source["modUrl"];
+	        this.localDate = source["localDate"];
+	        this.remoteDate = source["remoteDate"];
+	    }
+	}
 	export class ZipFile {
 	    name: string;
 	    isDir: boolean;

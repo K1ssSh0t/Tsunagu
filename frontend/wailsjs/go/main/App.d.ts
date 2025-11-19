@@ -8,6 +8,8 @@ export function AddMod(arg1:string,arg2:string,arg3:string,arg4:string):Promise<
 
 export function AddModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<void>;
 
+export function CheckForUpdates():Promise<Array<main.ModUpdate>>;
+
 export function CleanupTempDirectory():Promise<void>;
 
 export function GetCharacters():Promise<Array<main.Character>>;
@@ -23,6 +25,8 @@ export function IsConfigured():Promise<boolean>;
 export function LoadCharactersList():Promise<Array<string>>;
 
 export function OpenModFolder(arg1:string):Promise<void>;
+
+export function OpenUrl(arg1:string):Promise<void>;
 
 export function RemoveMod(arg1:string,arg2:string):Promise<void>;
 

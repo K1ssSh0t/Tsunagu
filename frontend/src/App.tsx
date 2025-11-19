@@ -14,6 +14,8 @@ import {
   SaveConfig,
   SelectDirectory,
   SelectFile,
+  CheckForUpdates,
+  OpenUrl,
 } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
@@ -75,6 +77,7 @@ const App: React.FC = () => {
     character: string;
     modName: string;
   } | null>(null);
+  const [updates, setUpdates] = useState<main.ModUpdate[]>([]);
 
   useEffect(() => {
     checkConfiguration();
@@ -86,9 +89,33 @@ const App: React.FC = () => {
       setIsAppConfigured(configured);
       if (configured) {
         loadCharacters();
+        checkForUpdates();
       }
     } catch (error) {
       console.error("Error checking configuration:", error);
+    }
+  };
+
+  const checkForUpdates = async () => {
+    try {
+      const availableUpdates = await CheckForUpdates();
+      if (availableUpdates && availableUpdates.length > 0) {
+        setUpdates(availableUpdates);
+        toast.info(
+          `Se encontraron ${availableUpdates.length} actualizaciones disponibles`,
+          {
+            action: {
+              label: "Ver",
+              onClick: () => {
+                // Could scroll to first updated mod or show a list
+                console.log("Updates:", availableUpdates);
+              },
+            },
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Error checking for updates:", error);
     }
   };
 
@@ -857,7 +884,33 @@ const App: React.FC = () => {
                                     }`}
                                 />
                                 <div>
-                                  <p className="font-medium">{mod.name}</p>
+                                  <div className="flex items-center space-x-2">
+                                    <p className="font-medium">{mod.name}</p>
+                                    {updates.some(
+                                      (u) =>
+                                        u.characterName === selectedCharacter &&
+                                        u.modName === mod.name,
+                                    ) && (
+                                        <Badge
+                                          variant="secondary"
+                                          className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30 cursor-pointer h-5 px-1.5 text-[10px]"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const update = updates.find(
+                                              (u) =>
+                                                u.characterName ===
+                                                selectedCharacter &&
+                                                u.modName === mod.name,
+                                            );
+                                            if (update) {
+                                              OpenUrl(update.modUrl);
+                                            }
+                                          }}
+                                        >
+                                          Update
+                                        </Badge>
+                                      )}
+                                  </div>
                                   <Badge
                                     variant={
                                       mod.isActive ? "default" : "outline"

@@ -6,4 +6,6 @@
 - ~~Quitar hasmodfiles de app.go~~
 - ~~Agregar que se le agregue el link de game banana como fuente a los mods~~
 - ~~Corregir eeror que al abrir un personje que no tiene mods ni carpeta muestra un mensaje de error~~
+- ~~Hacer que se chechen las actuliaciones en gamebanana~~
+- Agregar que se actulice el mod pedira seleccionar la carpte o acrhivo compirmido para actulizar dicho mod
 - Agregar que se puedan adminstrar varios juegos no solo el genshin

@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -708,4 +711,154 @@ func (a *App) CleanupTempDirectory() error {
 		return err
 	}
 	return nil
+}
+
+// ModUpdate struct to hold update information
+type ModUpdate struct {
+	CharacterName string `json:"characterName"`
+	ModName       string `json:"modName"`
+	ModUrl        string `json:"modUrl"`
+	LocalDate     string `json:"localDate"`
+	RemoteDate    string `json:"remoteDate"`
+}
+
+// CheckForUpdates checks for updates for all mods with a GameBanana URL
+func (a *App) CheckForUpdates() ([]ModUpdate, error) {
+	var updates []ModUpdate
+
+	characters, err := a.GetCharacters()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, char := range characters {
+		mods, err := a.GetModsForCharacter(char.Name)
+		if err != nil {
+			continue
+		}
+
+		for _, mod := range mods {
+			configPath := filepath.Join(mod.FullPath, ".modconfig.json")
+			if _, err := os.Stat(configPath); err == nil {
+				// Read config
+				data, err := os.ReadFile(configPath)
+				if err != nil {
+					continue
+				}
+
+				var config ModConfig
+				if err := json.Unmarshal(data, &config); err != nil {
+					continue
+				}
+
+				if config.ModUrl != "" && strings.Contains(config.ModUrl, "gamebanana.com") {
+					// Fetch GameBanana page
+					remoteDate, err := a.fetchGameBananaDate(config.ModUrl)
+					if err != nil {
+						fmt.Printf("Error fetching date for %s: %v\n", config.ModUrl, err)
+						continue
+					}
+
+					// Parse dates
+					// Local date format: "02/01/2006 03:04:05 p. m." (from createModConfig)
+					// We need to normalize "p. m." to "PM" and "a. m." to "AM" for Go's parser
+					normalizedDate := strings.ReplaceAll(config.DateAdded, "p. m.", "PM")
+					normalizedDate = strings.ReplaceAll(normalizedDate, "a. m.", "AM")
+
+					localTime, err := time.Parse("02/01/2006 03:04:05 PM", normalizedDate)
+					if err != nil {
+						// Try fallback to standard format just in case
+						localTime, err = time.Parse("2006-01-02 15:04:05", config.DateAdded)
+						if err != nil {
+							fmt.Printf("Error parsing local date %s: %v\n", config.DateAdded, err)
+							continue
+						}
+					}
+
+					// Remote date format (ISO 8601 from JSON-LD): "2024-09-10T19:33:05+00:00"
+					remoteTime, err := time.Parse(time.RFC3339, remoteDate)
+					if err != nil {
+						fmt.Printf("Error parsing remote date %s: %v\n", remoteDate, err)
+						continue
+					}
+
+					// Compare dates
+					if remoteTime.After(localTime) {
+						updates = append(updates, ModUpdate{
+							CharacterName: char.Name,
+							ModName:       mod.Name,
+							ModUrl:        config.ModUrl,
+							LocalDate:     config.DateAdded,
+							RemoteDate:    remoteTime.Format("2006-01-02 15:04:05"),
+						})
+					}
+				}
+			}
+		}
+	}
+
+	return updates, nil
+}
+
+// fetchGameBananaDate fetches the modification date from a GameBanana URL
+func (a *App) fetchGameBananaDate(url string) (string, error) {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Set User-Agent to avoid being blocked
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("received status code %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract JSON-LD
+	// Look for <script type="application/ld+json"> containing "dateModified"
+	// Simple regex to find the dateModified field in the JSON-LD block
+	// This is a bit hacky but avoids a full HTML parser dependency for now
+	re := regexp.MustCompile(`"dateModified"\s*:\s*"([^"]+)"`)
+	matches := re.FindStringSubmatch(string(body))
+
+	if len(matches) > 1 {
+		return matches[1], nil
+	}
+
+	return "", fmt.Errorf("dateModified not found in page")
+}
+
+// OpenUrl opens a URL in the default browser
+func (a *App) OpenUrl(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start", url}
+	case "darwin":
+		cmd = "open"
+		args = []string{url}
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+		args = []string{url}
+	}
+
+	return exec.Command(cmd, args...).Start()
 }
