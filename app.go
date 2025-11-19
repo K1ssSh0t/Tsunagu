@@ -244,6 +244,9 @@ func (a *App) getModsForCharacter(characterName string) ([]Mod, error) {
 
 	entries, err := os.ReadDir(characterPath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []Mod{}, nil
+		}
 		return nil, err
 	}
 
