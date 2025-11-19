@@ -17,7 +17,7 @@ import {
 } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
-import { Trash2, Folder, File, ChevronRight, ChevronDown } from "lucide-react";
+import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2 } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ const App: React.FC = () => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set(),
   );
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   useEffect(() => {
     checkConfiguration();
@@ -102,6 +104,8 @@ const App: React.FC = () => {
   };
 
   const handleToggleMod = async (character: string, modName: string) => {
+    setIsLoading(true);
+    setLoadingMessage("Actualizando estado del mod...");
     try {
       await ToggleMod(character, modName);
       await loadCharacterMods(character);
@@ -116,10 +120,15 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error toggling mod:", error);
       toast.error("Error al cambiar el estado del mod");
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
   const handleActivateSingle = async (character: string, modName: string) => {
+    setIsLoading(true);
+    setLoadingMessage("Activando mod único...");
     try {
       await ActivateSingleMod(character, modName);
       await loadCharacterMods(character);
@@ -128,11 +137,17 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error activating mod:", error);
       toast.error("Error al activar el mod");
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
   const handleAddMod = async () => {
     if (!selectedCharacter || !newModName || !newModPath) return;
+
+    setIsLoading(true);
+    setLoadingMessage("Procesando...");
 
     try {
       // Check if the path is a ZIP file
@@ -141,6 +156,7 @@ const App: React.FC = () => {
         newModPath.toLowerCase().endsWith(".rar") ||
         newModPath.toLowerCase().endsWith(".7z")
       ) {
+        setLoadingMessage("Analizando archivo ZIP...");
         // Reset all ZIP-related states first
         setZipStructure([]);
         setSelectedRoot("");
@@ -182,6 +198,7 @@ const App: React.FC = () => {
           );
         }
       } else {
+        setLoadingMessage("Copiando archivos del mod...");
         await AddMod(selectedCharacter, newModName, newModPath, gameBananaUrl);
         setShowAddMod(false);
         setNewModName("");
@@ -194,6 +211,9 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error adding mod:", error);
       toast.error("Error al agregar el mod: " + (error as Error).message);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -202,6 +222,9 @@ const App: React.FC = () => {
       toast.error("Por favor selecciona una carpeta raíz");
       return;
     }
+
+    setIsLoading(true);
+    setLoadingMessage("Extrayendo y copiando archivos...");
 
     try {
       await AddModFromZipWithRoot(
@@ -225,6 +248,9 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error adding mod from ZIP:", error);
       toast.error("Error al agregar el mod desde ZIP: " + error);
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -339,6 +365,8 @@ const App: React.FC = () => {
         `¿Estás seguro de que quieres eliminar el mod "${modName}" de ${character}?`,
       )
     ) {
+      setIsLoading(true);
+      setLoadingMessage("Eliminando mod...");
       try {
         await RemoveMod(character, modName);
         await loadCharacterMods(character);
@@ -347,6 +375,9 @@ const App: React.FC = () => {
       } catch (error) {
         console.error("Error removing mod:", error);
         toast.error("Error al eliminar el mod");
+      } finally {
+        setIsLoading(false);
+        setLoadingMessage("");
       }
     }
   };
@@ -484,8 +515,21 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-6 relative">
       <Toaster position="top-center" richColors closeButton />
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="w-[300px]">
+            <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-sm font-medium text-center">{loadingMessage}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <Card className="border-0 shadow-sm">
