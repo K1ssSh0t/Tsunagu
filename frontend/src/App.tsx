@@ -37,6 +37,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 type Character = main.Character;
 type Mod = main.Mod;
 type ZipFile = main.ZipFile;
@@ -60,6 +71,10 @@ const App: React.FC = () => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [modToDelete, setModToDelete] = useState<{
+    character: string;
+    modName: string;
+  } | null>(null);
 
   useEffect(() => {
     checkConfiguration();
@@ -93,7 +108,7 @@ const App: React.FC = () => {
       setCharacterMods(mods);
     } catch (error) {
       console.error("Error loading character mods:", error);
-      toast.error("Error al cargar los mods del personaje");
+      // toast.error("Error al cargar los mods del personaje");
       setCharacterMods([]);
     }
   };
@@ -359,26 +374,28 @@ const App: React.FC = () => {
     );
   };
 
-  const handleRemoveMod = async (character: string, modName: string) => {
-    if (
-      confirm(
-        `¿Estás seguro de que quieres eliminar el mod "${modName}" de ${character}?`,
-      )
-    ) {
-      setIsLoading(true);
-      setLoadingMessage("Eliminando mod...");
-      try {
-        await RemoveMod(character, modName);
-        await loadCharacterMods(character);
-        await loadCharacters();
-        toast.success(`Mod ${modName} eliminado correctamente`);
-      } catch (error) {
-        console.error("Error removing mod:", error);
-        toast.error("Error al eliminar el mod");
-      } finally {
-        setIsLoading(false);
-        setLoadingMessage("");
-      }
+  const handleRemoveModClick = (character: string, modName: string) => {
+    setModToDelete({ character, modName });
+  };
+
+  const confirmRemoveMod = async () => {
+    if (!modToDelete) return;
+
+    const { character, modName } = modToDelete;
+    setIsLoading(true);
+    setLoadingMessage("Eliminando mod...");
+    try {
+      await RemoveMod(character, modName);
+      await loadCharacterMods(character);
+      await loadCharacters();
+      toast.success(`Mod ${modName} eliminado correctamente`);
+    } catch (error) {
+      console.error("Error removing mod:", error);
+      toast.error("Error al eliminar el mod");
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+      setModToDelete(null);
     }
   };
 
@@ -529,6 +546,31 @@ const App: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!modToDelete}
+        onOpenChange={(open) => !open && setModToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el
+              mod "{modToDelete?.modName}" de la carpeta de {modToDelete?.character}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveMod}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
@@ -869,7 +911,10 @@ const App: React.FC = () => {
                                   size="icon"
                                   className="text-destructive hover:text-destructive"
                                   onClick={() =>
-                                    handleRemoveMod(mod.character, mod.name)
+                                    handleRemoveModClick(
+                                      mod.character,
+                                      mod.name,
+                                    )
                                   }
                                 >
                                   <Trash2 className="h-4 w-4" />
