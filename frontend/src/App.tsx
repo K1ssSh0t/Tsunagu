@@ -50,6 +50,7 @@ const App: React.FC = () => {
   const [showAddMod, setShowAddMod] = useState(false);
   const [newModPath, setNewModPath] = useState("");
   const [newModName, setNewModName] = useState("");
+  const [gameBananaUrl, setGameBananaUrl] = useState("");
   const [configPath, setConfigPath] = useState("");
   const [showZipModal, setShowZipModal] = useState(false);
   const [zipStructure, setZipStructure] = useState<ZipFile[]>([]);
@@ -177,14 +178,15 @@ const App: React.FC = () => {
           console.error("Error reading ZIP structure:", zipError);
           toast.error(
             "Error al leer la estructura del ZIP: " +
-              (zipError as Error).message,
+            (zipError as Error).message,
           );
         }
       } else {
-        await AddMod(selectedCharacter, newModName, newModPath);
+        await AddMod(selectedCharacter, newModName, newModPath, gameBananaUrl);
         setShowAddMod(false);
         setNewModName("");
         setNewModPath("");
+        setGameBananaUrl("");
         await loadCharacterMods(selectedCharacter);
         await loadCharacters();
         toast.success(`Mod ${newModName} agregado correctamente`);
@@ -207,11 +209,13 @@ const App: React.FC = () => {
         newModName,
         newModPath,
         selectedRoot,
+        gameBananaUrl,
       );
       setShowZipModal(false);
       setShowAddMod(false);
       setNewModName("");
       setNewModPath("");
+      setGameBananaUrl("");
       setSelectedRoot("");
       setZipStructure([]);
       setExpandedFolders(new Set());
@@ -282,9 +286,8 @@ const App: React.FC = () => {
             style={{ paddingLeft: `${level * 20}px` }}
           >
             <div
-              className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                selectedRoot === file.path ? "bg-blue-100 dark:bg-blue-900" : ""
-              }`}
+              className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedRoot === file.path ? "bg-blue-100 dark:bg-blue-900" : ""
+                }`}
               onClick={() => {
                 if (file.isDir) {
                   selectRootFolder(file.path);
@@ -526,7 +529,7 @@ const App: React.FC = () => {
                         }
                         onClick={() => handleCharacterSelect(character.name)}
                         className={`w-full justify-between h-auto py-3 ${!character.hasFolder ? "opacity-70" : ""}`}
-                        // disabled={!character.hasFolder}
+                      // disabled={!character.hasFolder}
                       >
                         <span className="font-medium capitalize">
                           {character.name}
@@ -635,6 +638,18 @@ const App: React.FC = () => {
                               </Button>
                             </div>
                           </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="gameBananaUrl">
+                              Enlace de GameBanana (Opcional)
+                            </Label>
+                            <Input
+                              id="gameBananaUrl"
+                              type="text"
+                              placeholder="https://gamebanana.com/mods/..."
+                              value={gameBananaUrl}
+                              onChange={(e) => setGameBananaUrl(e.target.value)}
+                            />
+                          </div>
                         </div>
                       </CardContent>
                       <CardFooter className="flex justify-end space-x-2">
@@ -724,10 +739,10 @@ const App: React.FC = () => {
                         <AlertDescription>
                           {!characters.find((c) => c.name === selectedCharacter)
                             ?.hasFolder && (
-                            <p className="mb-2">
-                              Agrega un mod para crear la carpeta.
-                            </p>
-                          )}
+                              <p className="mb-2">
+                                Agrega un mod para crear la carpeta.
+                              </p>
+                            )}
                           <Button
                             variant="outline"
                             size="sm"
@@ -741,21 +756,19 @@ const App: React.FC = () => {
                       characterMods.map((mod) => (
                         <Card
                           key={mod.id}
-                          className={`overflow-hidden ${
-                            mod.isActive
-                              ? "border-green-200 dark:border-green-900"
-                              : ""
-                          }`}
+                          className={`overflow-hidden ${mod.isActive
+                            ? "border-green-200 dark:border-green-900"
+                            : ""
+                            }`}
                         >
                           <CardContent className="p-4">
                             <div className="flex justify-between items-center">
                               <div className="flex items-center space-x-3">
                                 <div
-                                  className={`w-3 h-3 rounded-full ${
-                                    mod.isActive
-                                      ? "bg-green-500"
-                                      : "bg-muted-foreground/50"
-                                  }`}
+                                  className={`w-3 h-3 rounded-full ${mod.isActive
+                                    ? "bg-green-500"
+                                    : "bg-muted-foreground/50"
+                                    }`}
                                 />
                                 <div>
                                   <p className="font-medium">{mod.name}</p>
@@ -763,11 +776,10 @@ const App: React.FC = () => {
                                     variant={
                                       mod.isActive ? "default" : "outline"
                                     }
-                                    className={`text-xs ${
-                                      mod.isActive
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-                                        : ""
-                                    }`}
+                                    className={`text-xs ${mod.isActive
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                      : ""
+                                      }`}
                                   >
                                     {mod.isActive ? "ACTIVO" : "INACTIVO"}
                                   </Badge>

@@ -6,16 +6,12 @@ export function ActivateSingleMod(arg1, arg2) {
   return window['go']['main']['App']['ActivateSingleMod'](arg1, arg2);
 }
 
-export function AddMod(arg1, arg2, arg3) {
-  return window['go']['main']['App']['AddMod'](arg1, arg2, arg3);
+export function AddMod(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['AddMod'](arg1, arg2, arg3, arg4);
 }
 
-export function AddModFromZip(arg1, arg2, arg3) {
-  return window['go']['main']['App']['AddModFromZip'](arg1, arg2, arg3);
-}
-
-export function AddModFromZipWithRoot(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['AddModFromZipWithRoot'](arg1, arg2, arg3, arg4);
+export function AddModFromZipWithRoot(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['AddModFromZipWithRoot'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function CleanupTempDirectory() {

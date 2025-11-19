@@ -4,11 +4,9 @@ import {main} from '../models';
 
 export function ActivateSingleMod(arg1:string,arg2:string):Promise<void>;
 
-export function AddMod(arg1:string,arg2:string,arg3:string):Promise<void>;
+export function AddMod(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
-export function AddModFromZip(arg1:string,arg2:string,arg3:string):Promise<void>;
-
-export function AddModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+export function AddModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<void>;
 
 export function CleanupTempDirectory():Promise<void>;
 

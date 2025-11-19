@@ -12,6 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	"crypto/rand"
+	"time"
+
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"golift.io/xtractr"
 )
@@ -42,10 +45,21 @@ type Mod struct {
 	FullPath  string `json:"fullPath"`
 }
 
+type ModConfig struct {
+	Id          string `json:"Id"`
+	CustomName  string `json:"CustomName"`
+	Author      string `json:"Author"`
+	ModUrl      string `json:"ModUrl"`
+	ImagePath   string `json:"ImagePath"`
+	Description string `json:"Description"`
+	DateAdded   string `json:"DateAdded"`
+	LastChecked string `json:"LastChecked"`
+}
+
 type ZipFile struct {
-	Name     string    `json:"name"`
-	IsDir    bool      `json:"isDir"`
-	Path     string    `json:"path"`
+	Name     string     `json:"name"`
+	IsDir    bool       `json:"isDir"`
+	Path     string     `json:"path"`
 	Children []*ZipFile `json:"children,omitempty"`
 }
 
@@ -331,7 +345,7 @@ func (a *App) ActivateSingleMod(characterName string, modName string) error {
 }
 
 // AddMod agrega un nuevo mod (crea la carpeta del personaje si no existe)
-func (a *App) AddMod(characterName string, modName string, sourcePath string) error {
+func (a *App) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
 	characterPath := filepath.Join(a.modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
@@ -346,93 +360,90 @@ func (a *App) AddMod(characterName string, modName string, sourcePath string) er
 	}
 
 	// Copiar archivos del mod
-	return a.copyModFiles(sourcePath, targetPath)
+	if err := a.copyModFiles(sourcePath, targetPath); err != nil {
+		return err
+	}
+
+	// Crear archivo de configuración del mod
+	return a.createModConfig(targetPath, modName, gameBananaUrl)
 }
 
-// AddModFromZip agrega un nuevo mod desde un archivo comprimido
-// func (a *App) AddModFromZip(characterName string, modName string, zipFilePath string) error {
-// 	characterPath := filepath.Join(a.modsPath, characterName)
-// 	targetPath := filepath.Join(characterPath, modName)
+// AddModFromZipWithRoot agrega un mod desde ZIP usando una raíz específica
+func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string, gameBananaUrl string) error {
+	// Verificar que tenemos un directorio temporal disponible
+	if a.tempZipDir == "" {
+		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
+	}
 
-// 	// Crear directorio del personaje si no existe
-// 	if err := os.MkdirAll(characterPath, 0755); err != nil {
-// 		return err
-// 	}
+	characterPath := filepath.Join(a.modsPath, characterName)
+	targetPath := filepath.Join(characterPath, modName)
 
-// 	// Crear directorio temporal para descomprimir
-// 	tempDir, err := os.MkdirTemp(".", "mod-temp-*")
-// 	if err != nil {
-// 		return fmt.Errorf("error creating temp directory: %v", err)
-// 	}
-// 	defer os.RemoveAll(tempDir)
+	// Crear directorio del personaje si no existe
+	if err := os.MkdirAll(characterPath, 0755); err != nil {
+		return err
+	}
 
-// 	// Descomprimir archivo en directorio temporal
-// 	if err := a.extractArchive(zipFilePath, tempDir); err != nil {
-// 		return fmt.Errorf("error unzipping file: %v", err)
-// 	}
+	// Construir la ruta completa al directorio raíz seleccionado en el temp
+	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
 
-// 	// Encontrar el directorio principal del mod dentro del ZIP
-// 	modSourceDir := a.findModRootDirectory(tempDir)
-// 	if modSourceDir == "" {
-// 		return fmt.Errorf("no mod directory found in zip file")
-// 	}
+	// Verificar que el directorio seleccionado existe
+	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
+		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
+	}
 
-// 	// Copiar archivos del mod descomprimido
-// 	return a.copyModFiles(modSourceDir, targetPath)
-// }
+	// Copiar archivos desde el directorio temporal ya extraído
+	if err := a.copyModFiles(selectedRootPath, targetPath); err != nil {
+		return err
+	}
 
-// findModRootDirectory encuentra el directorio principal del mod
-// func (a *App) findModRootDirectory(tempDir string) string {
-// 	// Buscar directorio que contenga .JASM_ModConfig.json u otros archivos de mod
-// 	files, err := os.ReadDir(tempDir)
-// 	if err != nil {
-// 		return ""
-// 	}
+	// Limpiar el directorio temporal después de usarlo
+	defer os.RemoveAll(a.tempZipDir)
+	a.tempZipDir = ""
 
-// 	// Si hay un solo directorio, usar ese como raíz
-// 	if len(files) == 1 && files[0].IsDir() {
-// 		return filepath.Join(tempDir, files[0].Name())
-// 	}
+	// Crear archivo de configuración del mod
+	return a.createModConfig(targetPath, modName, gameBananaUrl)
+}
 
-// 	// Si hay múltiples archivos/directorios, buscar el que contenga archivos de mod
-// 	for _, file := range files {
-// 		if file.IsDir() {
-// 			dirPath := filepath.Join(tempDir, file.Name())
-// 			if a.hasModFiles(dirPath) {
-// 				return dirPath
-// 			}
-// 		}
-// 	}
+// createModConfig crea el archivo .modconfig.json en el directorio del mod
+func (a *App) createModConfig(modPath string, modName string, gameBananaUrl string) error {
+	configPath := filepath.Join(modPath, ".modconfig.json")
 
-// 	// Si no hay subdirectorios, usar el directorio temporal directamente
-// 	if a.hasModFiles(tempDir) {
-// 		return tempDir
-// 	}
+	// Generar UUID
+	id := generateUUID()
+	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
 
-// 	return ""
-// }
+	config := ModConfig{
+		Id:          id,
+		CustomName:  modName,
+		Author:      "", // Por ahora vacío, podría ser un campo futuro
+		ModUrl:      gameBananaUrl,
+		ImagePath:   ".JASM_Cover.jpg", // Valor por defecto
+		Description: "",
+		DateAdded:   now,
+		LastChecked: now,
+	}
 
-// hasModFiles verifica si un directorio contiene archivos de mod
-// func (a *App) hasModFiles(dir string) bool {
-// 	entries, err := os.ReadDir(dir)
-// 	if err != nil {
-// 		return false
-// 	}
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
 
-// 	for _, entry := range entries {
-// 		name := entry.Name()
-// 		// Buscar archivos típicos de mods
-// 		if strings.HasSuffix(name, ".JASM_ModConfig.json") ||
-// 			strings.HasSuffix(name, ".ini") ||
-// 			strings.HasSuffix(name, ".dds") ||
-// 			strings.Contains(name, "GenshinImpact_Data") ||
-// 			strings.Contains(name, "StreamingAssets") {
-// 			return true
-// 		}
-// 	}
+	return os.WriteFile(configPath, data, 0644)
+}
 
-// 	return false
-// }
+// generateUUID genera un UUID v4 simple
+func generateUUID() string {
+	u := make([]byte, 16)
+	_, err := rand.Read(u)
+	if err != nil {
+		return ""
+	}
+
+	u[6] = (u[6] & 0x0f) | 0x40 // Version 4
+	u[8] = (u[8] & 0x3f) | 0x80 // Variant 10
+
+	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
+}
 
 // RemoveMod elimina un mod
 func (a *App) RemoveMod(characterName string, modName string) error {
@@ -502,14 +513,13 @@ func (a *App) extractArchive(source, destination string) error {
 	}
 
 	// Extraer el archivo
-	_,files,arch, err := xtractr.ExtractFile(xfile)
+	_, files, arch, err := xtractr.ExtractFile(xfile)
 	if err != nil || files == nil || arch == nil {
 		return fmt.Errorf("error extracting archive: %v", err)
 	}
 
 	return nil
 }
-
 
 func isDirectory(path string) bool {
 	info, err := os.Stat(path)
@@ -682,41 +692,6 @@ func sortZipFileChildren(file *ZipFile) {
 		}
 	}
 }
-
-// AddModFromZipWithRoot agrega un mod desde ZIP usando una raíz específica
-func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string) error {
-	// Verificar que tenemos un directorio temporal disponible
-	if a.tempZipDir == "" {
-		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
-	}
-
-	characterPath := filepath.Join(a.modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
-
-	// Crear directorio del personaje si no existe
-	if err := os.MkdirAll(characterPath, 0755); err != nil {
-		return err
-	}
-
-	// Construir la ruta completa al directorio raíz seleccionado en el temp
-	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
-
-	// Verificar que el directorio seleccionado existe
-	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
-		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
-	}
-
-	// Copiar archivos desde el directorio temporal ya extraído
-	err := a.copyModFiles(selectedRootPath, targetPath)
-
-	// Limpiar el directorio temporal después de usarlo
-	defer os.RemoveAll(a.tempZipDir)
-	a.tempZipDir = ""
-
-	return err
-}
-
-
 
 func (a *App) Greet(name string) (string, error) {
 	return "Hello " + name, nil
