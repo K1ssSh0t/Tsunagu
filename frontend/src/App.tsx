@@ -21,7 +21,7 @@ import {
 } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
-import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download } from "lucide-react";
+import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download, MoreVertical } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Character = main.Character;
 type Mod = main.Mod;
@@ -701,7 +709,7 @@ const App: React.FC = () => {
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center">
           <Card className="w-[300px]">
             <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -921,20 +929,22 @@ const App: React.FC = () => {
                               </div>
                             )}
                           </CardContent>
-                          <CardFooter className="p-4 pt-0 flex justify-between gap-2">
-                            <div className="flex gap-2">
+                          <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
+                            <div className="flex gap-2 flex-1 overflow-hidden">
                               <Button
                                 variant={mod.isActive ? "secondary" : "default"}
                                 size="sm"
                                 onClick={() => handleToggleMod(mod.character, mod.name)}
+                                className="flex-1 sm:flex-none"
                               >
                                 {mod.isActive ? "Desactivar" : "Activar"}
                               </Button>
+
                               {hasUpdate && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="text-green-600 border-green-200 hover:bg-green-50 dark:hover:bg-green-950"
+                                  className="text-green-600 border-green-200 hover:bg-green-50 dark:hover:bg-green-950 flex-1 sm:flex-none"
                                   onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}
                                 >
                                   <RefreshCw className="h-3 w-3 mr-1" />
@@ -942,26 +952,32 @@ const App: React.FC = () => {
                                 </Button>
                               )}
                             </div>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleOpenModFolder(mod.fullPath)}
-                                title="Abrir carpeta"
-                              >
-                                <Folder className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handleRemoveModClick(mod.character, mod.name)}
-                                title="Eliminar mod"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleActivateSingle(mod.character, mod.name)}>
+                                  Activar Único
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenModFolder(mod.fullPath)}>
+                                  <Folder className="mr-2 h-4 w-4" />
+                                  Abrir Carpeta
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleRemoveModClick(mod.character, mod.name)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Eliminar Mod
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </CardFooter>
                         </Card>
                       );
