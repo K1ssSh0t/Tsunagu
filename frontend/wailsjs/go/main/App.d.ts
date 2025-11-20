@@ -37,3 +37,7 @@ export function SelectDirectory():Promise<string>;
 export function SelectFile():Promise<string>;
 
 export function ToggleMod(arg1:string,arg2:string):Promise<void>;
+
+export function UpdateMod(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function UpdateModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;

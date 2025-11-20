@@ -73,3 +73,11 @@ export function SelectFile() {
 export function ToggleMod(arg1, arg2) {
   return window['go']['main']['App']['ToggleMod'](arg1, arg2);
 }
+
+export function UpdateMod(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateMod'](arg1, arg2, arg3);
+}
+
+export function UpdateModFromZipWithRoot(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['UpdateModFromZipWithRoot'](arg1, arg2, arg3, arg4);
+}

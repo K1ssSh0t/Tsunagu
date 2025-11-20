@@ -410,6 +410,112 @@ func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFil
 	return a.createModConfig(targetPath, modName, gameBananaUrl)
 }
 
+// UpdateMod actualiza un mod existente desde una carpeta o archivo
+func (a *App) UpdateMod(characterName string, modName string, sourcePath string) error {
+	characterPath := filepath.Join(a.modsPath, characterName)
+	targetPath := filepath.Join(characterPath, modName)
+	configPath := filepath.Join(targetPath, ".modconfig.json")
+
+	// 1. Leer configuración existente para preservar ID y URL
+	var oldConfig ModConfig
+	if data, err := os.ReadFile(configPath); err == nil {
+		json.Unmarshal(data, &oldConfig)
+	}
+
+	// 2. Eliminar archivos antiguos (excepto config si quisiéramos preservarlo, pero mejor recrearlo limpio)
+	// Para asegurar limpieza, eliminamos todo el directorio del mod
+	if err := os.RemoveAll(targetPath); err != nil {
+		return fmt.Errorf("error eliminando mod antiguo: %v", err)
+	}
+
+	// 3. Re-crear directorio
+	if err := os.MkdirAll(targetPath, 0755); err != nil {
+		return fmt.Errorf("error creando directorio del mod: %v", err)
+	}
+
+	// 4. Copiar nuevos archivos
+	if err := a.copyModFiles(sourcePath, targetPath); err != nil {
+		return err
+	}
+
+	// 5. Restaurar/Actualizar configuración
+	// Si no había config previa, usamos valores por defecto
+	if oldConfig.Id == "" {
+		oldConfig.Id = generateUUID()
+	}
+
+	// Actualizar fecha
+	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
+	oldConfig.LastChecked = oldConfig.DateAdded
+	// Asegurar que el nombre sea consistente
+	oldConfig.CustomName = modName
+
+	// Escribir config
+	data, err := json.MarshalIndent(oldConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+}
+
+// UpdateModFromZipWithRoot actualiza un mod desde un ZIP
+func (a *App) UpdateModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string) error {
+	// Verificar que tenemos un directorio temporal disponible
+	if a.tempZipDir == "" {
+		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
+	}
+
+	characterPath := filepath.Join(a.modsPath, characterName)
+	targetPath := filepath.Join(characterPath, modName)
+	configPath := filepath.Join(targetPath, ".modconfig.json")
+
+	// 1. Leer configuración existente
+	var oldConfig ModConfig
+	if data, err := os.ReadFile(configPath); err == nil {
+		json.Unmarshal(data, &oldConfig)
+	}
+
+	// 2. Eliminar mod antiguo
+	if err := os.RemoveAll(targetPath); err != nil {
+		return fmt.Errorf("error eliminando mod antiguo: %v", err)
+	}
+
+	// 3. Re-crear directorio
+	if err := os.MkdirAll(targetPath, 0755); err != nil {
+		return fmt.Errorf("error creando directorio del mod: %v", err)
+	}
+
+	// 4. Copiar archivos desde el temp zip
+	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
+	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
+		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
+	}
+
+	if err := a.copyModFiles(selectedRootPath, targetPath); err != nil {
+		return err
+	}
+
+	// Limpiar temp
+	defer os.RemoveAll(a.tempZipDir)
+	a.tempZipDir = ""
+
+	// 5. Restaurar config
+	if oldConfig.Id == "" {
+		oldConfig.Id = generateUUID()
+	}
+	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
+	oldConfig.LastChecked = oldConfig.DateAdded
+	oldConfig.CustomName = modName
+
+	data, err := json.MarshalIndent(oldConfig, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+}
+
 // createModConfig crea el archivo .modconfig.json en el directorio del mod
 func (a *App) createModConfig(modPath string, modName string, gameBananaUrl string) error {
 	configPath := filepath.Join(modPath, ".modconfig.json")
