@@ -46,6 +46,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
 
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -970,51 +971,35 @@ const App: React.FC = () => {
                       const updateInfo = updates.find(u => u.characterName === mod.character && u.modName === mod.name);
 
                       return (
-                        <Card key={mod.id} className="overflow-hidden flex flex-col border-0 shadow-md bg-card/50 hover:bg-card/80 transition-colors group/card">
-                          <div className="relative h-14 bg-muted flex flex-col justify-end p-3 overflow-hidden group">
-                            {/* Placeholder image logic would go here */}
-                            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
+                        <div key={mod.id} className="group relative flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 shadow-sm hover:shadow-md">
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <div className={`h-10 w-1 rounded-full ${mod.isActive ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-muted-foreground/30"}`} />
 
-                            <div className="relative z-10 flex justify-between items-end">
-                              <div className="overflow-hidden flex-1 mr-2">
-                                <h3 className="font-bold truncate text-white text-sm leading-tight" title={mod.name}>{mod.name}</h3>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  <span className={`h-1.5 w-1.5 rounded-full shadow-[0_0_4px] ${mod.isActive ? "bg-green-400 shadow-green-400/50" : "bg-red-400 shadow-red-400/50"}`} />
-                                  <span className={`text-[10px] uppercase font-bold tracking-wider ${mod.isActive ? "text-green-400" : "text-red-400"}`}>
-                                    {mod.isActive ? "Activo" : "Inactivo"}
-                                  </span>
-                                </div>
+                            <div className="flex flex-col overflow-hidden">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold truncate text-base">{mod.name}</h3>
+                                {hasUpdate && (
+                                  <Badge
+                                    variant="outline"
+                                    className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-500 bg-green-500/10 animate-pulse cursor-pointer hover:bg-green-500/20"
+                                    onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}
+                                  >
+                                    Update
+                                  </Badge>
+                                )}
                               </div>
-
-                              {hasUpdate && (
-                                <Badge
-                                  className="bg-green-500 hover:bg-green-600 animate-pulse text-[10px] px-1.5 h-5 cursor-pointer border-0 shadow-lg shadow-green-900/20"
-                                  onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}
-                                >
-                                  <RefreshCw className="w-3 h-3 mr-1" />
-                                  Update
-                                </Badge>
-                              )}
+                              <p className="text-xs text-muted-foreground truncate">
+                                {mod.isActive ? "Habilitado" : "Deshabilitado"}
+                              </p>
                             </div>
                           </div>
 
-                          <div className="p-2 flex gap-1 bg-card/30 border-t border-border/50">
-                            <Button
-                              variant={mod.isActive ? "secondary" : "default"}
-                              size="sm"
-                              className={`flex-1 h-8 text-xs font-medium ${mod.isActive ? "hover:bg-secondary/80" : "hover:bg-primary/90"}`}
-                              onClick={() =>
-                                handleToggleMod(mod.character, mod.name)
-                              }
-                            >
-                              {mod.isActive ? "Desactivar" : "Activar"}
-                            </Button>
-
+                          <div className="flex items-center gap-2">
                             {(mod as any).gameBananaUrl && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Ver en GameBanana"
                                 onClick={() => OpenUrl((mod as any).gameBananaUrl)}
                               >
@@ -1024,7 +1009,7 @@ const App: React.FC = () => {
 
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -1050,8 +1035,15 @@ const App: React.FC = () => {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+
+                            <div className="pl-2 border-l ml-1">
+                              <Switch
+                                checked={mod.isActive}
+                                onCheckedChange={() => handleToggleMod(mod.character, mod.name)}
+                              />
+                            </div>
                           </div>
-                        </Card>
+                        </div>
                       );
                     })}
                   </div>

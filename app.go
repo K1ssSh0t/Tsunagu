@@ -803,7 +803,7 @@ func (a *App) GetZipStructure(zipFilePath string) ([]ZipFile, error) {
 		return nil, fmt.Errorf("error extracting zip to temp directory: %v", err)
 	}
 
-	// Leer la estructura desde el sistema de archivos
+	// Construir la estructura desde el sistema de archivos
 	structure, err := a.buildStructureFromPath(tempDir)
 	if err != nil {
 		os.RemoveAll(tempDir)
@@ -813,7 +813,19 @@ func (a *App) GetZipStructure(zipFilePath string) ([]ZipFile, error) {
 
 	// NO limpiamos el directorio temporal aquí porque lo necesitaremos para AddModFromZipWithRoot
 
-	return structure, nil
+	// Envolver todo en un nodo Raíz para permitir seleccionar la raíz del ZIP
+	rootNode := ZipFile{
+		Name:     "Root (Select this if files are not in a folder)",
+		IsDir:    true,
+		Path:     ".",
+		Children: make([]*ZipFile, len(structure)),
+	}
+
+	for i := range structure {
+		rootNode.Children[i] = &structure[i]
+	}
+
+	return []ZipFile{rootNode}, nil
 }
 
 // buildStructureFromPath construye la estructura ZipFile desde una ruta del sistema de archivos

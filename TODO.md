@@ -10,4 +10,4 @@
 - ~~Al inciiar aparace dos veces la notifaicionde hay una actuliazacion apesar de que solo hay un mod por actualizar~~
 -  ~~Agregar que se actulice el mod pedira seleccionar la carpte o acrhivo compirmido para actulizar dicho mod~~
 - ~~Agregar que se puedan adminstrar varios juegos no solo el genshin~~
--- chear un edge case si un arhcivo comprimi tiene sus arhcivos directos en la carpeta raiz y no en una carpeta hija
+- ~~Chear un edge case si un arhcivo comprimi tiene sus arhcivos directos en la carpeta raiz y no en una carpeta hija~~
