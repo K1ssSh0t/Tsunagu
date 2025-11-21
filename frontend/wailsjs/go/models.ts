@@ -6,6 +6,7 @@ export namespace main {
 	    name: string;
 	    isActive: boolean;
 	    fullPath: string;
+	    gameBananaUrl: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Mod(source);
@@ -18,6 +19,7 @@ export namespace main {
 	        this.name = source["name"];
 	        this.isActive = source["isActive"];
 	        this.fullPath = source["fullPath"];
+	        this.gameBananaUrl = source["gameBananaUrl"];
 	    }
 	}
 	export class Character {

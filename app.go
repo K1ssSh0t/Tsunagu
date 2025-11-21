@@ -47,11 +47,12 @@ type Character struct {
 }
 
 type Mod struct {
-	ID        string `json:"id"`
-	Character string `json:"character"`
-	Name      string `json:"name"`
-	IsActive  bool   `json:"isActive"`
-	FullPath  string `json:"fullPath"`
+	ID            string `json:"id"`
+	Character     string `json:"character"`
+	Name          string `json:"name"`
+	IsActive      bool   `json:"isActive"`
+	FullPath      string `json:"fullPath"`
+	GameBananaUrl string `json:"gameBananaUrl"`
 }
 
 type ModConfig struct {
@@ -391,6 +392,15 @@ func (a *App) getModsForCharacter(characterName string) ([]Mod, error) {
 				Name:      actualModName,
 				IsActive:  isActive,
 				FullPath:  filepath.Join(characterPath, modName),
+			}
+
+			// Intentar leer la URL de GameBanana desde .modconfig.json
+			modConfigPath := filepath.Join(characterPath, modName, ".modconfig.json")
+			if data, err := os.ReadFile(modConfigPath); err == nil {
+				var config ModConfig
+				if err := json.Unmarshal(data, &config); err == nil {
+					mod.GameBananaUrl = config.ModUrl
+				}
 			}
 
 			mods = append(mods, mod)

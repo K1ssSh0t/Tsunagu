@@ -25,7 +25,7 @@ import {
 import { main } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
 import { GameSelector } from "./components/game-selector";
-import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download, MoreVertical, Settings, Gamepad2 } from "lucide-react";
+import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download, MoreVertical, Settings, Gamepad2, Globe } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -182,14 +182,14 @@ const App: React.FC = () => {
         setUpdates(availableUpdates);
         toast.info(
           `Se encontraron ${availableUpdates.length} actualizaciones disponibles`,
-          {
-            action: {
-              label: "Ver",
-              onClick: () => {
-                console.log("Updates:", availableUpdates);
-              },
-            },
-          },
+          // {
+          //   action: {
+          //     label: "Ver",
+          //     onClick: () => {
+          //       console.log("Updates:", availableUpdates);
+          //     },
+          //   },
+          // },
         );
       } else {
         setUpdates([]);
@@ -970,36 +970,39 @@ const App: React.FC = () => {
                       const updateInfo = updates.find(u => u.characterName === mod.character && u.modName === mod.name);
 
                       return (
-                        <Card key={mod.id} className="overflow-hidden flex flex-col">
-                          <div className="relative h-10 bg-muted flex items-center justify-center overflow-hidden group mb-2">
+                        <Card key={mod.id} className="overflow-hidden flex flex-col border-0 shadow-md bg-card/50 hover:bg-card/80 transition-colors group/card">
+                          <div className="relative h-14 bg-muted flex flex-col justify-end p-3 overflow-hidden group">
                             {/* Placeholder image logic would go here */}
-                            {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" /> */}
-                            <div className="absolute bottom-2 left-2 right-2 text-white">
-                              <h3 className="font-bold truncate">{mod.name}</h3>
-                            </div>
-                            {hasUpdate && (
-                              <div className="absolute top-2 right-2">
-                                <Badge className="bg-green-500 hover:bg-green-600 animate-pulse cursor-pointer" onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}>
+                            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
+
+                            <div className="relative z-10 flex justify-between items-end">
+                              <div className="overflow-hidden flex-1 mr-2">
+                                <h3 className="font-bold truncate text-white text-sm leading-tight" title={mod.name}>{mod.name}</h3>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className={`h-1.5 w-1.5 rounded-full shadow-[0_0_4px] ${mod.isActive ? "bg-green-400 shadow-green-400/50" : "bg-red-400 shadow-red-400/50"}`} />
+                                  <span className={`text-[10px] uppercase font-bold tracking-wider ${mod.isActive ? "text-green-400" : "text-red-400"}`}>
+                                    {mod.isActive ? "Activo" : "Inactivo"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {hasUpdate && (
+                                <Badge
+                                  className="bg-green-500 hover:bg-green-600 animate-pulse text-[10px] px-1.5 h-5 cursor-pointer border-0 shadow-lg shadow-green-900/20"
+                                  onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}
+                                >
                                   <RefreshCw className="w-3 h-3 mr-1" />
                                   Update
                                 </Badge>
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className=" flex-1">
-                            <div className="flex justify-between items-center">
-                              <Badge
-                                variant={mod.isActive ? "default" : "secondary"}
-                              >
-                                {mod.isActive ? "Activo" : "Desactivado"}
-                              </Badge>
+                              )}
                             </div>
-                          </CardContent>
-                          <CardFooter className="p-2 bg-muted/50 flex justify-between gap-2">
+                          </div>
+
+                          <div className="p-2 flex gap-1 bg-card/30 border-t border-border/50">
                             <Button
                               variant={mod.isActive ? "secondary" : "default"}
                               size="sm"
-                              className="flex-1"
+                              className={`flex-1 h-8 text-xs font-medium ${mod.isActive ? "hover:bg-secondary/80" : "hover:bg-primary/90"}`}
                               onClick={() =>
                                 handleToggleMod(mod.character, mod.name)
                               }
@@ -1007,9 +1010,21 @@ const App: React.FC = () => {
                               {mod.isActive ? "Desactivar" : "Activar"}
                             </Button>
 
+                            {(mod as any).gameBananaUrl && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                title="Ver en GameBanana"
+                                onClick={() => OpenUrl((mod as any).gameBananaUrl)}
+                              >
+                                <Globe className="h-4 w-4" />
+                              </Button>
+                            )}
+
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -1035,7 +1050,7 @@ const App: React.FC = () => {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </CardFooter>
+                          </div>
                         </Card>
                       );
                     })}
