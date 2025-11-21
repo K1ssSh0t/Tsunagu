@@ -11,17 +11,21 @@ import {
   RemoveMod,
   OpenModFolder,
   IsConfigured,
-  SaveConfig,
   SelectDirectory,
   SelectFile,
   CheckForUpdates,
   OpenUrl,
   UpdateMod,
   UpdateModFromZipWithRoot,
+  SetGame,
+  GetCurrentGame,
+  GetGamesConfig,
+  UpdateGamePath,
 } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
-import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download, MoreVertical } from "lucide-react";
+import { GameSelector } from "./components/game-selector";
+import { Trash2, Folder, File, ChevronRight, ChevronDown, Loader2, RefreshCw, Download, MoreVertical, Settings, Gamepad2 } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -40,6 +44,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+
 
 import {
   AlertDialog,
@@ -94,6 +99,9 @@ const App: React.FC = () => {
     currentUrl?: string;
   } | null>(null);
 
+  const [selectedGame, setSelectedGame] = useState("genshin");
+  const [gamesConfig, setGamesConfig] = useState<any>({}); // Using any for now as Config type might not be generated yet
+
   const hasCheckedConfig = React.useRef(false);
 
   useEffect(() => {
@@ -104,14 +112,66 @@ const App: React.FC = () => {
 
   const checkConfiguration = async () => {
     try {
+      const game = await GetCurrentGame();
+      setSelectedGame(game);
+
+      const config = await GetGamesConfig();
+      setGamesConfig(config);
+
+      // Set initial config path for the selected game
+      if (config.games && config.games[game]) {
+        setConfigPath(config.games[game].modsPath);
+      } else {
+        setConfigPath("");
+      }
+
       const configured = await IsConfigured();
       setIsAppConfigured(configured);
+
       if (configured) {
         loadCharacters();
         checkForUpdates();
       }
     } catch (error) {
       console.error("Error checking configuration:", error);
+    }
+  };
+
+  const handleGameSelect = async (game: string) => {
+    setIsLoading(true);
+    setLoadingMessage(`Cambiando a ${game}...`);
+    try {
+      await SetGame(game);
+      setSelectedGame(game);
+
+      // Update config path for the new game
+      const config = await GetGamesConfig();
+      setGamesConfig(config);
+      if (config.games && config.games[game]) {
+        setConfigPath(config.games[game].modsPath);
+      } else {
+        setConfigPath("");
+      }
+
+      const configured = await IsConfigured();
+      setIsAppConfigured(configured);
+
+      // Reset selection
+      setSelectedCharacter("");
+      setCharacterMods([]);
+
+      if (configured) {
+        await loadCharacters();
+        await checkForUpdates();
+      } else {
+        setCharacters([]);
+      }
+    } catch (error) {
+      console.error("Error switching game:", error);
+      toast.error("Error al cambiar de juego");
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
     }
   };
 
@@ -126,12 +186,13 @@ const App: React.FC = () => {
             action: {
               label: "Ver",
               onClick: () => {
-                // Could scroll to first updated mod or show a list
                 console.log("Updates:", availableUpdates);
               },
             },
           },
         );
+      } else {
+        setUpdates([]);
       }
     } catch (error) {
       console.error("Error checking for updates:", error);
@@ -154,7 +215,6 @@ const App: React.FC = () => {
       setCharacterMods(mods);
     } catch (error) {
       console.error("Error loading character mods:", error);
-      // toast.error("Error al cargar los mods del personaje");
       setCharacterMods([]);
     }
   };
@@ -171,7 +231,6 @@ const App: React.FC = () => {
       await ToggleMod(character, modName);
       await loadCharacterMods(character);
       await loadCharacters();
-      // Get the current state of the mod to show the correct message
       const mod = characterMods.find((m) => m.name === modName);
       if (mod) {
         toast.success(
@@ -211,30 +270,24 @@ const App: React.FC = () => {
     setLoadingMessage("Procesando...");
 
     try {
-      // Check if the path is a ZIP file
       if (
         newModPath.toLowerCase().endsWith(".zip") ||
         newModPath.toLowerCase().endsWith(".rar") ||
         newModPath.toLowerCase().endsWith(".7z")
       ) {
         setLoadingMessage("Analizando archivo ZIP...");
-        // Reset all ZIP-related states first
         setZipStructure([]);
         setSelectedRoot("");
         setExpandedFolders(new Set());
 
         try {
-          // Show ZIP structure modal
           const structure = await GetZipStructure(newModPath);
-          console.log("ZIP structure received:", structure);
 
-          // Ensure we have valid structure before proceeding
           if (!structure || structure.length === 0) {
             toast.error("El archivo ZIP no contiene archivos o está vacío");
             return;
           }
 
-          // Prepare expanded folders
           const initialExpanded = new Set<string>();
           structure.forEach((file) => {
             if (file.isDir) {
@@ -242,12 +295,10 @@ const App: React.FC = () => {
             }
           });
 
-          // Update states in sequence
           setZipStructure(structure);
           setExpandedFolders(initialExpanded);
           setSelectedRoot("");
 
-          // Show modal after a short delay to ensure states are updated
           setTimeout(() => {
             setShowZipModal(true);
           }, 100);
@@ -284,7 +335,6 @@ const App: React.FC = () => {
 
 
   const handleZipModalCancel = async () => {
-    // Limpiar el directorio temporal en el backend
     try {
       await CleanupTempDirectory();
     } catch (error) {
@@ -296,9 +346,6 @@ const App: React.FC = () => {
     setSelectedRoot("");
     setExpandedFolders(new Set());
     setNewModPath("");
-    // Si estábamos en proceso de actualización, no limpiamos modToUpdate todavía para que el usuario pueda reintentar o cancelar explícitamente desde el diálogo de actualización si existiera,
-    // pero aquí el modal de zip es parte del flujo.
-    // Si cancelamos el zip, cancelamos la operación de actualización si era eso lo que hacíamos.
     if (modToUpdate) {
       setModToUpdate(null);
     }
@@ -311,15 +358,9 @@ const App: React.FC = () => {
   const handleUpdateFromFile = async () => {
     if (!modToUpdate) return;
 
-    // 1. Seleccionar archivo o carpeta
-    // Por simplicidad, preguntamos primero qué quiere usar, o usamos un diálogo genérico?
-    // Vamos a usar SelectFile por defecto para zips, o podríamos poner dos botones en el diálogo de confirmación.
-    // Para hacerlo más fluido, abriremos un diálogo de selección que permita ambos si es posible, o botones separados.
-    // Wails no tiene "SelectAny", así que usaremos SelectFile para Zips (lo más común)
-
     try {
       const file = await SelectFile();
-      if (!file) return; // Cancelado por usuario
+      if (!file) return;
 
       setIsLoading(true);
       setLoadingMessage("Procesando actualización...");
@@ -341,21 +382,16 @@ const App: React.FC = () => {
           return;
         }
 
-        // Preparar modal de zip
         const initialExpanded = new Set<string>();
         structure.forEach((f) => { if (f.isDir) initialExpanded.add(f.path); });
 
         setZipStructure(structure);
         setExpandedFolders(initialExpanded);
-        setNewModPath(file); // Usamos esto para guardar la ruta temporalmente
+        setNewModPath(file);
 
-        // Importante: mantenemos modToUpdate activo para saber que es una actualización
         setShowZipModal(true);
         setIsLoading(false);
       } else {
-        // Es un archivo no zip? SelectFile tiene filtro.
-        // Si queremos soportar carpetas, necesitaríamos otro botón.
-        // Asumimos que si seleccionó algo es válido según el filtro.
         toast.error("Por favor selecciona un archivo comprimido (.zip, .rar, .7z)");
         setIsLoading(false);
       }
@@ -380,12 +416,11 @@ const App: React.FC = () => {
 
       toast.success(`Mod ${modToUpdate.modName} actualizado correctamente`);
 
-      // Actualizar estado local para quitar la notificación inmediatamente
       setUpdates(prev => prev.filter(u => !(u.characterName === modToUpdate.character && u.modName === modToUpdate.modName)));
 
       setModToUpdate(null);
       await loadCharacterMods(modToUpdate.character);
-      await checkForUpdates(); // Refrescar estado de actualizaciones del backend
+      await checkForUpdates();
     } catch (error) {
       console.error("Error updating from folder:", error);
       toast.error("Error al actualizar desde carpeta: " + error);
@@ -394,7 +429,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Modificar handleZipModalConfirm para manejar actualizaciones
   const handleZipModalConfirmAction = async () => {
     if (!selectedRoot) {
       toast.error("Por favor selecciona una carpeta raíz");
@@ -406,7 +440,6 @@ const App: React.FC = () => {
 
     try {
       if (modToUpdate) {
-        // Es una actualización
         await UpdateModFromZipWithRoot(
           modToUpdate.character,
           modToUpdate.modName,
@@ -415,12 +448,10 @@ const App: React.FC = () => {
         );
         toast.success(`Mod ${modToUpdate.modName} actualizado correctamente`);
 
-        // Actualizar estado local para quitar la notificación inmediatamente
         setUpdates(prev => prev.filter(u => !(u.characterName === modToUpdate.character && u.modName === modToUpdate.modName)));
 
         setModToUpdate(null);
       } else {
-        // Es un nuevo mod
         await AddModFromZipWithRoot(
           selectedCharacter,
           newModName,
@@ -434,7 +465,6 @@ const App: React.FC = () => {
         setGameBananaUrl("");
       }
 
-      // Limpieza común
       setShowZipModal(false);
       setNewModPath("");
       setSelectedRoot("");
@@ -456,7 +486,6 @@ const App: React.FC = () => {
     }
   };
 
-  // ZIP Modal state management
   useEffect(() => {
     if (showZipModal && zipStructure.length > 0) {
       console.log("ZIP modal shown with structure:", zipStructure);
@@ -477,12 +506,10 @@ const App: React.FC = () => {
     setSelectedRoot(path);
   };
 
-  // Component to render ZIP file tree
   const ZipFileTree: React.FC<{ files: ZipFile[]; level: number }> = ({
     files,
     level,
   }) => {
-    // Early return if no files
     if (!files || files.length === 0) {
       return (
         <div className="text-gray-500 text-sm p-2">
@@ -580,12 +607,20 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveConfig = async () => {
+  const handleUpdateGamePath = async () => {
     try {
-      await SaveConfig(configPath);
+      await UpdateGamePath(selectedGame, configPath);
       setIsAppConfigured(true);
       setShowConfig(false);
+
+      // Update local config state
+      const newConfig = { ...gamesConfig };
+      if (!newConfig.games) newConfig.games = {};
+      newConfig.games[selectedGame] = { modsPath: configPath };
+      setGamesConfig(newConfig);
+
       await loadCharacters();
+      toast.success("Configuración guardada correctamente");
     } catch (error) {
       console.error("Error saving config:", error);
       toast.error("Error al guardar la configuración");
@@ -644,26 +679,49 @@ const App: React.FC = () => {
     );
   }
 
-  if (!isAppConfigured) {
+  // Configuration Screen (Initial or Requested)
+  if (!isAppConfigured || showConfig) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 flex gap-2">
+          {isAppConfigured && (
+            <Button variant="ghost" onClick={() => setShowConfig(false)}>
+              Cerrar
+            </Button>
+          )}
           <ModeToggle />
         </div>
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              Configuración Inicial
+              Configuración
             </CardTitle>
             <CardDescription className="text-center">
-              Configura la ruta de la carpeta de mods para comenzar
+              Configura las rutas de mods para tus juegos
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
+              <div className="flex justify-center">
+                <GameSelector
+                  selectedGame={selectedGame}
+                  onGameSelect={(game) => {
+                    setSelectedGame(game);
+                    // Update input with path for selected game
+                    if (gamesConfig.games && gamesConfig.games[game]) {
+                      setConfigPath(gamesConfig.games[game].modsPath);
+                    } else {
+                      setConfigPath("");
+                    }
+                  }}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="modsPath">
-                  Ruta de la carpeta 'mods' de 3DMigoto:
+                  Ruta de mods para {selectedGame === "genshin" ? "Genshin Impact" :
+                    selectedGame === "wuwa" ? "Wuthering Waves" :
+                      selectedGame === "hsr" ? "Honkai: Star Rail" : "Zenless Zone Zero"}:
                 </Label>
                 <div className="flex space-x-2">
                   <Input
@@ -684,14 +742,14 @@ const App: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Esta es la carpeta donde se crearán las carpetas de personajes
+                  Selecciona la carpeta donde se guardarán los mods para este juego.
                 </p>
               </div>
             </div>
           </CardContent>
           <CardFooter>
             <Button
-              onClick={handleSaveConfig}
+              onClick={handleUpdateGamePath}
               disabled={!configPath}
               className="w-full"
             >
@@ -707,10 +765,10 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-background p-6 relative">
       <Toaster position="top-center" richColors closeButton />
 
-      {/* Loading Overlay */}
+      {/* Loading Overlay - Increased z-index to ensure it's above modals */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-100 flex items-center justify-center">
-          <Card className="w-[300px]">
+          <Card className="w-[300px] shadow-lg">
             <CardContent className="flex flex-col items-center justify-center py-8 space-y-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
               <p className="text-sm font-medium text-center">{loadingMessage}</p>
@@ -791,167 +849,163 @@ const App: React.FC = () => {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle className="text-3xl font-bold">
-                  Genshin Impact Mod Manager
+                  Mod Manager
                 </CardTitle>
                 <CardDescription>
                   Administra tus mods de 3DMigoto
                 </CardDescription>
               </div>
-              <div className="flex items-center space-x-2">
-                <ModeToggle />
-                <Button variant="outline" onClick={() => setShowConfig(true)}>
-                  Configuración
+              <div className="flex items-center space-x-4">
+                <GameSelector
+                  selectedGame={selectedGame}
+                  onGameSelect={handleGameSelect}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowConfig(true)}
+                  title="Configuración"
+                >
+                  <Settings className="h-4 w-4" />
                 </Button>
+                <ModeToggle />
               </div>
             </div>
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Sidebar - Character List */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Personajes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[500px] pr-4">
-                  <div className="space-y-2">
-                    {characters.map((character) => (
+        {/* Main Content */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Character List */}
+          <Card className="md:col-span-1 h-[calc(100vh-200px)] flex flex-col">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Personajes</CardTitle>
+              <div className="relative">
+                <Input placeholder="Buscar..." className="h-8" />
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden p-2">
+              <ScrollArea className="h-full pr-4">
+                <div className="space-y-1">
+                  {characters.map((char) => {
+                    const hasCharUpdate = updates.some(u => u.characterName === char.name);
+                    return (
                       <Button
-                        key={character.name}
+                        key={char.name}
                         variant={
-                          selectedCharacter === character.name
-                            ? "secondary"
-                            : "ghost"
+                          selectedCharacter === char.name ? "secondary" : "ghost"
                         }
-                        onClick={() => handleCharacterSelect(character.name)}
-                        className={`w-full justify-between h-auto py-3 ${!character.hasFolder ? "opacity-70" : ""}`}
-                      // disabled={!character.hasFolder}
+                        className="w-full justify-start capitalize relative"
+                        onClick={() => handleCharacterSelect(char.name)}
                       >
-                        <span className="font-medium capitalize">
-                          {character.name}
-                        </span>
-                        <div className="flex items-center space-x-2">
-                          {!character.hasFolder && (
+                        <span className="truncate">{char.name}</span>
+                        <div className="ml-auto flex items-center gap-2">
+                          {hasCharUpdate && (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                          )}
+                          {char.hasFolder && (
                             <Badge variant="outline" className="text-xs">
-                              Sin carpeta
+                              {char.mods ? char.mods.length : 0}
                             </Badge>
                           )}
-                          {updates.some(u => u.characterName === character.name) && (
-                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Actualizaciones disponibles" />
-                          )}
-                          <Badge
-                            variant={
-                              selectedCharacter === character.name
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {character.mods.length} mods
-                          </Badge>
                         </div>
                       </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content - Character Mods */}
-          <div className="lg:col-span-3">
-            {selectedCharacter ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle className="text-2xl capitalize">
-                        Mods de {selectedCharacter}
-                      </CardTitle>
-                      <CardDescription>
-                        {characters.find((c) => c.name === selectedCharacter)
-                          ?.hasFolder
-                          ? `${characterMods.length} mods encontrados`
-                          : "La carpeta se creará al agregar el primer mod"}
-                      </CardDescription>
+                    );
+                  })}
+                  {characters.length === 0 && (
+                    <div className="text-center text-muted-foreground py-4">
+                      No hay personajes
                     </div>
-                    <Button
-                      onClick={() => setShowAddMod(true)}
-                      variant="default"
-                      size="sm"
-                      className="gap-1"
-                    >
-                      <span className="text-lg">+</span> Agregar Mod
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-4 space-y-4">
-                  {/* Updates Alert */}
-                  {updates.filter(u => u.characterName === selectedCharacter).length > 0 && (
-                    <Alert className="mb-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                      <RefreshCw className="h-4 w-4 text-blue-500" />
-                      <AlertTitle>Actualizaciones disponibles</AlertTitle>
-                      <AlertDescription>
-                        Hay actualizaciones para algunos mods de este personaje. Busca el icono de actualización en la lista.
-                      </AlertDescription>
-                    </Alert>
                   )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
 
-                  {/* Mod List */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Mods List */}
+          <Card className="md:col-span-3 h-[calc(100vh-200px)] flex flex-col">
+            <CardHeader className="pb-2 flex flex-row justify-between items-center">
+              <div>
+                <CardTitle className="text-xl capitalize">
+                  {selectedCharacter || "Selecciona un personaje"}
+                </CardTitle>
+                <CardDescription>
+                  {selectedCharacter
+                    ? `Gestionando mods para ${selectedCharacter}`
+                    : "Selecciona un personaje para ver sus mods"}
+                </CardDescription>
+              </div>
+              {selectedCharacter && (
+                <Button onClick={() => setShowAddMod(true)}>
+                  Agregar Mod
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden p-4 bg-muted/20">
+              {!selectedCharacter ? (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <Gamepad2 className="h-16 w-16 mb-4 opacity-20" />
+                  <p>Selecciona un personaje de la lista</p>
+                </div>
+              ) : characterMods.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <Folder className="h-16 w-16 mb-4 opacity-20" />
+                  <p>No hay mods instalados para este personaje</p>
+                  <Button
+                    variant="link"
+                    onClick={() => setShowAddMod(true)}
+                    className="mt-2"
+                  >
+                    Agregar el primer mod
+                  </Button>
+                </div>
+              ) : (
+                <ScrollArea className="h-full pr-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {characterMods.map((mod) => {
                       const hasUpdate = updates.some(u => u.characterName === mod.character && u.modName === mod.name);
                       const updateInfo = updates.find(u => u.characterName === mod.character && u.modName === mod.name);
 
                       return (
-                        <Card key={mod.id} className={`overflow-hidden ${!mod.isActive ? "opacity-70 bg-muted" : ""}`}>
-                          <CardHeader className="p-4 pb-2 space-y-0">
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-base font-medium truncate pr-2" title={mod.name}>
-                                {mod.name}
-                              </CardTitle>
-                              {hasUpdate && (
-                                <Badge variant="default" className="bg-green-500 hover:bg-green-600 animate-pulse">
-                                  Update
-                                </Badge>
-                              )}
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-2 pb-2">
-                            <div className="text-xs text-muted-foreground mb-2">
-                              Estado: {mod.isActive ? "Activo" : "Desactivado"}
+                        <Card key={mod.id} className="overflow-hidden flex flex-col">
+                          <div className="relative h-10 bg-muted flex items-center justify-center overflow-hidden group mb-2">
+                            {/* Placeholder image logic would go here */}
+                            {/* <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" /> */}
+                            <div className="absolute bottom-2 left-2 right-2 text-white">
+                              <h3 className="font-bold truncate">{mod.name}</h3>
                             </div>
                             {hasUpdate && (
-                              <div className="text-xs text-green-600 dark:text-green-400 mb-2">
-                                Nueva versión disponible ({updateInfo?.remoteDate})
+                              <div className="absolute top-2 right-2">
+                                <Badge className="bg-green-500 hover:bg-green-600 animate-pulse cursor-pointer" onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}>
+                                  <RefreshCw className="w-3 h-3 mr-1" />
+                                  Update
+                                </Badge>
                               </div>
                             )}
-                          </CardContent>
-                          <CardFooter className="p-4 pt-0 flex items-center justify-between gap-2">
-                            <div className="flex gap-2 flex-1 overflow-hidden">
-                              <Button
-                                variant={mod.isActive ? "secondary" : "default"}
-                                size="sm"
-                                onClick={() => handleToggleMod(mod.character, mod.name)}
-                                className="flex-1 sm:flex-none"
+                          </div>
+                          <CardContent className=" flex-1">
+                            <div className="flex justify-between items-center">
+                              <Badge
+                                variant={mod.isActive ? "default" : "secondary"}
                               >
-                                {mod.isActive ? "Desactivar" : "Activar"}
-                              </Button>
-
-                              {hasUpdate && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-green-600 border-green-200 hover:bg-green-50 dark:hover:bg-green-950 flex-1 sm:flex-none"
-                                  onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}
-                                >
-                                  <RefreshCw className="h-3 w-3 mr-1" />
-                                  Actualizar
-                                </Button>
-                              )}
+                                {mod.isActive ? "Activo" : "Desactivado"}
+                              </Badge>
                             </div>
+                          </CardContent>
+                          <CardFooter className="p-2 bg-muted/50 flex justify-between gap-2">
+                            <Button
+                              variant={mod.isActive ? "secondary" : "default"}
+                              size="sm"
+                              className="flex-1"
+                              onClick={() =>
+                                handleToggleMod(mod.character, mod.name)
+                              }
+                            >
+                              {mod.isActive ? "Desactivar" : "Activar"}
+                            </Button>
 
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -962,19 +1016,22 @@ const App: React.FC = () => {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DropdownMenuItem onClick={() => handleActivateSingle(mod.character, mod.name)}>
-                                  Activar Único
+                                  Activar Solo Este
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleOpenModFolder(mod.fullPath)}>
-                                  <Folder className="mr-2 h-4 w-4" />
                                   Abrir Carpeta
                                 </DropdownMenuItem>
+                                {hasUpdate && (
+                                  <DropdownMenuItem onClick={() => handleUpdateModClick(mod.character, mod.name, updateInfo?.modUrl || "")}>
+                                    Actualizar Mod
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
+                                  className="text-red-600 focus:text-red-600"
                                   onClick={() => handleRemoveModClick(mod.character, mod.name)}
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar Mod
+                                  Eliminar
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -983,229 +1040,125 @@ const App: React.FC = () => {
                       );
                     })}
                   </div>
-
-                  {/* Add Mod Form */}
-                  {showAddMod && (
-                    <Card className="mb-6">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">
-                          Agregar Nuevo Mod
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="modName">Nombre del mod</Label>
-                            <Input
-                              id="modName"
-                              type="text"
-                              placeholder="Ej: Mod de Traje"
-                              value={newModName}
-                              onChange={(e) => setNewModName(e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="modPath">
-                              Ruta de los archivos
-                            </Label>
-                            <div className="flex space-x-2">
-                              <Input
-                                id="modPath"
-                                type="text"
-                                placeholder="Ruta del mod (carpeta o archivo .zip)"
-                                value={newModPath}
-                                onChange={(e) => setNewModPath(e.target.value)}
-                                className="flex-1" />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleSelectModDirectory}
-                                className="px-3"
-                              >
-                                <Folder className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleSelectModFile}
-                                className="px-3"
-                              >
-                                <File className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="gameBananaUrl">
-                              Enlace de GameBanana (Opcional)
-                            </Label>
-                            <Input
-                              id="gameBananaUrl"
-                              type="text"
-                              placeholder="https://gamebanana.com/mods/..."
-                              value={gameBananaUrl}
-                              onChange={(e) => setGameBananaUrl(e.target.value)} />
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowAddMod(false)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          onClick={handleAddMod}
-                          disabled={!newModName || !newModPath}
-                        >
-                          Agregar Mod
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  )}
-
-                  {/* ZIP Structure Modal */}
-                  {showZipModal && (
-                    <div
-                      key={`zip-modal-${newModPath}-${Date.now()}`}
-                      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-                    >
-                      <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden">
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Folder className="w-5 h-5" />
-                            Seleccionar raíz del mod
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                          <div className="mb-4">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Selecciona la carpeta raíz del mod dentro del
-                              archivo ZIP:
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              {newModPath}
-                            </p>
-                          </div>
-
-                          <ScrollArea className="h-50 border rounded-md p-2">
-                            <ZipFileTree files={zipStructure} level={0} />
-                          </ScrollArea>
-
-                          {selectedRoot && (
-                            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-                              <p className="text-sm">
-                                <span className="font-medium">
-                                  Raíz seleccionada:
-                                </span>{" "}
-                                {selectedRoot}
-                              </p>
-                            </div>
-                          )}
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            onClick={handleZipModalCancel}
-                          >
-                            Cancelar
-                          </Button>
-                          <Button
-                            onClick={handleZipModalConfirm}
-                            disabled={!selectedRoot}
-                          >
-                            Confirmar
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    </div>
-                  )}
-
-
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="text-center p-8">
-                <div className="text-muted-foreground mb-4">
-                  <svg
-                    className="w-16 h-16 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1"
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                    />
-                  </svg>
-                </div>
-                <CardTitle className="text-lg font-medium mb-2">
-                  Selecciona un personaje
-                </CardTitle>
-                <CardDescription>
-                  Elige un personaje de la lista para ver y gestionar sus mods.
-                </CardDescription>
-              </Card>
-            )}
-          </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </div >
+      </div>
 
-      {/* Configuration Modal */}
-      {
-        showConfig && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md">
-              <CardHeader>
-                <CardTitle>Configuración</CardTitle>
-                <CardDescription>
-                  Configura la ruta de la carpeta de mods de 3DMigoto
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="configPath">Ruta de la carpeta 'mods'</Label>
-                    <div className="flex space-x-2">
-                      <Input
-                        id="configPath"
-                        type="text"
-                        value={configPath}
-                        onChange={(e) => setConfigPath(e.target.value)}
-                        placeholder="Ej: C:\\Genshin Impact\\3DMigoto\\mods"
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleSelectDirectory}
-                        className="px-3"
-                      >
+      {/* Add Mod Dialog */}
+      {showAddMod && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg">
+            <CardHeader>
+              <CardTitle>Agregar Nuevo Mod</CardTitle>
+              <CardDescription>
+                Agrega un mod para {selectedCharacter}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="modName">Nombre del Mod</Label>
+                <Input
+                  id="modName"
+                  value={newModName}
+                  onChange={(e) => setNewModName(e.target.value)}
+                  placeholder="Ej: Skin Verano"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="modPath">Archivo o Carpeta del Mod</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    id="modPath"
+                    value={newModPath}
+                    onChange={(e) => setNewModPath(e.target.value)}
+                    placeholder="Ruta al archivo .zip o carpeta"
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
                         <Folder className="h-4 w-4" />
                       </Button>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Esta es la carpeta donde se crearán las carpetas de
-                      personajes
-                    </p>
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={handleSelectModFile}>
+                        <File className="mr-2 h-4 w-4" />
+                        Seleccionar Archivo (ZIP/RAR)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleSelectModDirectory}>
+                        <Folder className="mr-2 h-4 w-4" />
+                        Seleccionar Carpeta
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowConfig(false)}>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gameBananaUrl">URL de GameBanana (Opcional)</Label>
+                <Input
+                  id="gameBananaUrl"
+                  value={gameBananaUrl}
+                  onChange={(e) => setGameBananaUrl(e.target.value)}
+                  placeholder="https://gamebanana.com/mods/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Permite verificar actualizaciones automáticamente
+                </p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setShowAddMod(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAddMod}
+                disabled={!newModName || !newModPath}
+              >
+                Agregar Mod
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+
+      {/* ZIP Structure Modal */}
+      {showZipModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl h-[80vh] flex flex-col">
+            <CardHeader>
+              <CardTitle>Estructura del ZIP</CardTitle>
+              <CardDescription>
+                Selecciona la carpeta raíz del mod dentro del archivo comprimido.
+                Busca la carpeta que contiene los archivos .ini y .dds
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              <ScrollArea className="h-full border rounded-md p-2">
+                <ZipFileTree files={zipStructure} level={0} />
+              </ScrollArea>
+            </CardContent>
+            <CardFooter className="flex justify-between border-t pt-4">
+              <div className="text-sm text-muted-foreground truncate max-w-[50%]">
+                Seleccionado: {selectedRoot || "Ninguno (Raíz del ZIP)"}
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleZipModalCancel}>
                   Cancelar
                 </Button>
-                <Button onClick={handleSaveConfig} disabled={!configPath}>
-                  Guardar Cambios
+                <Button onClick={handleZipModalConfirm}>
+                  Confirmar Selección
                 </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        )
-      }
-    </div >
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 };
+
+
 
 export default App;

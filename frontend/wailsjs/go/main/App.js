@@ -26,6 +26,14 @@ export function GetCharacters() {
   return window['go']['main']['App']['GetCharacters']();
 }
 
+export function GetCurrentGame() {
+  return window['go']['main']['App']['GetCurrentGame']();
+}
+
+export function GetGamesConfig() {
+  return window['go']['main']['App']['GetGamesConfig']();
+}
+
 export function GetModsForCharacter(arg1) {
   return window['go']['main']['App']['GetModsForCharacter'](arg1);
 }
@@ -58,8 +66,8 @@ export function RemoveMod(arg1, arg2) {
   return window['go']['main']['App']['RemoveMod'](arg1, arg2);
 }
 
-export function SaveConfig(arg1) {
-  return window['go']['main']['App']['SaveConfig'](arg1);
+export function SaveConfig() {
+  return window['go']['main']['App']['SaveConfig']();
 }
 
 export function SelectDirectory() {
@@ -70,8 +78,16 @@ export function SelectFile() {
   return window['go']['main']['App']['SelectFile']();
 }
 
+export function SetGame(arg1) {
+  return window['go']['main']['App']['SetGame'](arg1);
+}
+
 export function ToggleMod(arg1, arg2) {
   return window['go']['main']['App']['ToggleMod'](arg1, arg2);
+}
+
+export function UpdateGamePath(arg1, arg2) {
+  return window['go']['main']['App']['UpdateGamePath'](arg1, arg2);
 }
 
 export function UpdateMod(arg1, arg2, arg3) {

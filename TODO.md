@@ -9,4 +9,4 @@
 - ~~Hacer que se chechen las actuliaciones en gamebanana~~
 - ~~Al inciiar aparace dos veces la notifaicionde hay una actuliazacion apesar de que solo hay un mod por actualizar~~
 -  ~~Agregar que se actulice el mod pedira seleccionar la carpte o acrhivo compirmido para actulizar dicho mod~~
-- Agregar que se puedan adminstrar varios juegos no solo el genshin
+- ~~Agregar que se puedan adminstrar varios juegos no solo el genshin~~

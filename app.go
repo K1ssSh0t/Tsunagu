@@ -23,21 +23,27 @@ import (
 )
 
 type App struct {
-	ctx        context.Context
-	configPath string
-	modsPath   string
-	charsPath  string
-	tempZipDir string // Nuevo campo para almacenar el directorio temporal del ZIP
+	ctx          context.Context
+	configPath   string
+	charsPath    string
+	tempZipDir   string
+	config       Config
+	selectedGame string
+}
+
+type GameConfig struct {
+	ModsPath string `json:"modsPath"`
 }
 
 type Config struct {
-	ModsPath string `json:"modsPath"`
+	Games        map[string]GameConfig `json:"games"`
+	SelectedGame string                `json:"selectedGame"`
 }
 
 type Character struct {
 	Name      string `json:"name"`
 	Mods      []Mod  `json:"mods"`
-	HasFolder bool   `json:"hasFolder"` // Indica si existe carpeta en el sistema
+	HasFolder bool   `json:"hasFolder"`
 }
 
 type Mod struct {
@@ -66,8 +72,22 @@ type ZipFile struct {
 	Children []*ZipFile `json:"children,omitempty"`
 }
 
+// ModUpdate struct to hold update information
+type ModUpdate struct {
+	CharacterName string `json:"characterName"`
+	ModName       string `json:"modName"`
+	ModUrl        string `json:"modUrl"`
+	LocalDate     string `json:"localDate"`
+	RemoteDate    string `json:"remoteDate"`
+}
+
 func NewApp() *App {
-	return &App{}
+	return &App{
+		config: Config{
+			Games: make(map[string]GameConfig),
+		},
+		selectedGame: "genshin", // Default
+	}
 }
 
 // startup se ejecuta al iniciar la aplicación
@@ -82,29 +102,85 @@ func (a *App) startup(ctx context.Context) {
 func (a *App) loadConfig() {
 	data, err := os.ReadFile(a.configPath)
 	if err == nil {
-		var config Config
-		json.Unmarshal(data, &config)
-		a.modsPath = config.ModsPath
+		// Intentar decodificar con la nueva estructura
+		var newConfig Config
+		if err := json.Unmarshal(data, &newConfig); err == nil && newConfig.Games != nil {
+			a.config = newConfig
+			if a.config.SelectedGame != "" {
+				a.selectedGame = a.config.SelectedGame
+			}
+			return
+		}
+
+		// Si falla, intentar migrar la configuración antigua
+		var oldConfig struct {
+			ModsPath string `json:"modsPath"`
+		}
+		if err := json.Unmarshal(data, &oldConfig); err == nil {
+			// Migrar
+			a.config.Games = make(map[string]GameConfig)
+			if oldConfig.ModsPath != "" {
+				a.config.Games["genshin"] = GameConfig{ModsPath: oldConfig.ModsPath}
+			}
+			a.config.SelectedGame = "genshin"
+			a.selectedGame = "genshin"
+			a.SaveConfig() // Guardar formato nuevo
+		}
+	} else {
+		// Inicializar si no existe
+		a.config.Games = make(map[string]GameConfig)
+		a.config.SelectedGame = "genshin"
 	}
 }
 
-// SaveConfig guarda la ruta de 3DMigoto
-func (a *App) SaveConfig(modsPath string) error {
-	a.modsPath = modsPath
-
-	config := Config{ModsPath: modsPath}
-	data, err := json.Marshal(config)
+// SaveConfig guarda la configuración completa
+func (a *App) SaveConfig() error {
+	data, err := json.MarshalIndent(a.config, "", "  ")
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(a.configPath, data, 0644)
+}
+
+// SetGame cambia el juego seleccionado
+func (a *App) SetGame(game string) string {
+	a.selectedGame = game
+	a.config.SelectedGame = game
+	a.SaveConfig()
+	return a.selectedGame
+}
+
+// GetCurrentGame obtiene el juego actual
+func (a *App) GetCurrentGame() string {
+	return a.selectedGame
+}
+
+// GetGamesConfig obtiene la configuración de todos los juegos
+func (a *App) GetGamesConfig() Config {
+	return a.config
+}
+
+// UpdateGamePath actualiza la ruta de mods para un juego específico
+func (a *App) UpdateGamePath(game string, path string) error {
+	if a.config.Games == nil {
+		a.config.Games = make(map[string]GameConfig)
+	}
+	a.config.Games[game] = GameConfig{ModsPath: path}
+	return a.SaveConfig()
+}
+
+// Helper para obtener la ruta de mods actual
+func (a *App) currentModsPath() string {
+	if config, ok := a.config.Games[a.selectedGame]; ok {
+		return config.ModsPath
+	}
+	return ""
 }
 
 // SelectDirectory abre el selector de carpetas del sistema
 func (a *App) SelectDirectory() (string, error) {
 	dialogOptions := wailsruntime.OpenDialogOptions{
-		Title: "Seleccionar carpeta de mods de 3DMigoto",
+		Title: "Seleccionar carpeta",
 	}
 
 	selectedDirectory, err := wailsruntime.OpenDirectoryDialog(a.ctx, dialogOptions)
@@ -160,33 +236,75 @@ func (a *App) OpenModFolder(modPath string) error {
 	return cmd.Start()
 }
 
-// IsConfigured verifica si la aplicación está configurada
+// IsConfigured verifica si la aplicación está configurada para el juego actual
 func (a *App) IsConfigured() bool {
-	return a.modsPath != "" && isDirectory(a.modsPath)
+	path := a.currentModsPath()
+	return path != "" && isDirectory(path)
 }
 
 // LoadCharactersList carga la lista de personajes desde el JSON
 func (a *App) LoadCharactersList() ([]string, error) {
 	data, err := os.ReadFile(a.charsPath)
-	if err != nil {
-		// Si el archivo no existe, crear uno por defecto
-		defaultChars := []string{
+
+	// Estructura por defecto para nuevos archivos
+	defaultChars := map[string][]string{
+		"genshin": {
 			"arlecchino", "clorinde", "furina", "raiden shogun",
 			"ganyu", "jean", "lisa", "kujou sara", "ningguang",
 			"eula", "yelan", "yae miko", "xilonen", "skirk", "mavulka", "deliya",
-		}
+		},
+		"wuwa": {
+			"jinhsi", "yinlin", "changli", "jiyan",
+		},
+		"hsr": {
+			"kafka", "black swan", "acheron", "firefly",
+		},
+		"zzz": {
+			"ellen", "zhu yuan", "jane doe",
+		},
+	}
+
+	if err != nil {
+		// Si el archivo no existe, crear uno por defecto
 		data, _ = json.MarshalIndent(defaultChars, "", "  ")
 		os.WriteFile(a.charsPath, data, 0644)
-		return defaultChars, nil
+		return defaultChars[a.selectedGame], nil
 	}
 
-	var characters []string
-	err = json.Unmarshal(data, &characters)
-	if err != nil {
-		return nil, err
+	// Intentar decodificar con la nueva estructura (mapa)
+	var charactersMap map[string][]string
+	if err := json.Unmarshal(data, &charactersMap); err == nil {
+		// Si el juego actual no está en el mapa, devolver lista vacía o default
+		if list, ok := charactersMap[a.selectedGame]; ok {
+			return list, nil
+		}
+		// Si no existe la key, devolver defaults si los tenemos, o vacío
+		if def, ok := defaultChars[a.selectedGame]; ok {
+			return def, nil
+		}
+		return []string{}, nil
 	}
 
-	return characters, nil
+	// Si falla, intentar como lista antigua (solo Genshin)
+	var oldList []string
+	if err := json.Unmarshal(data, &oldList); err == nil {
+		// Es el formato antiguo, asumimos que es Genshin
+		// Migrar el archivo a formato nuevo en memoria y guardar
+
+		// Preservar la lista antigua como 'genshin'
+		defaultChars["genshin"] = oldList
+
+		data, _ = json.MarshalIndent(defaultChars, "", "  ")
+		os.WriteFile(a.charsPath, data, 0644)
+
+		// Devolver la lista correspondiente al juego seleccionado
+		if list, ok := defaultChars[a.selectedGame]; ok {
+			return list, nil
+		}
+		return []string{}, nil
+	}
+
+	return nil, fmt.Errorf("formato de characters.json desconocido")
 }
 
 // GetCharacters obtiene todos los personajes con su información
@@ -201,9 +319,11 @@ func (a *App) GetCharacters() ([]Character, error) {
 		return nil, err
 	}
 
+	modsPath := a.currentModsPath()
+
 	// Obtener carpetas existentes en mods
 	existingFolders := make(map[string]bool)
-	entries, err := os.ReadDir(a.modsPath)
+	entries, err := os.ReadDir(modsPath)
 	if err == nil {
 		for _, entry := range entries {
 			if entry.IsDir() {
@@ -242,7 +362,8 @@ func (a *App) GetCharacters() ([]Character, error) {
 
 // getModsForCharacter obtiene los mods de un personaje específico
 func (a *App) getModsForCharacter(characterName string) ([]Mod, error) {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	mods := []Mod{}
 
 	entries, err := os.ReadDir(characterPath)
@@ -295,7 +416,8 @@ func (a *App) GetModsForCharacter(characterName string) ([]Mod, error) {
 
 // ToggleMod activa/desactiva un mod
 func (a *App) ToggleMod(characterName string, modName string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	activePath := filepath.Join(characterPath, modName)
 	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
 
@@ -316,7 +438,8 @@ func (a *App) ToggleMod(characterName string, modName string) error {
 
 // ActivateSingleMod activa un mod y desactiva los demás del mismo personaje
 func (a *App) ActivateSingleMod(characterName string, modName string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 
 	// Primero desactivar todos los mods del personaje
 	entries, err := os.ReadDir(characterPath)
@@ -352,7 +475,8 @@ func (a *App) ActivateSingleMod(characterName string, modName string) error {
 
 // AddMod agrega un nuevo mod (crea la carpeta del personaje si no existe)
 func (a *App) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Crear directorio del personaje si no existe
@@ -381,7 +505,8 @@ func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFil
 		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
 	}
 
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Crear directorio del personaje si no existe
@@ -412,7 +537,8 @@ func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFil
 
 // UpdateMod actualiza un mod existente desde una carpeta o archivo
 func (a *App) UpdateMod(characterName string, modName string, sourcePath string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -466,7 +592,8 @@ func (a *App) UpdateModFromZipWithRoot(characterName string, modName string, zip
 		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
 	}
 
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -559,7 +686,8 @@ func generateUUID() string {
 
 // RemoveMod elimina un mod
 func (a *App) RemoveMod(characterName string, modName string) error {
-	characterPath := filepath.Join(a.modsPath, characterName)
+	modsPath := a.currentModsPath()
+	characterPath := filepath.Join(modsPath, characterName)
 
 	// Intentar eliminar ambas versiones (activa e inactiva)
 	activePath := filepath.Join(characterPath, modName)
@@ -817,15 +945,6 @@ func (a *App) CleanupTempDirectory() error {
 		return err
 	}
 	return nil
-}
-
-// ModUpdate struct to hold update information
-type ModUpdate struct {
-	CharacterName string `json:"characterName"`
-	ModName       string `json:"modName"`
-	ModUrl        string `json:"modUrl"`
-	LocalDate     string `json:"localDate"`
-	RemoteDate    string `json:"remoteDate"`
 }
 
 // CheckForUpdates checks for updates for all mods with a GameBanana URL
