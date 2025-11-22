@@ -50,10 +50,6 @@ export function IsConfigured() {
   return window['go']['main']['App']['IsConfigured']();
 }
 
-export function LoadCharactersList() {
-  return window['go']['main']['App']['LoadCharactersList']();
-}
-
 export function OpenModFolder(arg1) {
   return window['go']['main']['App']['OpenModFolder'](arg1);
 }

@@ -1,184 +1,70 @@
-// app.go
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"regexp"
-	"runtime"
-	"sort"
-	"strings"
-
-	"crypto/rand"
-	"time"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
-	"golift.io/xtractr"
+
+	"modManager/pkg/character"
+	"modManager/pkg/config"
+	"modManager/pkg/mod"
+	"modManager/pkg/utils"
 )
 
 type App struct {
-	ctx          context.Context
-	configPath   string
-	charsPath    string
-	tempZipDir   string
-	config       Config
-	selectedGame string
-}
-
-type GameConfig struct {
-	ModsPath string `json:"modsPath"`
-}
-
-type Config struct {
-	Games        map[string]GameConfig `json:"games"`
-	SelectedGame string                `json:"selectedGame"`
-}
-
-type Character struct {
-	Name      string `json:"name"`
-	Mods      []Mod  `json:"mods"`
-	HasFolder bool   `json:"hasFolder"`
-}
-
-type Mod struct {
-	ID            string `json:"id"`
-	Character     string `json:"character"`
-	Name          string `json:"name"`
-	IsActive      bool   `json:"isActive"`
-	FullPath      string `json:"fullPath"`
-	GameBananaUrl string `json:"gameBananaUrl"`
-}
-
-type ModConfig struct {
-	Id          string `json:"Id"`
-	CustomName  string `json:"CustomName"`
-	Author      string `json:"Author"`
-	ModUrl      string `json:"ModUrl"`
-	ImagePath   string `json:"ImagePath"`
-	Description string `json:"Description"`
-	DateAdded   string `json:"DateAdded"`
-	LastChecked string `json:"LastChecked"`
-}
-
-type ZipFile struct {
-	Name     string     `json:"name"`
-	IsDir    bool       `json:"isDir"`
-	Path     string     `json:"path"`
-	Children []*ZipFile `json:"children,omitempty"`
-}
-
-// ModUpdate struct to hold update information
-type ModUpdate struct {
-	CharacterName string `json:"characterName"`
-	ModName       string `json:"modName"`
-	ModUrl        string `json:"modUrl"`
-	LocalDate     string `json:"localDate"`
-	RemoteDate    string `json:"remoteDate"`
+	ctx              context.Context
+	configService    *config.Service
+	modService       *mod.Service
+	characterService *character.Service
+	tempZipDir       string
 }
 
 func NewApp() *App {
+	configSvc := config.NewService()
+	modSvc := mod.NewService(configSvc)
+	charSvc := character.NewService(configSvc, modSvc)
+
 	return &App{
-		config: Config{
-			Games: make(map[string]GameConfig),
-		},
-		selectedGame: "genshin", // Default
+		configService:    configSvc,
+		modService:       modSvc,
+		characterService: charSvc,
 	}
 }
 
-// startup se ejecuta al iniciar la aplicación
+// startup is called when the app starts
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	a.configPath = filepath.Join(".", "config.json")
-	a.charsPath = filepath.Join(".", "characters.json")
-	a.loadConfig()
+	a.configService.LoadConfig()
 }
 
-// loadConfig carga la configuración guardada
-func (a *App) loadConfig() {
-	data, err := os.ReadFile(a.configPath)
-	if err == nil {
-		// Intentar decodificar con la nueva estructura
-		var newConfig Config
-		if err := json.Unmarshal(data, &newConfig); err == nil && newConfig.Games != nil {
-			a.config = newConfig
-			if a.config.SelectedGame != "" {
-				a.selectedGame = a.config.SelectedGame
-			}
-			return
-		}
-
-		// Si falla, intentar migrar la configuración antigua
-		var oldConfig struct {
-			ModsPath string `json:"modsPath"`
-		}
-		if err := json.Unmarshal(data, &oldConfig); err == nil {
-			// Migrar
-			a.config.Games = make(map[string]GameConfig)
-			if oldConfig.ModsPath != "" {
-				a.config.Games["genshin"] = GameConfig{ModsPath: oldConfig.ModsPath}
-			}
-			a.config.SelectedGame = "genshin"
-			a.selectedGame = "genshin"
-			a.SaveConfig() // Guardar formato nuevo
-		}
-	} else {
-		// Inicializar si no existe
-		a.config.Games = make(map[string]GameConfig)
-		a.config.SelectedGame = "genshin"
-	}
-}
-
-// SaveConfig guarda la configuración completa
+// SaveConfig saves the configuration
 func (a *App) SaveConfig() error {
-	data, err := json.MarshalIndent(a.config, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(a.configPath, data, 0644)
+	return a.configService.SaveConfig()
 }
 
-// SetGame cambia el juego seleccionado
+// SetGame changes the selected game
 func (a *App) SetGame(game string) string {
-	a.selectedGame = game
-	a.config.SelectedGame = game
-	a.SaveConfig()
-	return a.selectedGame
+	return a.configService.SetGame(game)
 }
 
-// GetCurrentGame obtiene el juego actual
+// GetCurrentGame gets the current game
 func (a *App) GetCurrentGame() string {
-	return a.selectedGame
+	return a.configService.GetCurrentGame()
 }
 
-// GetGamesConfig obtiene la configuración de todos los juegos
-func (a *App) GetGamesConfig() Config {
-	return a.config
+// GetGamesConfig gets the configuration for all games
+func (a *App) GetGamesConfig() config.Config {
+	return a.configService.GetGamesConfig()
 }
 
-// UpdateGamePath actualiza la ruta de mods para un juego específico
+// UpdateGamePath updates the mods path for a specific game
 func (a *App) UpdateGamePath(game string, path string) error {
-	if a.config.Games == nil {
-		a.config.Games = make(map[string]GameConfig)
-	}
-	a.config.Games[game] = GameConfig{ModsPath: path}
-	return a.SaveConfig()
+	return a.configService.UpdateGamePath(game, path)
 }
 
-// Helper para obtener la ruta de mods actual
-func (a *App) currentModsPath() string {
-	if config, ok := a.config.Games[a.selectedGame]; ok {
-		return config.ModsPath
-	}
-	return ""
-}
-
-// SelectDirectory abre el selector de carpetas del sistema
+// SelectDirectory opens the system folder selector
 func (a *App) SelectDirectory() (string, error) {
 	dialogOptions := wailsruntime.OpenDialogOptions{
 		Title: "Seleccionar carpeta",
@@ -192,7 +78,7 @@ func (a *App) SelectDirectory() (string, error) {
 	return selectedDirectory, nil
 }
 
-// SelectFile abre el selector de archivos del sistema
+// SelectFile opens the system file selector
 func (a *App) SelectFile() (string, error) {
 	dialogOptions := wailsruntime.OpenDialogOptions{
 		Title:           "Seleccionar archivo de mod comprimido",
@@ -213,753 +99,142 @@ func (a *App) SelectFile() (string, error) {
 	return selectedFile, nil
 }
 
-// OpenModFolder abre la carpeta del mod en el explorador de archivos del sistema
+// OpenModFolder opens the mod folder in the system file explorer
 func (a *App) OpenModFolder(modPath string) error {
-
-	// Verificar que la carpeta existe
+	// Verify folder exists
 	if _, err := os.Stat(modPath); os.IsNotExist(err) {
 		return fmt.Errorf("la carpeta del mod no existe: %s", modPath)
 	}
 
-	// Abrir en el explorador de archivos del sistema usando comandos del SO
-	var cmd *exec.Cmd
-	switch runtime.GOOS {
-	case "windows":
-		cmd = exec.Command("explorer", modPath)
-	case "darwin":
-		cmd = exec.Command("open", modPath)
-	case "linux":
-		cmd = exec.Command("xdg-open", modPath)
-	default:
-		return fmt.Errorf("sistema operativo no soportado: %s", runtime.GOOS)
-	}
+	// Open in system file explorer using OS commands
 
-	return cmd.Start()
+	// Use utils.OpenFolder logic
+	return utils.OpenFolder(modPath)
 }
 
-// IsConfigured verifica si la aplicación está configurada para el juego actual
+// IsConfigured checks if the app is configured for the current game
 func (a *App) IsConfigured() bool {
-	path := a.currentModsPath()
-	return path != "" && isDirectory(path)
+	path := a.configService.CurrentModsPath()
+	return path != "" && utils.IsDirectory(path)
 }
 
-// LoadCharactersList carga la lista de personajes desde el JSON
-func (a *App) LoadCharactersList() ([]string, error) {
-	data, err := os.ReadFile(a.charsPath)
-
-	// Estructura por defecto para nuevos archivos
-	defaultChars := map[string][]string{
-		"genshin": {
-			"arlecchino", "clorinde", "furina", "raiden shogun",
-			"ganyu", "jean", "lisa", "kujou sara", "ningguang",
-			"eula", "yelan", "yae miko", "xilonen", "skirk", "mavulka", "deliya",
-		},
-		"wuwa": {
-			"jinhsi", "yinlin", "changli", "jiyan",
-		},
-		"hsr": {
-			"kafka", "black swan", "acheron", "firefly",
-		},
-		"zzz": {
-			"ellen", "zhu yuan", "jane doe",
-		},
-	}
-
-	if err != nil {
-		// Si el archivo no existe, crear uno por defecto
-		data, _ = json.MarshalIndent(defaultChars, "", "  ")
-		os.WriteFile(a.charsPath, data, 0644)
-		return defaultChars[a.selectedGame], nil
-	}
-
-	// Intentar decodificar con la nueva estructura (mapa)
-	var charactersMap map[string][]string
-	if err := json.Unmarshal(data, &charactersMap); err == nil {
-		// Si el juego actual no está en el mapa, devolver lista vacía o default
-		if list, ok := charactersMap[a.selectedGame]; ok {
-			return list, nil
-		}
-		// Si no existe la key, devolver defaults si los tenemos, o vacío
-		if def, ok := defaultChars[a.selectedGame]; ok {
-			return def, nil
-		}
-		return []string{}, nil
-	}
-
-	// Si falla, intentar como lista antigua (solo Genshin)
-	var oldList []string
-	if err := json.Unmarshal(data, &oldList); err == nil {
-		// Es el formato antiguo, asumimos que es Genshin
-		// Migrar el archivo a formato nuevo en memoria y guardar
-
-		// Preservar la lista antigua como 'genshin'
-		defaultChars["genshin"] = oldList
-
-		data, _ = json.MarshalIndent(defaultChars, "", "  ")
-		os.WriteFile(a.charsPath, data, 0644)
-
-		// Devolver la lista correspondiente al juego seleccionado
-		if list, ok := defaultChars[a.selectedGame]; ok {
-			return list, nil
-		}
-		return []string{}, nil
-	}
-
-	return nil, fmt.Errorf("formato de characters.json desconocido")
+// GetCharacters gets all characters with their info
+func (a *App) GetCharacters() ([]character.Character, error) {
+	return a.characterService.GetCharacters()
 }
 
-// GetCharacters obtiene todos los personajes con su información
-func (a *App) GetCharacters() ([]Character, error) {
+// GetModsForCharacter gets mods for a specific character
+func (a *App) GetModsForCharacter(characterName string) ([]mod.Mod, error) {
 	if !a.IsConfigured() {
-		return []Character{}, nil
+		return []mod.Mod{}, nil
 	}
-
-	// Cargar lista de personajes desde JSON
-	charList, err := a.LoadCharactersList()
-	if err != nil {
-		return nil, err
-	}
-
-	modsPath := a.currentModsPath()
-
-	// Obtener carpetas existentes en mods
-	existingFolders := make(map[string]bool)
-	entries, err := os.ReadDir(modsPath)
-	if err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() {
-				existingFolders[strings.ToLower(entry.Name())] = true
-			}
-		}
-	}
-
-	var characters []Character
-
-	for _, charName := range charList {
-		character := Character{
-			Name:      charName,
-			Mods:      []Mod{},
-			HasFolder: existingFolders[strings.ToLower(charName)],
-		}
-
-		// Si existe la carpeta, cargar los mods
-		if character.HasFolder {
-			mods, err := a.getModsForCharacter(charName)
-			if err == nil {
-				character.Mods = mods
-			}
-		}
-
-		characters = append(characters, character)
-	}
-
-	// Ordenar por nombre
-	sort.Slice(characters, func(i, j int) bool {
-		return characters[i].Name < characters[j].Name
-	})
-
-	return characters, nil
+	return a.modService.GetModsForCharacter(characterName)
 }
 
-// getModsForCharacter obtiene los mods de un personaje específico
-func (a *App) getModsForCharacter(characterName string) ([]Mod, error) {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	mods := []Mod{}
-
-	entries, err := os.ReadDir(characterPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Mod{}, nil
-		}
-		return nil, err
-	}
-
-	for _, modEntry := range entries {
-		if modEntry.IsDir() {
-			modName := modEntry.Name()
-			isActive := !strings.HasPrefix(modName, "DISABLED_")
-
-			// Obtener el nombre real del mod (sin DISABLED_)
-			actualModName := modName
-			if !isActive {
-				actualModName = strings.TrimPrefix(modName, "DISABLED_")
-			}
-
-			mod := Mod{
-				ID:        actualModName,
-				Character: characterName,
-				Name:      actualModName,
-				IsActive:  isActive,
-				FullPath:  filepath.Join(characterPath, modName),
-			}
-
-			// Intentar leer la URL de GameBanana desde .modconfig.json
-			modConfigPath := filepath.Join(characterPath, modName, ".modconfig.json")
-			if data, err := os.ReadFile(modConfigPath); err == nil {
-				var config ModConfig
-				if err := json.Unmarshal(data, &config); err == nil {
-					mod.GameBananaUrl = config.ModUrl
-				}
-			}
-
-			mods = append(mods, mod)
-		}
-	}
-
-	// Ordenar mods por nombre
-	sort.Slice(mods, func(i, j int) bool {
-		return mods[i].Name < mods[j].Name
-	})
-
-	return mods, nil
-}
-
-// GetModsForCharacter obtiene los mods de un personaje (para el frontend)
-func (a *App) GetModsForCharacter(characterName string) ([]Mod, error) {
-	if !a.IsConfigured() {
-		return []Mod{}, nil
-	}
-
-	return a.getModsForCharacter(characterName)
-}
-
-// ToggleMod activa/desactiva un mod
+// ToggleMod toggles a mod
 func (a *App) ToggleMod(characterName string, modName string) error {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	activePath := filepath.Join(characterPath, modName)
-	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
-
-	// Verificar si el mod está activo (sin DISABLED_)
-	if _, err := os.Stat(activePath); err == nil {
-		// Está activo → desactivar (renombrar a DISABLED_)
-		return os.Rename(activePath, disabledPath)
-	}
-
-	// Verificar si el mod está inactivo (con DISABLED_)
-	if _, err := os.Stat(disabledPath); err == nil {
-		// Está inactivo → activar (quitar DISABLED_)
-		return os.Rename(disabledPath, activePath)
-	}
-
-	return os.ErrNotExist
+	return a.modService.ToggleMod(characterName, modName)
 }
 
-// ActivateSingleMod activa un mod y desactiva los demás del mismo personaje
+// ActivateSingleMod activates a single mod
 func (a *App) ActivateSingleMod(characterName string, modName string) error {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-
-	// Primero desactivar todos los mods del personaje
-	entries, err := os.ReadDir(characterPath)
-	if err != nil {
-		return err
-	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			currentModName := entry.Name()
-
-			// Si es un mod activo (no tiene DISABLED_), desactivarlo
-			if !strings.HasPrefix(currentModName, "DISABLED_") {
-				disabledPath := filepath.Join(characterPath, "DISABLED_"+currentModName)
-				if err := os.Rename(filepath.Join(characterPath, currentModName), disabledPath); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	// Ahora activar el mod solicitado
-	targetDisabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
-	targetActivePath := filepath.Join(characterPath, modName)
-
-	// Si el mod está desactivado, activarlo
-	if _, err := os.Stat(targetDisabledPath); err == nil {
-		return os.Rename(targetDisabledPath, targetActivePath)
-	}
-
-	return nil
+	return a.modService.ActivateSingleMod(characterName, modName)
 }
 
-// AddMod agrega un nuevo mod (crea la carpeta del personaje si no existe)
+// AddMod adds a new mod
 func (a *App) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
-
-	// Crear directorio del personaje si no existe
-	if err := os.MkdirAll(characterPath, 0755); err != nil {
-		return err
-	}
-
-	// Crear directorio del mod
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
-		return err
-	}
-
-	// Copiar archivos del mod
-	if err := a.copyModFiles(sourcePath, targetPath); err != nil {
-		return err
-	}
-
-	// Crear archivo de configuración del mod
-	return a.createModConfig(targetPath, modName, gameBananaUrl)
+	return a.modService.AddMod(characterName, modName, sourcePath, gameBananaUrl)
 }
 
-// AddModFromZipWithRoot agrega un mod desde ZIP usando una raíz específica
+// AddModFromZipWithRoot adds a mod from ZIP using a specific root
 func (a *App) AddModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string, gameBananaUrl string) error {
-	// Verificar que tenemos un directorio temporal disponible
+	// Verify we have a temp directory available
 	if a.tempZipDir == "" {
 		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
 	}
 
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
+	// Delegate to service, passing the temp dir
+	err := a.modService.AddModFromZipWithRoot(characterName, modName, a.tempZipDir, selectedRoot, gameBananaUrl)
 
-	// Crear directorio del personaje si no existe
-	if err := os.MkdirAll(characterPath, 0755); err != nil {
-		return err
-	}
-
-	// Construir la ruta completa al directorio raíz seleccionado en el temp
-	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
-
-	// Verificar que el directorio seleccionado existe
-	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
-		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
-	}
-
-	// Copiar archivos desde el directorio temporal ya extraído
-	if err := a.copyModFiles(selectedRootPath, targetPath); err != nil {
-		return err
-	}
-
-	// Limpiar el directorio temporal después de usarlo
-	defer os.RemoveAll(a.tempZipDir)
+	// Clean up temp dir
+	os.RemoveAll(a.tempZipDir)
 	a.tempZipDir = ""
 
-	// Crear archivo de configuración del mod
-	return a.createModConfig(targetPath, modName, gameBananaUrl)
+	return err
 }
 
-// UpdateMod actualiza un mod existente desde una carpeta o archivo
+// UpdateMod updates an existing mod
 func (a *App) UpdateMod(characterName string, modName string, sourcePath string) error {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
-	configPath := filepath.Join(targetPath, ".modconfig.json")
-
-	// 1. Leer configuración existente para preservar ID y URL
-	var oldConfig ModConfig
-	if data, err := os.ReadFile(configPath); err == nil {
-		json.Unmarshal(data, &oldConfig)
-	}
-
-	// 2. Eliminar archivos antiguos (excepto config si quisiéramos preservarlo, pero mejor recrearlo limpio)
-	// Para asegurar limpieza, eliminamos todo el directorio del mod
-	if err := os.RemoveAll(targetPath); err != nil {
-		return fmt.Errorf("error eliminando mod antiguo: %v", err)
-	}
-
-	// 3. Re-crear directorio
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
-		return fmt.Errorf("error creando directorio del mod: %v", err)
-	}
-
-	// 4. Copiar nuevos archivos
-	if err := a.copyModFiles(sourcePath, targetPath); err != nil {
-		return err
-	}
-
-	// 5. Restaurar/Actualizar configuración
-	// Si no había config previa, usamos valores por defecto
-	if oldConfig.Id == "" {
-		oldConfig.Id = generateUUID()
-	}
-
-	// Actualizar fecha
-	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
-	oldConfig.LastChecked = oldConfig.DateAdded
-	// Asegurar que el nombre sea consistente
-	oldConfig.CustomName = modName
-
-	// Escribir config
-	data, err := json.MarshalIndent(oldConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+	return a.modService.UpdateMod(characterName, modName, sourcePath)
 }
 
-// UpdateModFromZipWithRoot actualiza un mod desde un ZIP
+// UpdateModFromZipWithRoot updates a mod from ZIP
 func (a *App) UpdateModFromZipWithRoot(characterName string, modName string, zipFilePath string, selectedRoot string) error {
-	// Verificar que tenemos un directorio temporal disponible
 	if a.tempZipDir == "" {
 		return fmt.Errorf("no temporary directory available. Please call GetZipStructure first")
 	}
 
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-	targetPath := filepath.Join(characterPath, modName)
-	configPath := filepath.Join(targetPath, ".modconfig.json")
+	err := a.modService.UpdateModFromZipWithRoot(characterName, modName, a.tempZipDir, selectedRoot)
 
-	// 1. Leer configuración existente
-	var oldConfig ModConfig
-	if data, err := os.ReadFile(configPath); err == nil {
-		json.Unmarshal(data, &oldConfig)
-	}
-
-	// 2. Eliminar mod antiguo
-	if err := os.RemoveAll(targetPath); err != nil {
-		return fmt.Errorf("error eliminando mod antiguo: %v", err)
-	}
-
-	// 3. Re-crear directorio
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
-		return fmt.Errorf("error creando directorio del mod: %v", err)
-	}
-
-	// 4. Copiar archivos desde el temp zip
-	selectedRootPath := filepath.Join(a.tempZipDir, selectedRoot)
-	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
-		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
-	}
-
-	if err := a.copyModFiles(selectedRootPath, targetPath); err != nil {
-		return err
-	}
-
-	// Limpiar temp
-	defer os.RemoveAll(a.tempZipDir)
+	os.RemoveAll(a.tempZipDir)
 	a.tempZipDir = ""
 
-	// 5. Restaurar config
-	if oldConfig.Id == "" {
-		oldConfig.Id = generateUUID()
-	}
-	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
-	oldConfig.LastChecked = oldConfig.DateAdded
-	oldConfig.CustomName = modName
-
-	data, err := json.MarshalIndent(oldConfig, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+	return err
 }
 
-// createModConfig crea el archivo .modconfig.json en el directorio del mod
-func (a *App) createModConfig(modPath string, modName string, gameBananaUrl string) error {
-	configPath := filepath.Join(modPath, ".modconfig.json")
-
-	// Generar UUID
-	id := generateUUID()
-	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
-
-	config := ModConfig{
-		Id:          id,
-		CustomName:  modName,
-		Author:      "", // Por ahora vacío, podría ser un campo futuro
-		ModUrl:      gameBananaUrl,
-		ImagePath:   ".JASM_Cover.jpg", // Valor por defecto
-		Description: "",
-		DateAdded:   now,
-		LastChecked: now,
-	}
-
-	data, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(configPath, data, 0644)
-}
-
-// generateUUID genera un UUID v4 simple
-func generateUUID() string {
-	u := make([]byte, 16)
-	_, err := rand.Read(u)
-	if err != nil {
-		return ""
-	}
-
-	u[6] = (u[6] & 0x0f) | 0x40 // Version 4
-	u[8] = (u[8] & 0x3f) | 0x80 // Variant 10
-
-	return fmt.Sprintf("%x-%x-%x-%x-%x", u[0:4], u[4:6], u[6:8], u[8:10], u[10:])
-}
-
-// RemoveMod elimina un mod
+// RemoveMod removes a mod
 func (a *App) RemoveMod(characterName string, modName string) error {
-	modsPath := a.currentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
-
-	// Intentar eliminar ambas versiones (activa e inactiva)
-	activePath := filepath.Join(characterPath, modName)
-	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
-
-	os.RemoveAll(activePath)
-	os.RemoveAll(disabledPath)
-
-	return nil
+	return a.modService.RemoveMod(characterName, modName)
 }
 
-// copyModFiles copia archivos de mod
-func (a *App) copyModFiles(sourcePath, targetPath string) error {
-	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			// Si hay error al acceder a un archivo, lo registramos pero continuamos
-			return fmt.Errorf("error accediendo a %s: %v", path, err)
-		}
-
-		relPath, err := filepath.Rel(sourcePath, path)
-		if err != nil {
-			return err
-		}
-
-		targetFilePath := filepath.Join(targetPath, relPath)
-
-		if info.IsDir() {
-			// Si es una carpeta vacía, la creamos pero no fallamos si hay error
-			if err := os.MkdirAll(targetFilePath, 0755); err != nil {
-				return fmt.Errorf("error creando directorio %s: %v", targetFilePath, err)
-			}
-			return nil
-		} else {
-			// Intentar copiar el archivo, pero si falla continuamos con el siguiente
-			input, err := os.ReadFile(path)
-			if err != nil {
-				return fmt.Errorf("error leyendo archivo %s: %v", path, err)
-			}
-
-			if err := os.WriteFile(targetFilePath, input, 0644); err != nil {
-				return fmt.Errorf("error escribiendo archivo %s: %v", targetFilePath, err)
-			}
-		}
-
-		return nil
-	})
-}
-
-// extractArchive descomprime un archivo (zip, rar, 7z) en el directorio especificado
-func (a *App) extractArchive(source, destination string) error {
-	// Asegurarse de que el destino sea una ruta absoluta
-	dest, err := filepath.Abs(destination)
-	if err != nil {
-		return fmt.Errorf("error getting absolute path for destination: %v", err)
-	}
-
-	// Configurar la extracción
-	xfile := &xtractr.XFile{
-		FilePath:  source,
-		OutputDir: dest,
-		FileMode:  0644, // Permisos para archivos extraídos
-		DirMode:   0755, // Permisos para directorios extraídos
-	}
-
-	// Extraer el archivo
-	_, files, arch, err := xtractr.ExtractFile(xfile)
-	if err != nil || files == nil || arch == nil {
-		return fmt.Errorf("error extracting archive: %v", err)
-	}
-
-	return nil
-}
-
-func isDirectory(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return info.IsDir()
-}
-
-// GetZipStructure obtiene la estructura de archivos de un ZIP extrayéndolo a una carpeta temporal
-func (a *App) GetZipStructure(zipFilePath string) ([]ZipFile, error) {
-	// Limpiar directorio temporal anterior si existe
+// GetZipStructure gets the structure of a ZIP file
+func (a *App) GetZipStructure(zipFilePath string) ([]utils.ZipFile, error) {
+	// Clean previous temp dir
 	if a.tempZipDir != "" {
 		os.RemoveAll(a.tempZipDir)
 	}
 
-	// Crear directorio temporal para extraer el ZIP en el mismo directorio de ejecución
+	// Create temp directory
 	tempDir, err := os.MkdirTemp(".", "zip-structure-*")
 	if err != nil {
 		return nil, fmt.Errorf("error creating temp directory: %v", err)
 	}
 
-	// Guardar la ruta temporal para uso posterior
+	// Save temp path
 	a.tempZipDir = tempDir
 
-	// Extraer todo el ZIP al directorio temporal
-	err = a.extractArchive(zipFilePath, tempDir)
+	// Extract ZIP to temp
+	err = utils.ExtractArchive(zipFilePath, tempDir)
 	if err != nil {
 		os.RemoveAll(tempDir)
 		a.tempZipDir = ""
 		return nil, fmt.Errorf("error extracting zip to temp directory: %v", err)
 	}
 
-	// Construir la estructura desde el sistema de archivos
-	structure, err := a.buildStructureFromPath(tempDir)
+	// Build structure
+	structure, err := utils.BuildStructureFromPath(tempDir)
 	if err != nil {
 		os.RemoveAll(tempDir)
 		a.tempZipDir = ""
 		return nil, fmt.Errorf("error building structure from temp directory: %v", err)
 	}
 
-	// NO limpiamos el directorio temporal aquí porque lo necesitaremos para AddModFromZipWithRoot
-
-	// Envolver todo en un nodo Raíz para permitir seleccionar la raíz del ZIP
-	rootNode := ZipFile{
+	// Wrap in Root node
+	rootNode := utils.ZipFile{
 		Name:     "Root (Select this if files are not in a folder)",
 		IsDir:    true,
 		Path:     ".",
-		Children: make([]*ZipFile, len(structure)),
+		Children: make([]*utils.ZipFile, len(structure)),
 	}
 
 	for i := range structure {
 		rootNode.Children[i] = &structure[i]
 	}
 
-	return []ZipFile{rootNode}, nil
+	return []utils.ZipFile{rootNode}, nil
 }
 
-// buildStructureFromPath construye la estructura ZipFile desde una ruta del sistema de archivos
-func (a *App) buildStructureFromPath(rootPath string) ([]ZipFile, error) {
-	var result []ZipFile
-
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Obtener la ruta relativa desde el directorio raíz
-		relPath, err := filepath.Rel(rootPath, path)
-		if err != nil {
-			return err
-		}
-
-		// Normalizar separadores a /
-		normalizedPath := filepath.ToSlash(relPath)
-
-		// Construir la entrada ZipFile
-		zipFile := ZipFile{
-			Name:     info.Name(),
-			IsDir:    info.IsDir(),
-			Path:     normalizedPath,
-			Children: []*ZipFile{}, // Se llenará después
-		}
-
-		// Si es el directorio raíz, agregarlo al resultado
-		if relPath == "." {
-			return nil // Saltar el directorio raíz
-		}
-
-		result = append(result, zipFile)
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Construir la estructura jerárquica
-	return a.buildHierarchicalStructure(result), nil
-}
-func (a *App) buildHierarchicalStructure(files []ZipFile) []ZipFile {
-	// Crear un mapa para acceso rápido
-	fileMap := make(map[string]*ZipFile)
-
-	// Primero, crear todas las entradas y guardar referencias
-	for i := range files {
-		fileMap[files[i].Path] = &files[i]
-		fmt.Printf("DEBUG: Added to map: %s (isDir: %v)\n", files[i].Path, files[i].IsDir)
-	}
-
-	// Luego, construir la jerarquía
-	var root []*ZipFile // Usar punteros para mantener las referencias
-	for i := range files {
-		file := &files[i]
-		if !strings.Contains(file.Path, "/") {
-			// Es un archivo/directorio raíz - agregar la referencia del mapa
-			root = append(root, file)
-			fmt.Printf("DEBUG: Root item: %s\n", file.Path)
-		} else {
-			// Tiene un padre
-			parentPath := file.Path[:strings.LastIndex(file.Path, "/")]
-			if parent, exists := fileMap[parentPath]; exists {
-				// Agregar la referencia del mapa en lugar de la copia
-				parent.Children = append(parent.Children, file)
-				fmt.Printf("DEBUG: Added %s as child of %s\n", file.Path, parentPath)
-			} else {
-				fmt.Printf("DEBUG: Parent not found for %s (parent: %s)\n", file.Path, parentPath)
-			}
-		}
-	}
-
-	// Imprimir estructura final para depuración
-	fmt.Printf("DEBUG: Final structure:\n")
-	for _, item := range root {
-		a.printZipFileStructure(*item, 0)
-	}
-
-	// Convertir a []ZipFile para el retorno
-	result := make([]ZipFile, len(root))
-	for i, item := range root {
-		result[i] = *item
-	}
-
-	// Ordenar
-	sort.Slice(result, func(i, j int) bool {
-		if result[i].IsDir != result[j].IsDir {
-			return result[i].IsDir // Directorios primero
-		}
-		return result[i].Name < result[j].Name
-	})
-
-	// Ordenar recursivamente
-	for i := range result {
-		sortZipFileChildren(&result[i])
-	}
-
-	return result
-}
-
-// printZipFileStructure imprime la estructura para depuración
-func (a *App) printZipFileStructure(file ZipFile, level int) {
-	indent := strings.Repeat("  ", level)
-	fmt.Printf("%s- %s (isDir: %v, children: %d)\n", indent, file.Path, file.IsDir, len(file.Children))
-	for _, child := range file.Children {
-		a.printZipFileStructure(*child, level+1)
-	}
-}
-
-// sortZipFileChildren ordena recursivamente los hijos de un archivo ZIP
-func sortZipFileChildren(file *ZipFile) {
-	if len(file.Children) > 0 {
-		sort.Slice(file.Children, func(i, j int) bool {
-			if file.Children[i].IsDir != file.Children[j].IsDir {
-				return file.Children[i].IsDir // Directorios primero
-			}
-			return file.Children[i].Name < file.Children[j].Name
-		})
-
-		// Ordenar recursivamente los hijos de cada hijo
-		for i := range file.Children {
-			sortZipFileChildren(file.Children[i])
-		}
-	}
-}
-
-func (a *App) Greet(name string) (string, error) {
-	return "Hello " + name, nil
-}
-
-// CleanupTempDirectory limpia el directorio temporal del ZIP
+// CleanupTempDirectory cleans the temp directory
 func (a *App) CleanupTempDirectory() error {
 	if a.tempZipDir != "" {
 		err := os.RemoveAll(a.tempZipDir)
@@ -969,143 +244,24 @@ func (a *App) CleanupTempDirectory() error {
 	return nil
 }
 
-// CheckForUpdates checks for updates for all mods with a GameBanana URL
-func (a *App) CheckForUpdates() ([]ModUpdate, error) {
-	var updates []ModUpdate
-
-	characters, err := a.GetCharacters()
+// CheckForUpdates checks for updates
+func (a *App) CheckForUpdates() ([]mod.ModUpdate, error) {
+	// We need the list of characters to check updates for all of them
+	// Or we can just iterate over all folders in mods path if we wanted,
+	// but the original logic iterated over characters.
+	// So we need to get characters first.
+	chars, err := a.characterService.LoadCharactersList()
 	if err != nil {
 		return nil, err
 	}
-
-	for _, char := range characters {
-		mods, err := a.GetModsForCharacter(char.Name)
-		if err != nil {
-			continue
-		}
-
-		for _, mod := range mods {
-			configPath := filepath.Join(mod.FullPath, ".modconfig.json")
-			if _, err := os.Stat(configPath); err == nil {
-				// Read config
-				data, err := os.ReadFile(configPath)
-				if err != nil {
-					continue
-				}
-
-				var config ModConfig
-				if err := json.Unmarshal(data, &config); err != nil {
-					continue
-				}
-
-				if config.ModUrl != "" && strings.Contains(config.ModUrl, "gamebanana.com") {
-					// Fetch GameBanana page
-					remoteDate, err := a.fetchGameBananaDate(config.ModUrl)
-					if err != nil {
-						fmt.Printf("Error fetching date for %s: %v\n", config.ModUrl, err)
-						continue
-					}
-
-					// Parse dates
-					// Local date format: "02/01/2006 03:04:05 p. m." (from createModConfig)
-					// We need to normalize "p. m." to "PM" and "a. m." to "AM" for Go's parser
-					normalizedDate := strings.ReplaceAll(config.DateAdded, "p. m.", "PM")
-					normalizedDate = strings.ReplaceAll(normalizedDate, "a. m.", "AM")
-
-					localTime, err := time.Parse("02/01/2006 03:04:05 PM", normalizedDate)
-					if err != nil {
-						// Try fallback to standard format just in case
-						localTime, err = time.Parse("2006-01-02 15:04:05", config.DateAdded)
-						if err != nil {
-							fmt.Printf("Error parsing local date %s: %v\n", config.DateAdded, err)
-							continue
-						}
-					}
-
-					// Remote date format (ISO 8601 from JSON-LD): "2024-09-10T19:33:05+00:00"
-					remoteTime, err := time.Parse(time.RFC3339, remoteDate)
-					if err != nil {
-						fmt.Printf("Error parsing remote date %s: %v\n", remoteDate, err)
-						continue
-					}
-
-					// Compare dates
-					if remoteTime.After(localTime) {
-						updates = append(updates, ModUpdate{
-							CharacterName: char.Name,
-							ModName:       mod.Name,
-							ModUrl:        config.ModUrl,
-							LocalDate:     config.DateAdded,
-							RemoteDate:    remoteTime.Format("2006-01-02 15:04:05"),
-						})
-					}
-				}
-			}
-		}
-	}
-
-	return updates, nil
+	return a.modService.CheckForUpdates(chars)
 }
 
-// fetchGameBananaDate fetches the modification date from a GameBanana URL
-func (a *App) fetchGameBananaDate(url string) (string, error) {
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
-	}
-
-	// Set User-Agent to avoid being blocked
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("received status code %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	// Extract JSON-LD
-	// Look for <script type="application/ld+json"> containing "dateModified"
-	// Simple regex to find the dateModified field in the JSON-LD block
-	// This is a bit hacky but avoids a full HTML parser dependency for now
-	re := regexp.MustCompile(`"dateModified"\s*:\s*"([^"]+)"`)
-	matches := re.FindStringSubmatch(string(body))
-
-	if len(matches) > 1 {
-		return matches[1], nil
-	}
-
-	return "", fmt.Errorf("dateModified not found in page")
-}
-
-// OpenUrl opens a URL in the default browser
+// OpenUrl opens a URL
 func (a *App) OpenUrl(url string) error {
-	var cmd string
-	var args []string
+	return utils.OpenUrl(url)
+}
 
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "cmd"
-		args = []string{"/c", "start", url}
-	case "darwin":
-		cmd = "open"
-		args = []string{url}
-	default: // "linux", "freebsd", "openbsd", "netbsd"
-		cmd = "xdg-open"
-		args = []string{url}
-	}
-
-	return exec.Command(cmd, args...).Start()
+func (a *App) Greet(name string) (string, error) {
+	return "Hello " + name, nil
 }

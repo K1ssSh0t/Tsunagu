@@ -11,3 +11,4 @@
 -  ~~Agregar que se actulice el mod pedira seleccionar la carpte o acrhivo compirmido para actulizar dicho mod~~
 - ~~Agregar que se puedan adminstrar varios juegos no solo el genshin~~
 - ~~Chear un edge case si un arhcivo comprimi tiene sus arhcivos directos en la carpeta raiz y no en una carpeta hija~~
+- Cambiar el nombre de la APP por uno mejor y luego se cambiara el nombre del modulo

@@ -1,30 +1,8 @@
-export namespace main {
+export namespace character {
 	
-	export class Mod {
-	    id: string;
-	    character: string;
-	    name: string;
-	    isActive: boolean;
-	    fullPath: string;
-	    gameBananaUrl: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Mod(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.character = source["character"];
-	        this.name = source["name"];
-	        this.isActive = source["isActive"];
-	        this.fullPath = source["fullPath"];
-	        this.gameBananaUrl = source["gameBananaUrl"];
-	    }
-	}
 	export class Character {
 	    name: string;
-	    mods: Mod[];
+	    mods: mod.Mod[];
 	    hasFolder: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -34,7 +12,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
-	        this.mods = this.convertValues(source["mods"], Mod);
+	        this.mods = this.convertValues(source["mods"], mod.Mod);
 	        this.hasFolder = source["hasFolder"];
 	    }
 	
@@ -56,6 +34,11 @@ export namespace main {
 		    return a;
 		}
 	}
+
+}
+
+export namespace config {
+	
 	export class GameConfig {
 	    modsPath: string;
 	
@@ -100,8 +83,33 @@ export namespace main {
 		    return a;
 		}
 	}
+
+}
+
+export namespace mod {
 	
+	export class Mod {
+	    id: string;
+	    character: string;
+	    name: string;
+	    isActive: boolean;
+	    fullPath: string;
+	    gameBananaUrl: string;
 	
+	    static createFrom(source: any = {}) {
+	        return new Mod(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.character = source["character"];
+	        this.name = source["name"];
+	        this.isActive = source["isActive"];
+	        this.fullPath = source["fullPath"];
+	        this.gameBananaUrl = source["gameBananaUrl"];
+	    }
+	}
 	export class ModUpdate {
 	    characterName: string;
 	    modName: string;
@@ -122,6 +130,11 @@ export namespace main {
 	        this.remoteDate = source["remoteDate"];
 	    }
 	}
+
+}
+
+export namespace utils {
+	
 	export class ZipFile {
 	    name: string;
 	    isDir: boolean;

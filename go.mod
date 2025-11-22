@@ -1,4 +1,4 @@
-module myproject
+module modManager
 
 go 1.23
 
