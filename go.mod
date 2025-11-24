@@ -1,4 +1,4 @@
-module modManager
+module tsunagu
 
 go 1.23
 

@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"modManager/pkg/character"
-	"modManager/pkg/config"
-	"modManager/pkg/mod"
-	"modManager/pkg/utils"
+	"tsunagu/pkg/character"
+	"tsunagu/pkg/config"
+	"tsunagu/pkg/mod"
+	"tsunagu/pkg/utils"
 )
 
 type App struct {
@@ -250,11 +251,25 @@ func (a *App) CheckForUpdates() ([]mod.ModUpdate, error) {
 	// Or we can just iterate over all folders in mods path if we wanted,
 	// but the original logic iterated over characters.
 	// So we need to get characters first.
-	chars, err := a.characterService.LoadCharactersList()
+	charDefs, err := a.characterService.LoadCharactersList()
 	if err != nil {
 		return nil, err
 	}
-	return a.modService.CheckForUpdates(chars)
+
+	var charNames []string
+	for _, def := range charDefs {
+		charNames = append(charNames, def.Name)
+		// Also add skin folders to check for updates
+		for _, skin := range def.Skins {
+			if skin.Folder != "" {
+				// Construct folder name: {Character}_skin_{SkinFolder}
+				fullSkinFolder := strings.ToLower(fmt.Sprintf("%s_skin_%s", def.Name, skin.Folder))
+				charNames = append(charNames, fullSkinFolder)
+			}
+		}
+	}
+
+	return a.modService.CheckForUpdates(charNames)
 }
 
 // OpenUrl opens a URL

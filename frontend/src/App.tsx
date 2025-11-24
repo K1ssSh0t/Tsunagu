@@ -49,13 +49,19 @@ import { ZipModal } from "./components/ZipModal";
 import { AddModDialog } from "./components/AddModDialog";
 import { UpdateModDialog } from "./components/UpdateModDialog";
 
-type Character = character.Character;
+type Character = character.Character & {
+  skins?: { name: string; folder: string }[];
+};
 type Mod = mod.Mod;
 type ZipFile = utils.ZipFile;
 
 const App: React.FC = () => {
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<string>("");
+  const [selectedSkin, setSelectedSkin] = useState<{
+    name: string;
+    folder: string;
+  } | null>(null);
   const [characterMods, setCharacterMods] = useState<Mod[]>([]);
   const [showConfig, setShowConfig] = useState(false);
   const [isAppConfigured, setIsAppConfigured] = useState<boolean | null>(null);
@@ -136,6 +142,7 @@ const App: React.FC = () => {
       setIsAppConfigured(configured);
 
       setSelectedCharacter("");
+      setSelectedSkin(null);
       setCharacterMods([]);
 
       if (configured) {
@@ -172,7 +179,7 @@ const App: React.FC = () => {
   const loadCharacters = async () => {
     try {
       const chars = await GetCharacters();
-      setCharacters(chars);
+      setCharacters(chars as Character[]);
     } catch (error) {
       console.error("Error loading characters:", error);
       toast.error("Error al cargar los personajes");
@@ -191,16 +198,36 @@ const App: React.FC = () => {
 
   const handleCharacterSelect = async (characterName: string) => {
     setSelectedCharacter(characterName);
+    setSelectedSkin(null);
     await loadCharacterMods(characterName);
   };
 
+  const handleSkinSelect = async (skin: { name: string; folder: string } | null) => {
+    setSelectedSkin(skin);
+    if (skin) {
+      await loadCharacterMods(skin.folder);
+    } else {
+      await loadCharacterMods(selectedCharacter);
+    }
+  };
+
   const handleToggleMod = async (character: string, modName: string) => {
+    // If a skin is selected, 'character' argument coming from ModList might be the skin folder name
+    // or we should use the current context.
+    // Actually, ModList passes the selectedCharacter prop, which is the main character name.
+    // But for skins, we need to operate on the skin folder.
+    // So we should use selectedSkin.folder if it exists.
+
+    const targetFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
+
     setIsLoading(true);
     setLoadingMessage("Actualizando estado del mod...");
     try {
-      await ToggleMod(character, modName);
-      await loadCharacterMods(character);
-      await loadCharacters();
+      await ToggleMod(targetFolder, modName);
+      await loadCharacterMods(targetFolder);
+      // We don't need to reload all characters unless we want to update the "HasFolder" status, 
+      // but for toggling mods it's not strictly necessary and avoids flickering.
+      // await loadCharacters(); 
       const mod = characterMods.find((m) => m.name === modName);
       if (mod) {
         toast.success(
@@ -217,12 +244,13 @@ const App: React.FC = () => {
   };
 
   const handleActivateSingle = async (character: string, modName: string) => {
+    const targetFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
+
     setIsLoading(true);
     setLoadingMessage("Activando mod único...");
     try {
-      await ActivateSingleMod(character, modName);
-      await loadCharacterMods(character);
-      await loadCharacters();
+      await ActivateSingleMod(targetFolder, modName);
+      await loadCharacterMods(targetFolder);
       toast.success(`Mod ${modName} activado como único`);
     } catch (error) {
       console.error("Error activating mod:", error);
@@ -234,7 +262,15 @@ const App: React.FC = () => {
   };
 
   const handleAddMod = async () => {
-    if (!selectedCharacter || !newModName || !newModPath) return;
+    const targetFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
+
+    if (!targetFolder || !newModName || !newModPath) return;
+
+    const trimmedModName = newModName.trim();
+    if (!trimmedModName) {
+      toast.error("El nombre del mod no puede estar vacío");
+      return;
+    }
 
     setIsLoading(true);
     setLoadingMessage("Procesando...");
@@ -270,14 +306,14 @@ const App: React.FC = () => {
         }
       } else {
         setLoadingMessage("Copiando archivos del mod...");
-        await AddMod(selectedCharacter, newModName, newModPath, gameBananaUrl);
+        await AddMod(targetFolder, trimmedModName, newModPath, gameBananaUrl);
         setShowAddMod(false);
         setNewModName("");
         setNewModPath("");
         setGameBananaUrl("");
-        await loadCharacterMods(selectedCharacter);
+        await loadCharacterMods(targetFolder);
         await loadCharacters();
-        toast.success(`Mod ${newModName} agregado correctamente`);
+        toast.success(`Mod ${trimmedModName} agregado correctamente`);
       }
     } catch (error) {
       console.error("Error adding mod:", error);
@@ -310,13 +346,16 @@ const App: React.FC = () => {
       return;
     }
 
+    const targetFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
+    const trimmedModName = newModName.trim();
+
     setIsLoading(true);
     setLoadingMessage("Extrayendo y copiando archivos...");
 
     try {
       if (modToUpdate) {
         await UpdateModFromZipWithRoot(
-          modToUpdate.character,
+          modToUpdate.character, // This comes from the mod object, which should have the correct folder
           modToUpdate.modName,
           newModPath,
           selectedRoot
@@ -335,14 +374,20 @@ const App: React.FC = () => {
 
         setModToUpdate(null);
       } else {
+        if (!trimmedModName) {
+          toast.error("El nombre del mod no puede estar vacío");
+          setIsLoading(false);
+          return;
+        }
+
         await AddModFromZipWithRoot(
-          selectedCharacter,
-          newModName,
+          targetFolder,
+          trimmedModName,
           newModPath,
           selectedRoot,
           gameBananaUrl
         );
-        toast.success(`Mod ${newModName} agregado correctamente`);
+        toast.success(`Mod ${trimmedModName} agregado correctamente`);
         setShowAddMod(false);
         setNewModName("");
         setGameBananaUrl("");
@@ -353,8 +398,8 @@ const App: React.FC = () => {
       setSelectedRoot("");
       setZipStructure([]);
 
-      if (selectedCharacter) {
-        await loadCharacterMods(selectedCharacter);
+      if (targetFolder) {
+        await loadCharacterMods(targetFolder);
       }
       await loadCharacters();
       await checkForUpdates();
@@ -372,6 +417,7 @@ const App: React.FC = () => {
     modName: string,
     modUrl: string
   ) => {
+    // character here is the folder name (either character name or skin folder)
     setModToUpdate({ character, modName, currentUrl: modUrl });
   };
 
@@ -453,6 +499,7 @@ const App: React.FC = () => {
   };
 
   const handleRemoveModClick = (character: string, modName: string) => {
+    // character here is the folder name
     setModToDelete({ character, modName });
   };
 
@@ -557,6 +604,9 @@ const App: React.FC = () => {
     );
   }
 
+  // Find the currently selected character object to pass its skins
+  const currentCharacterObj = characters.find(c => c.name === selectedCharacter);
+
   return (
     <div className="min-h-screen bg-background p-6 relative">
       <Toaster position="top-center" richColors closeButton />
@@ -603,7 +653,7 @@ const App: React.FC = () => {
 
       <AddModDialog
         isOpen={showAddMod}
-        selectedCharacter={selectedCharacter}
+        selectedCharacter={selectedSkin ? selectedSkin.folder : selectedCharacter}
         newModName={newModName}
         newModPath={newModPath}
         gameBananaUrl={gameBananaUrl}
@@ -670,6 +720,8 @@ const App: React.FC = () => {
 
             <ModList
               selectedCharacter={selectedCharacter}
+              selectedSkin={selectedSkin}
+              skins={currentCharacterObj?.skins || []}
               mods={characterMods}
               updates={updates}
               onAddMod={() => setShowAddMod(true)}
@@ -679,6 +731,7 @@ const App: React.FC = () => {
               onActivateSingle={handleActivateSingle}
               onOpenFolder={handleOpenModFolder}
               onRemoveMod={handleRemoveModClick}
+              onSelectSkin={handleSkinSelect}
             />
           </div>
         </div>

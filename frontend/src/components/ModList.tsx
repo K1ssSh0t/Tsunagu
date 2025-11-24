@@ -8,6 +8,8 @@ import { mod } from "../../wailsjs/go/models";
 
 interface ModListProps {
     selectedCharacter: string;
+    selectedSkin: { name: string; folder: string } | null;
+    skins: { name: string; folder: string }[];
     mods: mod.Mod[];
     updates: mod.ModUpdate[];
     onAddMod: () => void;
@@ -17,10 +19,13 @@ interface ModListProps {
     onActivateSingle: (character: string, modName: string) => void;
     onOpenFolder: (path: string) => void;
     onRemoveMod: (character: string, modName: string) => void;
+    onSelectSkin: (skin: { name: string; folder: string } | null) => void;
 }
 
 export const ModList: React.FC<ModListProps> = ({
     selectedCharacter,
+    selectedSkin,
+    skins,
     mods,
     updates,
     onAddMod,
@@ -30,22 +35,53 @@ export const ModList: React.FC<ModListProps> = ({
     onActivateSingle,
     onOpenFolder,
     onRemoveMod,
+    onSelectSkin,
 }) => {
     return (
         <Card className="md:col-span-3 h-[calc(100vh-200px)] flex flex-col">
-            <CardHeader className="pb-2 flex flex-row justify-between items-center">
-                <div>
-                    <CardTitle className="text-xl capitalize">
-                        {selectedCharacter || "Selecciona un personaje"}
-                    </CardTitle>
-                    <CardDescription>
-                        {selectedCharacter
-                            ? `Gestionando mods para ${selectedCharacter}`
-                            : "Selecciona un personaje para ver sus mods"}
-                    </CardDescription>
+            <CardHeader className="pb-2">
+                <div className="flex flex-row justify-between items-center mb-4">
+                    <div>
+                        <CardTitle className="text-xl capitalize">
+                            {selectedCharacter || "Selecciona un personaje"}
+                        </CardTitle>
+                        <CardDescription>
+                            {selectedCharacter
+                                ? `Gestionando mods para ${selectedCharacter}`
+                                : "Selecciona un personaje para ver sus mods"}
+                        </CardDescription>
+                    </div>
+                    {selectedCharacter && (
+                        <Button onClick={onAddMod}>Agregar Mod</Button>
+                    )}
                 </div>
-                {selectedCharacter && (
-                    <Button onClick={onAddMod}>Agregar Mod</Button>
+
+                {selectedCharacter && skins && skins.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                        <Button
+                            variant={!selectedSkin ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onSelectSkin(null)}
+                            className="whitespace-nowrap"
+                        >
+                            Default
+                        </Button>
+                        {skins.map((skin) => (
+                            <Button
+                                key={skin.name}
+                                variant={
+                                    selectedSkin?.name === skin.name
+                                        ? "default"
+                                        : "outline"
+                                }
+                                size="sm"
+                                onClick={() => onSelectSkin(skin)}
+                                className="whitespace-nowrap"
+                            >
+                                {skin.name}
+                            </Button>
+                        ))}
+                    </div>
                 )}
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-4 bg-muted/20">
@@ -57,7 +93,7 @@ export const ModList: React.FC<ModListProps> = ({
                 ) : mods.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                         <Folder className="h-16 w-16 mb-4 opacity-20" />
-                        <p>No hay mods instalados para este personaje</p>
+                        <p>No hay mods instalados para {selectedSkin ? `la skin ${selectedSkin.name}` : "este personaje"}</p>
                         <Button variant="link" onClick={onAddMod} className="mt-2">
                             Agregar el primer mod
                         </Button>

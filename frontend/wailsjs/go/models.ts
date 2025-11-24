@@ -1,9 +1,24 @@
 export namespace character {
 	
+	export class Skin {
+	    name: string;
+	    folder: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Skin(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.folder = source["folder"];
+	    }
+	}
 	export class Character {
 	    name: string;
 	    mods: mod.Mod[];
 	    hasFolder: boolean;
+	    skins: Skin[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Character(source);
@@ -14,6 +29,7 @@ export namespace character {
 	        this.name = source["name"];
 	        this.mods = this.convertValues(source["mods"], mod.Mod);
 	        this.hasFolder = source["hasFolder"];
+	        this.skins = this.convertValues(source["skins"], Skin);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

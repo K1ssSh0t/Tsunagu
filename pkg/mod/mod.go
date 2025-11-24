@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"modManager/pkg/config"
-	"modManager/pkg/utils"
+	"tsunagu/pkg/config"
+	"tsunagu/pkg/utils"
 )
 
 type Mod struct {
@@ -170,6 +170,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 
 // AddMod adds a new mod (creates character folder if not exists)
 func (s *Service) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
+	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)
@@ -195,6 +196,7 @@ func (s *Service) AddMod(characterName string, modName string, sourcePath string
 
 // AddModFromZipWithRoot adds a mod from ZIP using a specific root
 func (s *Service) AddModFromZipWithRoot(characterName string, modName string, tempZipDir string, selectedRoot string, gameBananaUrl string) error {
+	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, characterName)
 	targetPath := filepath.Join(characterPath, modName)

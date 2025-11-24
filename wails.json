@@ -1,18 +1,17 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "Mod Manager",
-  "outputfilename": "Mod Manager",
+  "name": "Tsunagu",
+  "outputfilename": "Tsunagu",
   "frontend:install": "bun install",
   "frontend:build": "bun run build",
   "frontend:dev:watcher": "bun run dev",
   "frontend:dev:serverUrl": "auto",
   "author": {
-    "name": "Kiss Shot",
-    "email": "angelomarmatias@gmail.com"
+    "name": "Kiss Shot"
   },
   "info": {
-    "productName": "Mod Manager",
-    "productVersion": "1.0.0",
+    "productName": "Tsunagu",
+    "productVersion": "1.1.0",
     "companyName": "Kiss Shot",
     "copyright": "Kiss Shot",
     "comments": "Mod Manager for GI, ZZZ, WUWA, HSR"
