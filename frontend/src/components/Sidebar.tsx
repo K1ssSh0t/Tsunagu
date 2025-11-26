@@ -19,18 +19,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
     updates,
     onSelectCharacter,
 }) => {
+    const [searchQuery, setSearchQuery] = React.useState("");
+
+    const filteredCharacters = characters.filter((char) =>
+        char.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <Card className="md:col-span-1 h-[calc(100vh-200px)] flex flex-col">
             <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Personajes</CardTitle>
                 <div className="relative">
-                    <Input placeholder="Buscar..." className="h-8" />
+                    <Input
+                        placeholder="Buscar..."
+                        className="h-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                 </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-2">
                 <ScrollArea className="h-full pr-4">
                     <div className="space-y-1">
-                        {characters.map((char) => {
+                        {filteredCharacters.map((char) => {
                             const hasCharUpdate = updates.some(
                                 (u) => u.characterName === char.name
                             );
@@ -60,9 +71,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 </Button>
                             );
                         })}
-                        {characters.length === 0 && (
+                        {filteredCharacters.length === 0 && (
                             <div className="text-center text-muted-foreground py-4">
-                                No hay personajes
+                                {searchQuery ? "No se encontraron personajes" : "No hay personajes"}
                             </div>
                         )}
                     </div>
