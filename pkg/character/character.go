@@ -172,9 +172,10 @@ func (s *Service) GetCharacters() ([]Character, error) {
 		return nil, err
 	}
 
-	// Get existing folders in mods
+	// Get existing folders in mods/character
+	characterPath := filepath.Join(modsPath, "character")
 	existingFolders := make(map[string]bool)
-	entries, err := os.ReadDir(modsPath)
+	entries, err := os.ReadDir(characterPath)
 	if err == nil {
 		for _, entry := range entries {
 			if entry.IsDir() {

@@ -58,7 +58,7 @@ func NewService(cfg *config.Service) *Service {
 // GetModsForCharacter gets the mods for a specific character
 func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	mods := []Mod{}
 
 	entries, err := os.ReadDir(characterPath)
@@ -112,7 +112,7 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 // ToggleMod toggles a mod active/inactive
 func (s *Service) ToggleMod(characterName string, modName string) error {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	activePath := filepath.Join(characterPath, modName)
 	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
 
@@ -134,7 +134,7 @@ func (s *Service) ToggleMod(characterName string, modName string) error {
 // ActivateSingleMod activates one mod and deactivates others for the same character
 func (s *Service) ActivateSingleMod(characterName string, modName string) error {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 
 	// First deactivate all mods for the character
 	entries, err := os.ReadDir(characterPath)
@@ -172,7 +172,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 func (s *Service) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Create character directory if not exists
@@ -198,7 +198,7 @@ func (s *Service) AddMod(characterName string, modName string, sourcePath string
 func (s *Service) AddModFromZipWithRoot(characterName string, modName string, tempZipDir string, selectedRoot string, gameBananaUrl string) error {
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Create character directory if not exists
@@ -226,7 +226,7 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 // UpdateMod updates an existing mod from a folder
 func (s *Service) UpdateMod(characterName string, modName string, sourcePath string) error {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -273,7 +273,7 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 // UpdateModFromZipWithRoot updates a mod from a ZIP
 func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string, tempZipDir string, selectedRoot string) error {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -349,7 +349,7 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 // RemoveMod removes a mod
 func (s *Service) RemoveMod(characterName string, modName string) error {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, characterName)
+	characterPath := filepath.Join(modsPath, "character", characterName)
 
 	// Try to remove both versions (active and inactive)
 	activePath := filepath.Join(characterPath, modName)
