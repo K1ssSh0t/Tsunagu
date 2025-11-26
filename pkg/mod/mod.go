@@ -36,6 +36,17 @@ type ModConfig struct {
 	LastChecked string `json:"LastChecked"`
 }
 
+type JASMConfig struct {
+	Id            string `json:"Id"`
+	CustomName    string `json:"CustomName"`
+	Author        string `json:"Author"`
+	ModUrl        string `json:"ModUrl"`
+	ImagePath     string `json:"ImagePath"`
+	MergedIniPath string `json:"MergedIniPath"`
+	Description   string `json:"Description"`
+	DateAdded     string `json:"DateAdded"`
+}
+
 // ModUpdate struct to hold update information
 type ModUpdate struct {
 	CharacterName string `json:"characterName"`
@@ -87,6 +98,9 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 				IsActive:  isActive,
 				FullPath:  filepath.Join(characterPath, modName),
 			}
+
+			// Check for JASM migration
+			s.checkAndMigrateJASMConfig(filepath.Join(characterPath, modName))
 
 			// Try to read GameBanana URL from .modconfig.json
 			modConfigPath := filepath.Join(characterPath, modName, ".modconfig.json")
@@ -322,6 +336,36 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 // createModConfig creates .modconfig.json file in mod directory
 func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl string) error {
 	configPath := filepath.Join(modPath, ".modconfig.json")
+	jasmPath := filepath.Join(modPath, ".JASM_ModConfig.json")
+
+	// Check if .JASM_ModConfig.json exists
+	if data, err := os.ReadFile(jasmPath); err == nil {
+		var jasmConfig JASMConfig
+		if err := json.Unmarshal(data, &jasmConfig); err == nil {
+			// Found valid JASM config, use it
+			config := ModConfig{
+				Id:          jasmConfig.Id,
+				CustomName:  jasmConfig.CustomName,
+				Author:      jasmConfig.Author,
+				ModUrl:      jasmConfig.ModUrl,
+				ImagePath:   jasmConfig.ImagePath,
+				Description: jasmConfig.Description,
+				DateAdded:   jasmConfig.DateAdded,
+				LastChecked: jasmConfig.DateAdded,
+			}
+
+			// If ModUrl was passed explicitly and JASM is empty, use passed one
+			if config.ModUrl == "" && gameBananaUrl != "" {
+				config.ModUrl = gameBananaUrl
+			}
+
+			data, err := json.MarshalIndent(config, "", "  ")
+			if err != nil {
+				return err
+			}
+			return os.WriteFile(configPath, data, 0644)
+		}
+	}
 
 	// Generate UUID
 	id := utils.GenerateUUID()
@@ -512,4 +556,46 @@ func (s *Service) fetchGameBananaDate(url string) (string, error) {
 	}
 
 	return "", fmt.Errorf("dateModified not found in page")
+}
+
+// checkAndMigrateJASMConfig checks for .JASM_ModConfig.json and migrates it to .modconfig.json if needed
+func (s *Service) checkAndMigrateJASMConfig(modPath string) error {
+	jasmPath := filepath.Join(modPath, ".JASM_ModConfig.json")
+	configPath := filepath.Join(modPath, ".modconfig.json")
+
+	// If .modconfig.json already exists, skip
+	if _, err := os.Stat(configPath); err == nil {
+		return nil
+	}
+
+	// Check if JASM config exists
+	data, err := os.ReadFile(jasmPath)
+	if err != nil {
+		return nil // Not found or error, just skip
+	}
+
+	var jasmConfig JASMConfig
+	if err := json.Unmarshal(data, &jasmConfig); err != nil {
+		return err
+	}
+
+	// Map to ModConfig
+	config := ModConfig{
+		Id:          jasmConfig.Id,
+		CustomName:  jasmConfig.CustomName,
+		Author:      jasmConfig.Author,
+		ModUrl:      jasmConfig.ModUrl,
+		ImagePath:   jasmConfig.ImagePath,
+		Description: jasmConfig.Description,
+		DateAdded:   jasmConfig.DateAdded,
+		LastChecked: jasmConfig.DateAdded,
+	}
+
+	// Write .modconfig.json
+	outData, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, outData, 0644)
 }

@@ -45,7 +45,7 @@ export const ModList: React.FC<ModListProps> = ({
                         <CardTitle className="text-xl capitalize">
                             {selectedCharacter || "Selecciona un personaje"}
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="capitalize">
                             {selectedCharacter
                                 ? `Gestionando mods para ${selectedCharacter}`
                                 : "Selecciona un personaje para ver sus mods"}
