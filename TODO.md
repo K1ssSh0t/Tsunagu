@@ -15,4 +15,4 @@
 - ~~Agregar sooprte para carpetas de skins de personajes~~
 - ~~en el menu de personajes no muestra correctamenta la cantidad de mods que tiene si hay mods de skin~~
 - agregar que se pueda modever los mods
-- checar que cargue bien la iamgen cuando es mod nsfw
+- ~~checar que cargue bien la iamgen cuando es mod nsfw~~

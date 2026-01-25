@@ -340,11 +340,16 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 
 // createModConfig creates .modconfig.json file in mod directory
 func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl string) error {
+	fmt.Printf("[createModConfig] Starting for mod: %s\n", modName)
+	fmt.Printf("[createModConfig] Mod path: %s\n", modPath)
+	fmt.Printf("[createModConfig] GameBanana URL: %s\n", gameBananaUrl)
+
 	configPath := filepath.Join(modPath, ".modconfig.json")
 	jasmPath := filepath.Join(modPath, ".JASM_ModConfig.json")
 
 	// Check if .JASM_ModConfig.json exists
 	if data, err := os.ReadFile(jasmPath); err == nil {
+		fmt.Printf("[createModConfig] Found JASM config, migrating...\n")
 		var jasmConfig JASMConfig
 		if err := json.Unmarshal(data, &jasmConfig); err == nil {
 			// Found valid JASM config, use it
@@ -369,11 +374,19 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 			if urlToUse == "" {
 				urlToUse = gameBananaUrl
 			}
+			fmt.Printf("[createModConfig] (JASM) URL to use for image: %s\n", urlToUse)
 			if urlToUse != "" && strings.Contains(urlToUse, "gamebanana.com") {
+				fmt.Printf("[createModConfig] (JASM) Attempting to fetch image...\n")
 				if imageUrl, err := s.fetchGameBananaImage(urlToUse); err == nil {
+					fmt.Printf("[createModConfig] (JASM) Got image URL, downloading...\n")
 					if coverPath, err := s.downloadModCover(imageUrl, modPath); err == nil {
 						config.ImagePath = coverPath
+						fmt.Printf("[createModConfig] (JASM) Image saved as: %s\n", coverPath)
+					} else {
+						fmt.Printf("[createModConfig] (JASM) ERROR downloading image: %v\n", err)
 					}
+				} else {
+					fmt.Printf("[createModConfig] (JASM) ERROR fetching image URL: %v\n", err)
 				}
 			}
 
@@ -385,6 +398,8 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 		}
 	}
 
+	fmt.Printf("[createModConfig] No JASM config, creating new config...\n")
+
 	// Generate UUID
 	id := utils.GenerateUUID()
 	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
@@ -393,12 +408,23 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 	imagePath := ".JASM_Cover.jpg"
 
 	// Try to download cover image from GameBanana if URL provided
+	fmt.Printf("[createModConfig] Checking if should download image. URL: '%s'\n", gameBananaUrl)
 	if gameBananaUrl != "" && strings.Contains(gameBananaUrl, "gamebanana.com") {
+		fmt.Printf("[createModConfig] Attempting to fetch image from GameBanana...\n")
 		if imageUrl, err := s.fetchGameBananaImage(gameBananaUrl); err == nil {
+			fmt.Printf("[createModConfig] Got image URL: %s\n", imageUrl)
+			fmt.Printf("[createModConfig] Downloading image...\n")
 			if coverPath, err := s.downloadModCover(imageUrl, modPath); err == nil {
 				imagePath = coverPath
+				fmt.Printf("[createModConfig] SUCCESS: Image saved as: %s\n", coverPath)
+			} else {
+				fmt.Printf("[createModConfig] ERROR downloading image: %v\n", err)
 			}
+		} else {
+			fmt.Printf("[createModConfig] ERROR fetching image URL: %v\n", err)
 		}
+	} else {
+		fmt.Printf("[createModConfig] Skipping image download - no valid GameBanana URL\n")
 	}
 
 	config := ModConfig{
@@ -411,6 +437,8 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 		DateAdded:   now,
 		LastChecked: now,
 	}
+
+	fmt.Printf("[createModConfig] Final ImagePath: %s\n", config.ImagePath)
 
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
@@ -588,88 +616,136 @@ func (s *Service) fetchGameBananaDate(url string) (string, error) {
 	return "", fmt.Errorf("dateModified not found in page")
 }
 
-// fetchGameBananaImage fetches the main image URL from a GameBanana mod page
+// fetchGameBananaImage fetches the main image URL from a GameBanana mod page using the API
 func (s *Service) fetchGameBananaImage(url string) (string, error) {
+	fmt.Printf("[fetchGameBananaImage] Starting for URL: %s\n", url)
+
+	// Extract mod ID from URL (e.g., https://gamebanana.com/mods/648208 -> 648208)
+	re := regexp.MustCompile(`gamebanana\.com/mods/(\d+)`)
+	matches := re.FindStringSubmatch(url)
+	if len(matches) < 2 {
+		fmt.Printf("[fetchGameBananaImage] ERROR: Could not extract mod ID from URL\n")
+		return "", fmt.Errorf("could not extract mod ID from URL: %s", url)
+	}
+	modID := matches[1]
+	fmt.Printf("[fetchGameBananaImage] Extracted mod ID: %s\n", modID)
+
+	// Use GameBanana API to get preview media
+	apiURL := fmt.Sprintf("https://gamebanana.com/apiv11/Mod/%s?_csvProperties=_aPreviewMedia", modID)
+	fmt.Printf("[fetchGameBananaImage] API URL: %s\n", apiURL)
+
 	client := &http.Client{
 		Timeout: 15 * time.Second,
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
+		fmt.Printf("[fetchGameBananaImage] ERROR creating request: %v\n", err)
 		return "", err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
+	fmt.Printf("[fetchGameBananaImage] Sending API request...\n")
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("[fetchGameBananaImage] ERROR sending request: %v\n", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("[fetchGameBananaImage] Response status: %d\n", resp.StatusCode)
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("received status code %d", resp.StatusCode)
+		return "", fmt.Errorf("API returned status code %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Printf("[fetchGameBananaImage] ERROR reading response: %v\n", err)
 		return "", err
 	}
 
-	// Look for the primary image in the JSON-LD schema
-	// The image is usually in the "image" field of the JSON-LD
-	reImage := regexp.MustCompile(`"image"\s*:\s*"(https://[^"]+)"`)
-	matchesImage := reImage.FindStringSubmatch(string(body))
+	fmt.Printf("[fetchGameBananaImage] Response body (first 500 chars): %.500s\n", string(body))
 
-	if len(matchesImage) > 1 {
-		return matchesImage[1], nil
+	// Parse JSON response - the structure is: { "_aPreviewMedia": { "_aImages": [...] } }
+	var apiResponse struct {
+		PreviewMedia struct {
+			Images []struct {
+				Type    string `json:"_sType"`
+				BaseURL string `json:"_sBaseUrl"`
+				File    string `json:"_sFile"`
+				File100 string `json:"_sFile100"`
+				File220 string `json:"_sFile220"`
+				File530 string `json:"_sFile530"`
+				File800 string `json:"_sFile800"`
+			} `json:"_aImages"`
+		} `json:"_aPreviewMedia"`
 	}
 
-	// Fallback: look for og:image meta tag
-	reOgImage := regexp.MustCompile(`<meta\s+property="og:image"\s+content="([^"]+)"`)
-	matchesOg := reOgImage.FindStringSubmatch(string(body))
-
-	if len(matchesOg) > 1 {
-		return matchesOg[1], nil
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		fmt.Printf("[fetchGameBananaImage] ERROR parsing JSON: %v\n", err)
+		return "", fmt.Errorf("failed to parse API response: %v", err)
 	}
 
-	// Second fallback: look for the first screenshot image in the page
-	reScreenshot := regexp.MustCompile(`https://images\.gamebanana\.com/img/ss/mods/[^"'\s]+`)
-	matchesScreenshot := reScreenshot.FindString(string(body))
+	fmt.Printf("[fetchGameBananaImage] Found %d images in preview media\n", len(apiResponse.PreviewMedia.Images))
 
-	if matchesScreenshot != "" {
-		return matchesScreenshot, nil
+	// Find first image in preview media
+	for i, media := range apiResponse.PreviewMedia.Images {
+		fmt.Printf("[fetchGameBananaImage] Image[%d]: Type=%s, BaseURL=%s, File=%s\n", i, media.Type, media.BaseURL, media.File)
+		if media.BaseURL != "" && media.File != "" {
+			// Prefer higher resolution images
+			imageFile := media.File
+			if media.File530 != "" {
+				imageFile = media.File530
+			} else if media.File220 != "" {
+				imageFile = media.File220
+			}
+
+			finalURL := media.BaseURL + "/" + imageFile
+			fmt.Printf("[fetchGameBananaImage] SUCCESS: Found image URL: %s\n", finalURL)
+			return finalURL, nil
+		}
 	}
 
-	return "", fmt.Errorf("image not found in page")
+	fmt.Printf("[fetchGameBananaImage] ERROR: No image found in preview media\n")
+	return "", fmt.Errorf("no image found in mod preview media")
 }
 
 // downloadModCover downloads an image from a URL and saves it as .modCover in the mod folder
 func (s *Service) downloadModCover(imageUrl string, modPath string) (string, error) {
+	fmt.Printf("[downloadModCover] Starting download from: %s\n", imageUrl)
+	fmt.Printf("[downloadModCover] Target mod path: %s\n", modPath)
+
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequest("GET", imageUrl, nil)
 	if err != nil {
+		fmt.Printf("[downloadModCover] ERROR creating request: %v\n", err)
 		return "", err
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
+	fmt.Printf("[downloadModCover] Sending request...\n")
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("[downloadModCover] ERROR sending request: %v\n", err)
 		return "", err
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("[downloadModCover] Response status: %d\n", resp.StatusCode)
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("failed to download image: status %d", resp.StatusCode)
 	}
 
 	// Determine file extension from content type or URL
-	ext := ".jpg"
 	contentType := resp.Header.Get("Content-Type")
+	fmt.Printf("[downloadModCover] Content-Type: %s\n", contentType)
+
+	ext := ".jpg"
 	if strings.Contains(contentType, "png") {
 		ext = ".png"
 	} else if strings.Contains(contentType, "gif") {
@@ -679,18 +755,24 @@ func (s *Service) downloadModCover(imageUrl string, modPath string) (string, err
 	}
 
 	coverPath := filepath.Join(modPath, ".modCover"+ext)
+	fmt.Printf("[downloadModCover] Will save to: %s\n", coverPath)
 
 	// Read image data
 	imageData, err := io.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Printf("[downloadModCover] ERROR reading image data: %v\n", err)
 		return "", err
 	}
+
+	fmt.Printf("[downloadModCover] Downloaded %d bytes\n", len(imageData))
 
 	// Save to file
 	if err := os.WriteFile(coverPath, imageData, 0644); err != nil {
+		fmt.Printf("[downloadModCover] ERROR writing file: %v\n", err)
 		return "", err
 	}
 
+	fmt.Printf("[downloadModCover] SUCCESS: Saved image to %s\n", coverPath)
 	return ".modCover" + ext, nil
 }
 
