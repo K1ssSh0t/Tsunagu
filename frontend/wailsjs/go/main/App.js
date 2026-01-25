@@ -34,6 +34,10 @@ export function GetGamesConfig() {
   return window['go']['main']['App']['GetGamesConfig']();
 }
 
+export function GetModImageBase64(arg1) {
+  return window['go']['main']['App']['GetModImageBase64'](arg1);
+}
+
 export function GetModsForCharacter(arg1) {
   return window['go']['main']['App']['GetModsForCharacter'](arg1);
 }

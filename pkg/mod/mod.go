@@ -23,6 +23,7 @@ type Mod struct {
 	IsActive      bool   `json:"isActive"`
 	FullPath      string `json:"fullPath"`
 	GameBananaUrl string `json:"gameBananaUrl"`
+	ImagePath     string `json:"imagePath"`
 }
 
 type ModConfig struct {
@@ -102,12 +103,16 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 			// Check for JASM migration
 			s.checkAndMigrateJASMConfig(filepath.Join(characterPath, modName))
 
-			// Try to read GameBanana URL from .modconfig.json
+			// Try to read GameBanana URL and ImagePath from .modconfig.json
 			modConfigPath := filepath.Join(characterPath, modName, ".modconfig.json")
 			if data, err := os.ReadFile(modConfigPath); err == nil {
 				var config ModConfig
 				if err := json.Unmarshal(data, &config); err == nil {
 					mod.GameBananaUrl = config.ModUrl
+					// Build full image path if ImagePath is set
+					if config.ImagePath != "" {
+						mod.ImagePath = filepath.Join(mod.FullPath, config.ImagePath)
+					}
 				}
 			}
 
@@ -359,6 +364,19 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 				config.ModUrl = gameBananaUrl
 			}
 
+			// Try to download cover image if we have a GameBanana URL
+			urlToUse := config.ModUrl
+			if urlToUse == "" {
+				urlToUse = gameBananaUrl
+			}
+			if urlToUse != "" && strings.Contains(urlToUse, "gamebanana.com") {
+				if imageUrl, err := s.fetchGameBananaImage(urlToUse); err == nil {
+					if coverPath, err := s.downloadModCover(imageUrl, modPath); err == nil {
+						config.ImagePath = coverPath
+					}
+				}
+			}
+
 			data, err := json.MarshalIndent(config, "", "  ")
 			if err != nil {
 				return err
@@ -371,12 +389,24 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 	id := utils.GenerateUUID()
 	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
 
+	// Default image path
+	imagePath := ".JASM_Cover.jpg"
+
+	// Try to download cover image from GameBanana if URL provided
+	if gameBananaUrl != "" && strings.Contains(gameBananaUrl, "gamebanana.com") {
+		if imageUrl, err := s.fetchGameBananaImage(gameBananaUrl); err == nil {
+			if coverPath, err := s.downloadModCover(imageUrl, modPath); err == nil {
+				imagePath = coverPath
+			}
+		}
+	}
+
 	config := ModConfig{
 		Id:          id,
 		CustomName:  modName,
 		Author:      "",
 		ModUrl:      gameBananaUrl,
-		ImagePath:   ".JASM_Cover.jpg", // Default value
+		ImagePath:   imagePath,
 		Description: "",
 		DateAdded:   now,
 		LastChecked: now,
@@ -556,6 +586,112 @@ func (s *Service) fetchGameBananaDate(url string) (string, error) {
 	}
 
 	return "", fmt.Errorf("dateModified not found in page")
+}
+
+// fetchGameBananaImage fetches the main image URL from a GameBanana mod page
+func (s *Service) fetchGameBananaImage(url string) (string, error) {
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("received status code %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Look for the primary image in the JSON-LD schema
+	// The image is usually in the "image" field of the JSON-LD
+	reImage := regexp.MustCompile(`"image"\s*:\s*"(https://[^"]+)"`)
+	matchesImage := reImage.FindStringSubmatch(string(body))
+
+	if len(matchesImage) > 1 {
+		return matchesImage[1], nil
+	}
+
+	// Fallback: look for og:image meta tag
+	reOgImage := regexp.MustCompile(`<meta\s+property="og:image"\s+content="([^"]+)"`)
+	matchesOg := reOgImage.FindStringSubmatch(string(body))
+
+	if len(matchesOg) > 1 {
+		return matchesOg[1], nil
+	}
+
+	// Second fallback: look for the first screenshot image in the page
+	reScreenshot := regexp.MustCompile(`https://images\.gamebanana\.com/img/ss/mods/[^"'\s]+`)
+	matchesScreenshot := reScreenshot.FindString(string(body))
+
+	if matchesScreenshot != "" {
+		return matchesScreenshot, nil
+	}
+
+	return "", fmt.Errorf("image not found in page")
+}
+
+// downloadModCover downloads an image from a URL and saves it as .modCover in the mod folder
+func (s *Service) downloadModCover(imageUrl string, modPath string) (string, error) {
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", imageUrl, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to download image: status %d", resp.StatusCode)
+	}
+
+	// Determine file extension from content type or URL
+	ext := ".jpg"
+	contentType := resp.Header.Get("Content-Type")
+	if strings.Contains(contentType, "png") {
+		ext = ".png"
+	} else if strings.Contains(contentType, "gif") {
+		ext = ".gif"
+	} else if strings.Contains(contentType, "webp") {
+		ext = ".webp"
+	}
+
+	coverPath := filepath.Join(modPath, ".modCover"+ext)
+
+	// Read image data
+	imageData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Save to file
+	if err := os.WriteFile(coverPath, imageData, 0644); err != nil {
+		return "", err
+	}
+
+	return ".modCover" + ext, nil
 }
 
 // checkAndMigrateJASMConfig checks for .JASM_ModConfig.json and migrates it to .modconfig.json if needed

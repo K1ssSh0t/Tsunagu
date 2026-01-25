@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -275,6 +277,42 @@ func (a *App) CheckForUpdates() ([]mod.ModUpdate, error) {
 // OpenUrl opens a URL
 func (a *App) OpenUrl(url string) error {
 	return utils.OpenUrl(url)
+}
+
+// GetModImageBase64 reads the mod cover image and returns it as base64
+func (a *App) GetModImageBase64(imagePath string) (string, error) {
+	if imagePath == "" {
+		return "", fmt.Errorf("empty image path")
+	}
+
+	// Check if file exists
+	if _, err := os.Stat(imagePath); os.IsNotExist(err) {
+		return "", fmt.Errorf("image file not found: %s", imagePath)
+	}
+
+	// Read the image file
+	data, err := os.ReadFile(imagePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read image: %v", err)
+	}
+
+	// Determine MIME type based on extension
+	ext := strings.ToLower(filepath.Ext(imagePath))
+	var mimeType string
+	switch ext {
+	case ".png":
+		mimeType = "image/png"
+	case ".gif":
+		mimeType = "image/gif"
+	case ".webp":
+		mimeType = "image/webp"
+	default:
+		mimeType = "image/jpeg"
+	}
+
+	// Encode to base64 with data URI prefix
+	base64Data := base64.StdEncoding.EncodeToString(data)
+	return fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data), nil
 }
 
 func (a *App) Greet(name string) (string, error) {

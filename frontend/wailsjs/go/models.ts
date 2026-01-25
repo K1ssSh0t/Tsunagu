@@ -111,6 +111,7 @@ export namespace mod {
 	    isActive: boolean;
 	    fullPath: string;
 	    gameBananaUrl: string;
+	    imagePath: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Mod(source);
@@ -124,6 +125,7 @@ export namespace mod {
 	        this.isActive = source["isActive"];
 	        this.fullPath = source["fullPath"];
 	        this.gameBananaUrl = source["gameBananaUrl"];
+	        this.imagePath = source["imagePath"];
 	    }
 	}
 	export class ModUpdate {

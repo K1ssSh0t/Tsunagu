@@ -13,4 +13,6 @@
 - ~~Chear un edge case si un arhcivo comprimi tiene sus arhcivos directos en la carpeta raiz y no en una carpeta hija~~
 - ~~Cambiar el nombre de la APP por uno mejor y luego se cambiara el nombre del modulo~~
 - ~~Agregar sooprte para carpetas de skins de personajes~~
-- en el menu de personajes no muestra correctamenta la cantidad de mods que tiene si hay mods de skin 
+- ~~en el menu de personajes no muestra correctamenta la cantidad de mods que tiene si hay mods de skin~~
+- agregar que se pueda modever los mods
+- checar que cargue bien la iamgen cuando es mod nsfw

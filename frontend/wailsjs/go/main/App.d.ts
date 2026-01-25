@@ -21,6 +21,8 @@ export function GetCurrentGame():Promise<string>;
 
 export function GetGamesConfig():Promise<config.Config>;
 
+export function GetModImageBase64(arg1:string):Promise<string>;
+
 export function GetModsForCharacter(arg1:string):Promise<Array<mod.Mod>>;
 
 export function GetZipStructure(arg1:string):Promise<Array<utils.ZipFile>>;
