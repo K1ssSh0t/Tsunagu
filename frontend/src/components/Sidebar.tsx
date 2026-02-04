@@ -42,9 +42,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ScrollArea className="h-full pr-4">
                     <div className="space-y-1">
                         {filteredCharacters.map((char) => {
+                            // Check for updates in main character folder
                             const hasCharUpdate = updates.some(
                                 (u) => u.characterName === char.name
                             );
+                            
+                            // Check for updates in any of the character's skins
+                            const hasSkinUpdate = char.skins && char.skins.some((skin) =>
+                                updates.some((u) => u.characterName === skin.folder)
+                            );
+                            
+                            const hasAnyUpdate = hasCharUpdate || hasSkinUpdate;
+                            
                             return (
                                 <Button
                                     key={char.name}
@@ -56,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 >
                                     <span className="truncate">{char.name}</span>
                                     <div className="ml-auto flex items-center gap-2">
-                                        {hasCharUpdate && (
+                                        {hasAnyUpdate && (
                                             <span className="relative flex h-2 w-2">
                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
