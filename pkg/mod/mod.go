@@ -463,6 +463,79 @@ func (s *Service) RemoveMod(characterName string, modName string) error {
 	return nil
 }
 
+// MoveMod moves a mod from one character to another (including skins)
+func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacter string) error {
+	modsPath := s.configService.CurrentModsPath()
+	sourceCharacterPath := filepath.Join(modsPath, "character", sourceCharacter)
+	targetCharacterPath := filepath.Join(modsPath, "character", targetCharacter)
+
+	// Check if source and target are the same
+	if strings.EqualFold(sourceCharacter, targetCharacter) {
+		return fmt.Errorf("source and target character cannot be the same")
+	}
+
+	// Determine if mod is active or disabled in source
+	sourceActivePath := filepath.Join(sourceCharacterPath, modName)
+	sourceDisabledPath := filepath.Join(sourceCharacterPath, "DISABLED_"+modName)
+
+	var sourcePath string
+	isActive := true
+
+	// Check which version exists
+	if _, err := os.Stat(sourceActivePath); err == nil {
+		sourcePath = sourceActivePath
+		isActive = true
+	} else if _, err := os.Stat(sourceDisabledPath); err == nil {
+		sourcePath = sourceDisabledPath
+		isActive = false
+	} else {
+		return fmt.Errorf("mod not found: %s", modName)
+	}
+
+	// Create target character directory if it doesn't exist
+	if err := os.MkdirAll(targetCharacterPath, 0755); err != nil {
+		return fmt.Errorf("failed to create target character directory: %v", err)
+	}
+
+	// Determine target path (preserve active/disabled state)
+	var targetPath string
+	if isActive {
+		targetPath = filepath.Join(targetCharacterPath, modName)
+	} else {
+		targetPath = filepath.Join(targetCharacterPath, "DISABLED_"+modName)
+	}
+
+	// Check if mod already exists in target
+	if _, err := os.Stat(targetPath); err == nil {
+		return fmt.Errorf("a mod with the name '%s' already exists in %s", modName, targetCharacter)
+	}
+
+	// Also check the opposite state (if we're moving active, check if disabled exists, and vice versa)
+	var oppositeTargetPath string
+	if isActive {
+		oppositeTargetPath = filepath.Join(targetCharacterPath, "DISABLED_"+modName)
+	} else {
+		oppositeTargetPath = filepath.Join(targetCharacterPath, modName)
+	}
+	if _, err := os.Stat(oppositeTargetPath); err == nil {
+		return fmt.Errorf("a mod with the name '%s' already exists in %s", modName, targetCharacter)
+	}
+
+	// Copy mod to target
+	if err := s.copyModFiles(sourcePath, targetPath); err != nil {
+		return fmt.Errorf("failed to copy mod to target: %v", err)
+	}
+
+	// Remove mod from source
+	if err := os.RemoveAll(sourcePath); err != nil {
+		// If removal fails, try to clean up the copied files
+		os.RemoveAll(targetPath)
+		return fmt.Errorf("failed to remove mod from source: %v", err)
+	}
+
+	return nil
+}
+
 // copyModFiles copies mod files
 func (s *Service) copyModFiles(sourcePath, targetPath string) error {
 	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {

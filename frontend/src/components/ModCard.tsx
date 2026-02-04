@@ -15,7 +15,7 @@ import {
     DialogContent,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Globe, MoreVertical, ImageOff, X } from "lucide-react";
+import { Globe, MoreVertical, ImageOff, X, MoveRight } from "lucide-react";
 import { mod } from "../../wailsjs/go/models";
 import { GetModImageBase64 } from "../../wailsjs/go/main/App";
 
@@ -29,6 +29,7 @@ interface ModCardProps {
     onActivateSingle: (character: string, modName: string) => void;
     onOpenFolder: (path: string) => void;
     onRemove: (character: string, modName: string) => void;
+    onMove: (character: string, modName: string) => void;
 }
 
 export const ModCard: React.FC<ModCardProps> = ({
@@ -41,6 +42,7 @@ export const ModCard: React.FC<ModCardProps> = ({
     onActivateSingle,
     onOpenFolder,
     onRemove,
+    onMove,
 }) => {
     const [imageData, setImageData] = useState<string | null>(null);
     const [imageLoading, setImageLoading] = useState(false);
@@ -170,6 +172,11 @@ export const ModCard: React.FC<ModCardProps> = ({
                                     Actualizar Mod
                                 </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => onMove(mod.character, mod.name)}>
+                                <MoveRight className="mr-2 h-4 w-4" />
+                                Mover a...
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-red-600 focus:text-red-600"

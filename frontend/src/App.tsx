@@ -9,6 +9,7 @@ import {
   CleanupTempDirectory,
   GetZipStructure,
   RemoveMod,
+  MoveMod,
   OpenModFolder,
   IsConfigured,
   SelectDirectory,
@@ -48,6 +49,7 @@ import { ConfigScreen } from "./components/ConfigScreen";
 import { ZipModal } from "./components/ZipModal";
 import { AddModDialog } from "./components/AddModDialog";
 import { UpdateModDialog } from "./components/UpdateModDialog";
+import { MoveModDialog } from "./components/MoveModDialog";
 
 type Character = character.Character & {
   skins?: { name: string; folder: string }[];
@@ -84,6 +86,11 @@ const App: React.FC = () => {
     character: string;
     modName: string;
     currentUrl?: string;
+  } | null>(null);
+
+  const [modToMove, setModToMove] = useState<{
+    character: string;
+    modName: string;
   } | null>(null);
 
   const [selectedGame, setSelectedGame] = useState("genshin");
@@ -503,6 +510,39 @@ const App: React.FC = () => {
     setModToDelete({ character, modName });
   };
 
+  const handleMoveModClick = (character: string, modName: string) => {
+    // character here is the folder name
+    setModToMove({ character, modName });
+  };
+
+  const handleConfirmMoveMod = async (targetCharacter: string) => {
+    if (!modToMove) return;
+
+    const { character: sourceCharacter, modName } = modToMove;
+    setIsLoading(true);
+    setLoadingMessage(`Moviendo mod "${modName}" a ${targetCharacter}...`);
+
+    try {
+      await MoveMod(sourceCharacter, modName, targetCharacter);
+      
+      // Reload mods for both source and target if we're viewing either
+      const currentFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
+      if (currentFolder === sourceCharacter || currentFolder === targetCharacter) {
+        await loadCharacterMods(currentFolder);
+      }
+      
+      await loadCharacters();
+      toast.success(`Mod "${modName}" movido correctamente a ${targetCharacter}`);
+      setModToMove(null);
+    } catch (error) {
+      console.error("Error moving mod:", error);
+      toast.error("Error al mover el mod: " + (error as Error));
+    } finally {
+      setIsLoading(false);
+      setLoadingMessage("");
+    }
+  };
+
   const confirmRemoveMod = async () => {
     if (!modToDelete) return;
 
@@ -631,6 +671,15 @@ const App: React.FC = () => {
         onCancel={() => setModToUpdate(null)}
       />
 
+      <MoveModDialog
+        open={!!modToMove}
+        onOpenChange={(open) => !open && setModToMove(null)}
+        modName={modToMove?.modName || ""}
+        currentCharacter={modToMove?.character || ""}
+        characters={characters}
+        onMove={handleConfirmMoveMod}
+      />
+
       <ConfigScreen
         isAppConfigured={isAppConfigured}
         showConfig={showConfig}
@@ -732,6 +781,7 @@ const App: React.FC = () => {
               onOpenFolder={handleOpenModFolder}
               onRemoveMod={handleRemoveModClick}
               onSelectSkin={handleSkinSelect}
+              onMoveMod={handleMoveModClick}
             />
           </div>
         </div>

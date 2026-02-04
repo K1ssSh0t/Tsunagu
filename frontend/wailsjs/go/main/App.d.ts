@@ -31,6 +31,8 @@ export function Greet(arg1:string):Promise<string>;
 
 export function IsConfigured():Promise<boolean>;
 
+export function MoveMod(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function OpenModFolder(arg1:string):Promise<void>;
 
 export function OpenUrl(arg1:string):Promise<void>;

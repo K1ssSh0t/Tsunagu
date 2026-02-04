@@ -54,6 +54,10 @@ export function IsConfigured() {
   return window['go']['main']['App']['IsConfigured']();
 }
 
+export function MoveMod(arg1, arg2, arg3) {
+  return window['go']['main']['App']['MoveMod'](arg1, arg2, arg3);
+}
+
 export function OpenModFolder(arg1) {
   return window['go']['main']['App']['OpenModFolder'](arg1);
 }

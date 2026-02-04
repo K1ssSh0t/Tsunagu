@@ -20,6 +20,7 @@ interface ModListProps {
     onOpenFolder: (path: string) => void;
     onRemoveMod: (character: string, modName: string) => void;
     onSelectSkin: (skin: { name: string; folder: string } | null) => void;
+    onMoveMod: (character: string, modName: string) => void;
 }
 
 export const ModList: React.FC<ModListProps> = ({
@@ -36,6 +37,7 @@ export const ModList: React.FC<ModListProps> = ({
     onOpenFolder,
     onRemoveMod,
     onSelectSkin,
+    onMoveMod,
 }) => {
     return (
         <Card className="md:col-span-3 h-[calc(100vh-200px)] flex flex-col">
@@ -123,6 +125,7 @@ export const ModList: React.FC<ModListProps> = ({
                                         onActivateSingle={onActivateSingle}
                                         onOpenFolder={onOpenFolder}
                                         onRemove={onRemoveMod}
+                                        onMove={onMoveMod}
                                     />
                                 );
                             })}

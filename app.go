@@ -190,6 +190,11 @@ func (a *App) RemoveMod(characterName string, modName string) error {
 	return a.modService.RemoveMod(characterName, modName)
 }
 
+// MoveMod moves a mod from one character to another
+func (a *App) MoveMod(sourceCharacter string, modName string, targetCharacter string) error {
+	return a.modService.MoveMod(sourceCharacter, modName, targetCharacter)
+}
+
 // GetZipStructure gets the structure of a ZIP file
 func (a *App) GetZipStructure(zipFilePath string) ([]utils.ZipFile, error) {
 	// Clean previous temp dir
