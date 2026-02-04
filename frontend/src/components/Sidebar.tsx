@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                             </span>
                                         )}
-                                        {char.hasFolder && (
+                                        {(char.hasFolder || (char.mods && char.mods.length > 0)) && (
                                             <Badge variant="outline" className="text-xs">
                                                 {char.mods ? char.mods.length : 0}
                                             </Badge>

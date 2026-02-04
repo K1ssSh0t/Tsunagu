@@ -218,6 +218,15 @@ func (s *Service) GetCharacters() ([]Character, error) {
 			}
 		}
 
+		// Also load mods from all skins and add them to the total count
+		for _, skin := range processedSkins {
+			skinMods, err := s.modService.GetModsForCharacter(skin.Folder)
+			if err == nil && len(skinMods) > 0 {
+				// Append skin mods to the character's mod list for counting purposes
+				character.Mods = append(character.Mods, skinMods...)
+			}
+		}
+
 		characters = append(characters, character)
 	}
 
