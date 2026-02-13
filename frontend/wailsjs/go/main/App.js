@@ -102,6 +102,10 @@ export function ToggleMod(arg1, arg2) {
   return window['go']['main']['App']['ToggleMod'](arg1, arg2);
 }
 
+export function UpdateCharactersDatabase() {
+  return window['go']['main']['App']['UpdateCharactersDatabase']();
+}
+
 export function UpdateGamePath(arg1, arg2) {
   return window['go']['main']['App']['UpdateGamePath'](arg1, arg2);
 }

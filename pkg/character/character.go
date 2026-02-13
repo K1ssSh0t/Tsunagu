@@ -245,3 +245,11 @@ func isDir(path string) bool {
 	}
 	return info.IsDir()
 }
+
+// ReloadCharacters forces a reload of the character database
+// This is called after updating characters.json from external sources
+func (s *Service) ReloadCharacters() {
+	// The next call to LoadCharactersList() or GetCharacters() will automatically
+	// read the updated characters.json file, so we don't need to cache anything
+	// This method exists as a placeholder for future optimization if we add caching
+}

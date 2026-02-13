@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -14,6 +15,7 @@ import (
 	"tsunagu/pkg/config"
 	"tsunagu/pkg/gamebanana"
 	"tsunagu/pkg/mod"
+	"tsunagu/pkg/updater"
 	"tsunagu/pkg/utils"
 )
 
@@ -51,6 +53,15 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize GameBanana client
 	a.gameBananaClient = gamebanana.NewClient(cacheDir)
+
+	// Auto-update character database on first launch (if characters.json doesn't exist)
+	if _, err := os.Stat("characters.json"); os.IsNotExist(err) {
+		go func() {
+			// Wait a bit for UI to load
+			time.Sleep(2 * time.Second)
+			a.UpdateCharactersDatabase()
+		}()
+	}
 }
 
 // SaveConfig saves the configuration
@@ -400,4 +411,23 @@ func (a *App) CleanupCachedFile(filePath string) error {
 	}
 
 	return nil
+}
+
+// UpdateCharactersDatabase updates the character database from hakush.in APIs
+func (a *App) UpdateCharactersDatabase() (*updater.UpdateResult, error) {
+	result, err := updater.UpdateCharacterDatabase(func(progress string) {
+		// Emit progress events to frontend
+		wailsruntime.EventsEmit(a.ctx, "character-update-progress", progress)
+	})
+
+	if err != nil {
+		wailsruntime.EventsEmit(a.ctx, "character-update-error", err.Error())
+		return nil, err
+	}
+
+	// Reload character service to use updated data
+	a.characterService.ReloadCharacters()
+
+	wailsruntime.EventsEmit(a.ctx, "character-update-complete", result)
+	return result, nil
 }

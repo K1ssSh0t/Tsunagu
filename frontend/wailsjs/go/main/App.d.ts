@@ -5,6 +5,7 @@ import {character} from '../models';
 import {config} from '../models';
 import {gamebanana} from '../models';
 import {utils} from '../models';
+import {updater} from '../models';
 
 export function ActivateSingleMod(arg1:string,arg2:string):Promise<void>;
 
@@ -55,6 +56,8 @@ export function SelectFile():Promise<string>;
 export function SetGame(arg1:string):Promise<string>;
 
 export function ToggleMod(arg1:string,arg2:string):Promise<void>;
+
+export function UpdateCharactersDatabase():Promise<updater.UpdateResult>;
 
 export function UpdateGamePath(arg1:string,arg2:string):Promise<void>;
 

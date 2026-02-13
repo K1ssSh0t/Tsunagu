@@ -16,3 +16,4 @@
 - ~~en el menu de personajes no muestra correctamenta la cantidad de mods que tiene si hay mods de skin~~
 - ~~agregar que se pueda modever los mods~~
 - ~~checar que cargue bien la iamgen cuando es mod nsfw~~
+- mejorar el como se sacan las skins de los personajes
