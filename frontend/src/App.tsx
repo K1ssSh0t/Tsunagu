@@ -22,6 +22,9 @@ import {
   GetCurrentGame,
   GetGamesConfig,
   UpdateGamePath,
+  GetModDownloadFiles,
+  DownloadModUpdate,
+  CleanupCachedFile,
 } from "../wailsjs/go/main/App";
 import { character, mod, utils } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
@@ -50,6 +53,9 @@ import { ZipModal } from "./components/ZipModal";
 import { AddModDialog } from "./components/AddModDialog";
 import { UpdateModDialog } from "./components/UpdateModDialog";
 import { MoveModDialog } from "./components/MoveModDialog";
+import { FileSelectionDialog, ModFile } from "./components/FileSelectionDialog";
+import { DownloadProgressDialog } from "./components/DownloadProgressDialog";
+import { CleanupDialog } from "./components/CleanupDialog";
 
 type Character = character.Character & {
   skins?: { name: string; folder: string }[];
@@ -95,6 +101,19 @@ const App: React.FC = () => {
 
   const [selectedGame, setSelectedGame] = useState("genshin");
   const [gamesConfig, setGamesConfig] = useState<any>({});
+
+  // Download-related states
+  const [showFileSelection, setShowFileSelection] = useState(false);
+  const [availableFiles, setAvailableFiles] = useState<ModFile[]>([]);
+  const [showDownloadProgress, setShowDownloadProgress] = useState(false);
+  const [downloadingFileName, setDownloadingFileName] = useState("");
+  const [showCleanupDialog, setShowCleanupDialog] = useState(false);
+  const [cachedFilePath, setCachedFilePath] = useState("");
+  const [cachedFileSize, setCachedFileSize] = useState(0);
+  const [downloadContext, setDownloadContext] = useState<{
+    character: string;
+    modName: string;
+  } | null>(null);
 
   const hasCheckedConfig = React.useRef(false);
 
@@ -380,6 +399,11 @@ const App: React.FC = () => {
         );
 
         setModToUpdate(null);
+        
+        // If this was a downloaded file, show cleanup dialog
+        if (cachedFilePath) {
+          setShowCleanupDialog(true);
+        }
       } else {
         if (!trimmedModName) {
           toast.error("El nombre del mod no puede estar vacío");
@@ -496,12 +520,110 @@ const App: React.FC = () => {
 
       setModToUpdate(null);
       await loadCharacterMods(modToUpdate.character);
-      await checkForUpdates();
     } catch (error) {
       console.error("Error updating from folder:", error);
       toast.error("Error al actualizar desde carpeta: " + error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDownloadFromGameBanana = async () => {
+    if (!modToUpdate || !modToUpdate.currentUrl) return;
+
+    try {
+      setIsLoading(true);
+      setLoadingMessage("Obteniendo archivos disponibles...");
+
+      // Fetch available files from GameBanana API
+      const files = await GetModDownloadFiles(modToUpdate.currentUrl);
+      
+      if (!files || files.length === 0) {
+        toast.error("No hay archivos disponibles para descargar");
+        setIsLoading(false);
+        return;
+      }
+
+      // Store download context
+      setDownloadContext({
+        character: modToUpdate.character,
+        modName: modToUpdate.modName,
+      });
+
+      // Show file selection dialog
+      setAvailableFiles(files);
+      setShowFileSelection(true);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching mod files:", error);
+      toast.error("Error al obtener archivos: " + error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileSelected = async (file: ModFile) => {
+    if (!downloadContext) return;
+
+    try {
+      // Close file selection dialog
+      setShowFileSelection(false);
+
+      // Show download progress dialog
+      setDownloadingFileName(file.fileName);
+      setShowDownloadProgress(true);
+
+      // Download the file
+      const downloadedPath = await DownloadModUpdate(file.downloadUrl, file.fileName);
+      
+      // Close download progress
+      setShowDownloadProgress(false);
+
+      // Store file info for cleanup later
+      setCachedFilePath(downloadedPath);
+      setCachedFileSize(file.fileSize);
+
+      // Get ZIP structure
+      setIsLoading(true);
+      setLoadingMessage("Analizando archivo descargado...");
+
+      const structure = await GetZipStructure(downloadedPath);
+      if (!structure || structure.length === 0) {
+        toast.error("El archivo descargado está vacío o corrupto");
+        setIsLoading(false);
+        return;
+      }
+
+      // Set up for ZIP modal
+      setZipStructure(structure);
+      setNewModPath(downloadedPath);
+      setSelectedRoot("");
+
+      setIsLoading(false);
+      setShowZipModal(true);
+    } catch (error) {
+      console.error("Error downloading mod:", error);
+      toast.error("Error al descargar: " + error);
+      setShowDownloadProgress(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleCleanupDecision = async (shouldDelete: boolean) => {
+    try {
+      if (shouldDelete && cachedFilePath) {
+        await CleanupCachedFile(cachedFilePath);
+        toast.success("Archivo descargado eliminado");
+      } else {
+        toast.success("Archivo guardado en carpeta .cache");
+      }
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+      toast.error("Error al limpiar archivo: " + error);
+    } finally {
+      setShowCleanupDialog(false);
+      setCachedFilePath("");
+      setCachedFileSize(0);
+      setDownloadContext(null);
     }
   };
 
@@ -666,6 +788,9 @@ const App: React.FC = () => {
         modName={modToUpdate?.modName || ""}
         currentUrl={modToUpdate?.currentUrl}
         onOpenUrl={OpenUrl}
+        onDownloadFromGameBanana={
+          modToUpdate?.currentUrl ? handleDownloadFromGameBanana : undefined
+        }
         onUpdateFromFile={handleUpdateFromFile}
         onUpdateFromFolder={handleUpdateFromFolder}
         onCancel={() => setModToUpdate(null)}
@@ -722,6 +847,28 @@ const App: React.FC = () => {
         onSelectRoot={setSelectedRoot}
         onCancel={handleZipModalCancel}
         onConfirm={handleZipModalConfirmAction}
+      />
+
+      <FileSelectionDialog
+        open={showFileSelection}
+        files={availableFiles}
+        onSelectFile={handleFileSelected}
+        onCancel={() => {
+          setShowFileSelection(false);
+          setAvailableFiles([]);
+        }}
+      />
+
+      <DownloadProgressDialog
+        open={showDownloadProgress}
+        fileName={downloadingFileName}
+      />
+
+      <CleanupDialog
+        open={showCleanupDialog}
+        fileName={downloadingFileName}
+        fileSize={cachedFileSize}
+        onDecision={handleCleanupDecision}
       />
 
       {/* Main Layout */}

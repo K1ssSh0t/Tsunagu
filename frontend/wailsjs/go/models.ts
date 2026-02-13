@@ -102,6 +102,33 @@ export namespace config {
 
 }
 
+export namespace gamebanana {
+	
+	export class ModFile {
+	    downloadUrl: string;
+	    fileName: string;
+	    fileSize: number;
+	    md5Checksum: string;
+	    description: string;
+	    fileId: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.downloadUrl = source["downloadUrl"];
+	        this.fileName = source["fileName"];
+	        this.fileSize = source["fileSize"];
+	        this.md5Checksum = source["md5Checksum"];
+	        this.description = source["description"];
+	        this.fileId = source["fileId"];
+	    }
+	}
+
+}
+
 export namespace mod {
 	
 	export class Mod {

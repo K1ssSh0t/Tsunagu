@@ -18,8 +18,16 @@ export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
 
+export function CleanupCachedFile(arg1) {
+  return window['go']['main']['App']['CleanupCachedFile'](arg1);
+}
+
 export function CleanupTempDirectory() {
   return window['go']['main']['App']['CleanupTempDirectory']();
+}
+
+export function DownloadModUpdate(arg1, arg2) {
+  return window['go']['main']['App']['DownloadModUpdate'](arg1, arg2);
 }
 
 export function GetCharacters() {
@@ -32,6 +40,10 @@ export function GetCurrentGame() {
 
 export function GetGamesConfig() {
   return window['go']['main']['App']['GetGamesConfig']();
+}
+
+export function GetModDownloadFiles(arg1) {
+  return window['go']['main']['App']['GetModDownloadFiles'](arg1);
 }
 
 export function GetModImageBase64(arg1) {

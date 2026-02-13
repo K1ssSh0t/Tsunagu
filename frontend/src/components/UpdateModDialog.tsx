@@ -9,13 +9,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Download, File, Folder } from "lucide-react";
+import { Download, File, Folder, CloudDownload } from "lucide-react";
 
 interface UpdateModDialogProps {
     isOpen: boolean;
     modName: string;
     currentUrl?: string;
     onOpenUrl: (url: string) => void;
+    onDownloadFromGameBanana?: () => void;
     onUpdateFromFile: () => void;
     onUpdateFromFolder: () => void;
     onCancel: () => void;
@@ -26,6 +27,7 @@ export const UpdateModDialog: React.FC<UpdateModDialogProps> = ({
     modName,
     currentUrl,
     onOpenUrl,
+    onDownloadFromGameBanana,
     onUpdateFromFile,
     onUpdateFromFolder,
     onCancel,
@@ -42,14 +44,26 @@ export const UpdateModDialog: React.FC<UpdateModDialogProps> = ({
                 </AlertDialogHeader>
                 <div className="flex flex-col gap-3 py-4">
                     {currentUrl && (
-                        <Button
-                            onClick={() => onOpenUrl(currentUrl)}
-                            variant="outline"
-                            className="w-full justify-start"
-                        >
-                            <Download className="mr-2 h-4 w-4" />
-                            Ir a la página del mod (GameBanana)
-                        </Button>
+                        <>
+                            <Button
+                                onClick={() => onOpenUrl(currentUrl)}
+                                variant="outline"
+                                className="w-full justify-start"
+                            >
+                                <Download className="mr-2 h-4 w-4" />
+                                Ir a la página del mod (GameBanana)
+                            </Button>
+                            {onDownloadFromGameBanana && (
+                                <Button
+                                    onClick={onDownloadFromGameBanana}
+                                    variant="default"
+                                    className="w-full justify-start bg-primary"
+                                >
+                                    <CloudDownload className="mr-2 h-4 w-4" />
+                                    Descargar desde GameBanana
+                                </Button>
+                            )}
+                        </>
                     )}
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">

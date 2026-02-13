@@ -12,6 +12,7 @@ import (
 
 	"tsunagu/pkg/character"
 	"tsunagu/pkg/config"
+	"tsunagu/pkg/gamebanana"
 	"tsunagu/pkg/mod"
 	"tsunagu/pkg/utils"
 )
@@ -22,6 +23,7 @@ type App struct {
 	modService       *mod.Service
 	characterService *character.Service
 	tempZipDir       string
+	gameBananaClient *gamebanana.Client
 }
 
 func NewApp() *App {
@@ -40,6 +42,15 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.configService.LoadConfig()
+
+	// Create cache directory for mod downloads
+	cacheDir := filepath.Join(".", ".cache", "mod-downloads")
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		fmt.Printf("Warning: failed to create cache directory: %v\n", err)
+	}
+
+	// Initialize GameBanana client
+	a.gameBananaClient = gamebanana.NewClient(cacheDir)
 }
 
 // SaveConfig saves the configuration
@@ -322,4 +333,71 @@ func (a *App) GetModImageBase64(imagePath string) (string, error) {
 
 func (a *App) Greet(name string) (string, error) {
 	return "Hello " + name, nil
+}
+
+// GetModDownloadFiles obtiene la lista de archivos disponibles para descargar
+func (a *App) GetModDownloadFiles(modURL string) ([]gamebanana.ModFile, error) {
+	if a.gameBananaClient == nil {
+		return nil, fmt.Errorf("GameBanana client not initialized")
+	}
+
+	// Extraer mod ID de la URL
+	modID, err := gamebanana.ExtractModID(modURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid GameBanana URL: %w", err)
+	}
+
+	// Obtener archivos disponibles
+	files, err := a.gameBananaClient.GetModFiles(modID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mod files: %w", err)
+	}
+
+	return files, nil
+}
+
+// DownloadModUpdate descarga un archivo de actualización de mod
+func (a *App) DownloadModUpdate(downloadURL, fileName string) (string, error) {
+	if a.gameBananaClient == nil {
+		return "", fmt.Errorf("GameBanana client not initialized")
+	}
+
+	// Descargar archivo con callback de progreso
+	downloadedPath, err := a.gameBananaClient.DownloadModFile(downloadURL, fileName, func(progress gamebanana.DownloadProgress) {
+		// Emitir evento de progreso al frontend
+		wailsruntime.EventsEmit(a.ctx, "download:progress", progress)
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("download failed: %w", err)
+	}
+
+	return downloadedPath, nil
+}
+
+// CleanupCachedFile elimina un archivo del caché de descargas
+func (a *App) CleanupCachedFile(filePath string) error {
+	// Validar que el archivo esté en el directorio de caché
+	cacheDir := filepath.Join(".", ".cache", "mod-downloads")
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return fmt.Errorf("invalid file path: %w", err)
+	}
+
+	absCacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return fmt.Errorf("invalid cache directory: %w", err)
+	}
+
+	// Verificar que el archivo está dentro del directorio de caché
+	if !strings.HasPrefix(absPath, absCacheDir) {
+		return fmt.Errorf("file is not in cache directory")
+	}
+
+	// Eliminar archivo
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+
+	return nil
 }

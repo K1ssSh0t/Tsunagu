@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"tsunagu/pkg/config"
+	"tsunagu/pkg/gamebanana"
 	"tsunagu/pkg/utils"
 )
 
@@ -646,47 +647,25 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 	return updates, nil
 }
 
-// fetchGameBananaDate fetches the modification date from a GameBanana URL
+// fetchGameBananaDate fetches the modification date from a GameBanana URL using API
 func (s *Service) fetchGameBananaDate(url string) (string, error) {
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	req, err := http.NewRequest("GET", url, nil)
+	// Extract mod ID
+	modID, err := gamebanana.ExtractModID(url)
 	if err != nil {
 		return "", err
 	}
 
-	// Set User-Agent to avoid being blocked
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+	// Create temporary GameBanana client
+	client := gamebanana.NewClient("")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("received status code %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
+	// Get mod info from API
+	modInfo, err := client.GetModInfo(modID)
 	if err != nil {
 		return "", err
 	}
 
-	// Extract JSON-LD
-	// Look for <script type="application/ld+json"> containing "dateModified"
-	// Simple regex to find the dateModified field in the JSON-LD block
-	// This is a bit hacky but avoids a full HTML parser dependency for now
-	re := regexp.MustCompile(`"dateModified"\s*:\s*"([^"]+)"`)
-	matches := re.FindStringSubmatch(string(body))
-
-	if len(matches) > 1 {
-		return matches[1], nil
-	}
-
-	return "", fmt.Errorf("dateModified not found in page")
+	// Return date in RFC3339 format (compatible with existing parsing logic)
+	return modInfo.DateModified.Format(time.RFC3339), nil
 }
 
 // fetchGameBananaImage fetches the main image URL from a GameBanana mod page using the API

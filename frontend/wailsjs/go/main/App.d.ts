@@ -3,6 +3,7 @@
 import {mod} from '../models';
 import {character} from '../models';
 import {config} from '../models';
+import {gamebanana} from '../models';
 import {utils} from '../models';
 
 export function ActivateSingleMod(arg1:string,arg2:string):Promise<void>;
@@ -13,13 +14,19 @@ export function AddModFromZipWithRoot(arg1:string,arg2:string,arg3:string,arg4:s
 
 export function CheckForUpdates():Promise<Array<mod.ModUpdate>>;
 
+export function CleanupCachedFile(arg1:string):Promise<void>;
+
 export function CleanupTempDirectory():Promise<void>;
+
+export function DownloadModUpdate(arg1:string,arg2:string):Promise<string>;
 
 export function GetCharacters():Promise<Array<character.Character>>;
 
 export function GetCurrentGame():Promise<string>;
 
 export function GetGamesConfig():Promise<config.Config>;
+
+export function GetModDownloadFiles(arg1:string):Promise<Array<gamebanana.ModFile>>;
 
 export function GetModImageBase64(arg1:string):Promise<string>;
 
