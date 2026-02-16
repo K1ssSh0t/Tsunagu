@@ -181,7 +181,13 @@
       "name": "Zibai"
     },
     {
-      "name": "Yaoyao"
+      "name": "Yaoyao",
+      "skins": [
+        {
+          "name": "Rainlit Bamboo Reverie",
+          "folder": "Yaoyao-Rainlit-Bamboo-Reverie"
+        }
+      ]
     },
     {
       "name": "Nahida"
@@ -230,7 +236,13 @@
       "name": "Kaveh"
     },
     {
-      "name": "Neuvillette"
+      "name": "Neuvillette",
+      "skins": [
+        {
+          "name": "Melusent Gift",
+          "folder": "Melusent-Gift"
+        }
+      ]
     },
     {
       "name": "Xiao"
