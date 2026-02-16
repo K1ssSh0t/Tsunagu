@@ -509,12 +509,9 @@
       "skins": [
         {
           "name": "Firefly Spring Missive",
-          "folder": "FireflySchoolGirl"
+          "folder": "Firefly-SchoolGirl"
         }
       ]
-    },
-    {
-      "name": "Dan Heng - PT"
     },
     {
       "name": "Jingliu"
@@ -632,11 +629,11 @@
       "skins": [
         {
           "name": "March7Hunt",
-          "folder": "March7thHunt"
+          "folder": "March-7thHunt"
         },
         {
           "name": "Nascent Spring",
-          "folder": "MarchNS"
+          "folder": "March-NS"
         }
       ]
     },
@@ -672,9 +669,6 @@
     },
     {
       "name": "Ruan Mei"
-    },
-    {
-      "name": "Topaz and Numby"
     },
     {
       "name": "Jiaoqiu"
@@ -713,9 +707,6 @@
       "name": "Lingsha"
     },
     {
-      "name": "{NICKNAME}"
-    },
-    {
       "name": "Qingque"
     },
     {
@@ -743,16 +734,13 @@
       "name": "Hysilens"
     },
     {
-      "name": "Dan Heng - IL"
-    },
-    {
       "name": "Sparkle"
     },
     {
       "name": "Cipher"
     },
     {
-      "name": "Topaz \u0026 Numby"
+      "name": "Topaz "
     },
     {
       "name": "Trailblazer"
