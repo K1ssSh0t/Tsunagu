@@ -924,129 +924,52 @@
   ],
   "zzz": [
     {
-      "name": "Nekomata",
-      "skins": [
-        {
-          "name": "Nekomata: Cat's Gratitude",
-          "folder": "3110210"
-        }
-      ]
+      "name": "Nekomata"
     },
     {
-      "name": "Caesar",
-      "skins": [
-        {
-          "name": "Caesar: Inferno Joyride",
-          "folder": "3110710"
-        }
-      ]
-    },
-    {
-      "name": "Astra",
-      "skins": [
-        {
-          "name": "Astra Chandelier",
-          "folder": "AstraChandelier"
-        }
-      ]
-    },
-    {
-      "name": "Evelyn",
-      "skins": [
-        {
-          "name": "Evelyn: A Moth to Light",
-          "folder": "3113210"
-        }
-      ]
-    },
-    {
-      "name": "Lighter",
-      "skins": [
-        {
-          "name": "Lighter: Everburn Embers",
-          "folder": "3111610"
-        }
-      ]
+      "name": "Caesar"
     },
     {
       "name": "Astra Yao",
       "skins": [
         {
-          "name": "Astra Yao: Chandelier",
-          "folder": "3113111"
-        },
-        {
-          "name": "Astra Yao: Scarlet Rock",
-          "folder": "3113110"
+          "name": "Astra Chandelier",
+          "folder": "Astra-Chandelier"
         }
       ]
+    },
+    {
+      "name": "Evelyn"
+    },
+    {
+      "name": "Lighter"
     },
     {
       "name": "Ye Shunguang",
       "skins": [
         {
-          "name": "Ye Shunguang: Clouddrift Illumination",
-          "folder": "3114310"
-        },
-        {
           "name": "Ye Shunguang: Touch of Dawnlight",
-          "folder": "3114311"
+          "folder": "YeShunguang-Dress"
         }
       ]
     },
     {
-      "name": "Zhao",
-      "skins": [
-        {
-          "name": "Zhao: Cuddly Executor",
-          "folder": "3113410"
-        }
-      ]
+      "name": "Zhao"
     },
     {
-      "name": "Rina",
-      "skins": [
-        {
-          "name": "Rina: Head Maid's Perfection",
-          "folder": "3112110"
-        }
-      ]
+      "name": "Rina"
     },
     {
-      "name": "Zhu Yuan",
-      "skins": [
-        {
-          "name": "Zhu Yuan: Suppressor of Evil",
-          "folder": "3112410"
-        }
-      ]
+      "name": "Zhu Yuan"
     },
     {
-      "name": "Corin",
-      "skins": [
-        {
-          "name": "Corin: Matcha Profiterole",
-          "folder": "3110610"
-        }
-      ]
+      "name": "Corin"
     },
     {
-      "name": "Yanagi",
-      "skins": [
-        {
-          "name": "Tsukishiro Yanagi: Flowing Moonshade",
-          "folder": "3112210"
-        }
-      ]
+      "name": "Yanagi"
     },
     {
-      "name": "Pulchra",
-      "skins": [
-        {
-          "name": "Pulchra: Rest for a Weary Tail",
-          "folder": "3113510"
-        }
-      ]
+      "name": "Pulchra"
     },
     {
       "name": "Aria",
@@ -1062,162 +985,70 @@
       ]
     },
     {
-      "name": "Koleda",
-      "skins": [
-        {
-          "name": "Koleda: Heart \u0026 Hammer",
-          "folder": "3111010"
-        }
-      ]
+      "name": "Koleda"
     },
     {
-      "name": "Lycaon",
-      "skins": [
-        {
-          "name": "Lycaon: Moonlight Prowl",
-          "folder": "3111410"
-        }
-      ]
+      "name": "Lycaon"
     },
     {
-      "name": "Billy",
-      "skins": [
-        {
-          "name": "Billy: Shining Starlight Costume",
-          "folder": "3110810"
-        }
-      ]
+      "name": "Billy"
     },
     {
-      "name": "Lucy",
-      "skins": [
-        {
-          "name": "Lucy: Ironfist Gentlewoman",
-          "folder": "3111510"
-        }
-      ]
+      "name": "Lucy"
     },
     {
-      "name": "Soukaku",
-      "skins": [
-        {
-          "name": "Soukaku: Dance of Azure Ice",
-          "folder": "3111310"
-        }
-      ]
+      "name": "Soukaku"
     },
     {
-      "name": "Trigger",
-      "skins": [
-        {
-          "name": "Trigger: Gaze Into the Light",
-          "folder": "3113610"
-        }
-      ]
+      "name": "Trigger"
     },
     {
-      "name": "Hugo",
-      "skins": [
-        {
-          "name": "Hugo: Crownless Rebellion",
-          "folder": "3112910"
-        }
-      ]
+      "name": "Hugo"
     },
     {
       "name": "Alice",
       "skins": [
         {
           "name": "Alice Sea of Thyme",
-          "folder": "AliceSkin"
-        },
-        {
-          "name": "Alice: Celestian Etiquette",
-          "folder": "3114010"
-        },
-        {
-          "name": "Alice: Sea of Thyme",
-          "folder": "3114011"
+          "folder": "Alice-Skin"
         }
       ]
     },
     {
-      "name": "Anby",
-      "skins": [
-        {
-          "name": "Anby: Street Streak",
-          "folder": "3110110"
-        }
-      ]
+      "name": "Anby"
     },
     {
-      "name": "Ben",
-      "skins": [
-        {
-          "name": "Ben: Fluffy Beastking",
-          "folder": "3111210"
-        }
-      ]
+      "name": "Ben"
     },
     {
-      "name": "Jane",
+      "name": "Jane Doe",
       "skins": [
-        {
-          "name": "Jane: Hidden Nightfade",
-          "folder": "3112610"
-        },
         {
           "name": "Jane: Nocturne of Light",
-          "folder": "3112611"
+          "folder": "Jane-Summer"
         }
       ]
     },
     {
-      "name": "Seth",
-      "skins": [
-        {
-          "name": "Seth: Incorruptible Heart",
-          "folder": "3112710"
-        }
-      ]
+      "name": "Seth"
     },
     {
       "name": "Silver Soldier - Anby"
     },
     {
-      "name": "Ju Fufu",
-      "skins": [
-        {
-          "name": "Ju Fufu: Summit's Cute Tiger",
-          "folder": "3113910"
-        }
-      ]
+      "name": "Ju Fufu"
     },
     {
       "name": "Manato",
       "skins": [
         {
           "name": "White Heart Silhouette",
-          "folder": "ManatoSkin"
-        },
-        {
-          "name": "Komano Manato: Loyal Wild Soul",
-          "folder": "3114410"
-        },
-        {
-          "name": "Komano Manato: White Heart Silhouette",
-          "folder": "3114411"
+          "folder": "Manato-Skin"
         }
       ]
     },
     {
-      "name": "Dialyn",
-      "skins": [
-        {
-          "name": "Dialyn: Ringing Judgment",
-          "folder": "3114810"
-        }
-      ]
+      "name": "Dialyn"
     },
     {
       "name": "Belle",
@@ -1238,25 +1069,11 @@
         {
           "name": "Ellen On Campus",
           "folder": "EllenOnCampus"
-        },
-        {
-          "name": "Ellen: Ellen Scissorhands",
-          "folder": "3111910"
-        },
-        {
-          "name": "Ellen: On Campus",
-          "folder": "3111911"
         }
       ]
     },
     {
-      "name": "Harumasa",
-      "skins": [
-        {
-          "name": "Asaba Harumasa: Full-Fledged Strings",
-          "folder": "3112010"
-        }
-      ]
+      "name": "Harumasa"
     },
     {
       "name": "Yixuan",
@@ -1264,14 +1081,6 @@
         {
           "name": "YixuanTrailsofInkr",
           "folder": "YixuanTrailsofInk"
-        },
-        {
-          "name": "Yixuan: Summit of Clouds",
-          "folder": "3113710"
-        },
-        {
-          "name": "Yixuan: Trails of Ink",
-          "folder": "3113711"
         }
       ]
     },
@@ -1281,34 +1090,14 @@
         {
           "name": "Yuzuha Tanuki in Broad Daylight",
           "folder": "YuzuhaSkin"
-        },
-        {
-          "name": "Yuzuha: Tanuki Under the Shade",
-          "folder": "3114110"
-        },
-        {
-          "name": "Yuzuha: Tanuki in Broad Daylight",
-          "folder": "3114111"
         }
       ]
     },
     {
-      "name": "Grace",
-      "skins": [
-        {
-          "name": "Grace: The Iron Witch",
-          "folder": "3111810"
-        }
-      ]
+      "name": "Grace"
     },
     {
-      "name": "Soldier 11",
-      "skins": [
-        {
-          "name": "Soldier 11: Elite Soldier",
-          "folder": "3110410"
-        }
-      ]
+      "name": "Soldier 11"
     },
     {
       "name": "Nicole",
@@ -1316,34 +1105,14 @@
         {
           "name": "Nicole Cunning Cutie",
           "folder": "NicoleCunningCutie"
-        },
-        {
-          "name": "Nicole: Cunning Cutie",
-          "folder": "3110311"
-        },
-        {
-          "name": "Nicole: Lil Sassy",
-          "folder": "3110310"
         }
       ]
     },
     {
-      "name": "Miyabi",
-      "skins": [
-        {
-          "name": "Hoshimi Miyabi: Frostgleam Dew",
-          "folder": "3110910"
-        }
-      ]
+      "name": "Miyabi"
     },
     {
-      "name": "Lucia",
-      "skins": [
-        {
-          "name": "Lucia: Whispering Dreams",
-          "folder": "3114510"
-        }
-      ]
+      "name": "Lucia"
     },
     {
       "name": "Sunna",
@@ -1372,43 +1141,17 @@
       ]
     },
     {
-      "name": "Piper",
-      "skins": [
-        {
-          "name": "Piper: Lazy Speed",
-          "folder": "3112810"
-        }
-      ]
+      "name": "Piper"
     },
     {
-      "name": "Qingyi",
-      "skins": [
-        {
-          "name": "Qingyi: Clarity, Peace, and Joy",
-          "folder": "3112510"
-        }
-      ]
+      "name": "Qingyi"
     },
     {
-      "name": "Burnice",
-      "skins": [
-        {
-          "name": "Burnice: Wildfire Rave",
-          "folder": "3111710"
-        }
-      ]
+      "name": "Burnice"
     },
     {
       "name": "Vivian",
       "skins": [
-        {
-          "name": "Vivian: Fluttering Violet",
-          "folder": "3113310"
-        },
-        {
-          "name": "Vivian: Iris of the Shore",
-          "folder": "3113311"
-        },
         {
           "name": "Iris of the Shore",
           "folder": "VivianSkin"
@@ -1429,61 +1172,22 @@
       ]
     },
     {
-      "name": "Banyue",
-      "skins": [
-        {
-          "name": "Banyue: Blazestone Heart",
-          "folder": "3114710"
-        }
-      ]
+      "name": "Banyue"
     },
     {
-      "name": "Orphie \u0026 Magus",
-      "skins": [
-        {
-          "name": "Orphie \u0026 Magus: Two Banks of the River",
-          "folder": "3113010"
-        }
-      ]
+      "name": "Orphie and  Magus"
     },
     {
-      "name": "Anton",
-      "skins": [
-        {
-          "name": "Anton: Earthshaking Axle",
-          "folder": "3111110"
-        }
-      ]
+      "name": "Anton"
     },
     {
       "name": "Orphie"
     },
     {
-      "name": "Seed",
-      "skins": [
-        {
-          "name": "Seed: Flower in Bloom",
-          "folder": "3114610"
-        }
-      ]
+      "name": "Seed"
     },
     {
-      "name": "Yidhari",
-      "skins": [
-        {
-          "name": "Yidhari: Stream of Consciousness",
-          "folder": "3110510"
-        }
-      ]
-    },
-    {
-      "name": "Soldier 0 - Anby",
-      "skins": [
-        {
-          "name": "Soldier 0 - Anby: Silver Soldier",
-          "folder": "3113810"
-        }
-      ]
+      "name": "Yidhari"
     }
   ]
 }
