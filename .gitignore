@@ -2,6 +2,5 @@ build/bin
 node_modules
 frontend/dist
 config.json
-characters.json
 .cache/
 zip-structure-*

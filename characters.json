@@ -1,0 +1,1504 @@
+{
+  "genshin": [
+    {
+      "name": "Mona",
+      "skins": [
+        {
+          "name": "MonaCN",
+          "folder": "Mona-CN"
+        }
+      ]
+    },
+    {
+      "name": "Xingqiu",
+      "skins": [
+        {
+          "name": "Bamboo Rain",
+          "folder": "Xingqiu-Bamboo"
+        }
+      ]
+    },
+    {
+      "name": "Xianyun"
+    },
+    {
+      "name": "Candace"
+    },
+    {
+      "name": "Lyney"
+    },
+    {
+      "name": "Lisa",
+      "skins": [
+        {
+          "name": "A Sobriquet Under Shade",
+          "folder": "Lisa-Sobriquet"
+        }
+      ]
+    },
+    {
+      "name": "Raiden Shogun"
+    },
+    {
+      "name": "Thoma"
+    },
+    {
+      "name": "Yelan",
+      "skins": [
+        {
+          "name": "Tranquil Banquet",
+          "folder": "Yelan-Tranquil"
+        }
+      ]
+    },
+    {
+      "name": "Razor"
+    },
+    {
+      "name": "Tighnari"
+    },
+    {
+      "name": "Lumine",
+      "skins": [
+        {
+          "name": "As Heaven and Earth Are Made Anew",
+          "folder": "Lumine-Skin"
+        }
+      ]
+    },
+    {
+      "name": "Xinyan"
+    },
+    {
+      "name": "Yoimiya"
+    },
+    {
+      "name": "Varka"
+    },
+    {
+      "name": "Rosaria",
+      "skins": [
+        {
+          "name": "RosariaCN",
+          "folder": "Rosaria-CN"
+        }
+      ]
+    },
+    {
+      "name": "Eula"
+    },
+    {
+      "name": "Furina"
+    },
+    {
+      "name": "Iansan"
+    },
+    {
+      "name": "Skirk"
+    },
+    {
+      "name": "Manekin"
+    },
+    {
+      "name": "Kaeya",
+      "skins": [
+        {
+          "name": "Sailwind Shadow",
+          "folder": "Kaeya-Sailwind"
+        }
+      ]
+    },
+    {
+      "name": "Tartaglia"
+    },
+    {
+      "name": "Yun Jin"
+    },
+    {
+      "name": "Diluc",
+      "skins": [
+        {
+          "name": "Red Dead of Night",
+          "folder": "Diluc-Flamme"
+        }
+      ]
+    },
+    {
+      "name": "Flins"
+    },
+    {
+      "name": "Sigewinne"
+    },
+    {
+      "name": "Citlali"
+    },
+    {
+      "name": "Lan Yan"
+    },
+    {
+      "name": "Jahoda"
+    },
+    {
+      "name": "Charlotte"
+    },
+    {
+      "name": "Ororon"
+    },
+    {
+      "name": "Lauma"
+    },
+    {
+      "name": "Mika"
+    },
+    {
+      "name": "Chasca"
+    },
+    {
+      "name": "Varesa"
+    },
+    {
+      "name": "Xiangling",
+      "skins": [
+        {
+          "name": "New Year's Cheer",
+          "folder": "Xiangling-Newyear"
+        }
+      ]
+    },
+    {
+      "name": "Chevreuse"
+    },
+    {
+      "name": "Ifa"
+    },
+    {
+      "name": "Emilie"
+    },
+    {
+      "name": "Nefer"
+    },
+    {
+      "name": "Zibai"
+    },
+    {
+      "name": "Yaoyao"
+    },
+    {
+      "name": "Nahida"
+    },
+    {
+      "name": "Noelle"
+    },
+    {
+      "name": "Jean",
+      "skins": [
+        {
+          "name": "JeanCN",
+          "folder": "Jean-CN"
+        },
+        {
+          "name": "Sea Breeze Dandelion",
+          "folder": "Jean-Sea"
+        }
+      ]
+    },
+    {
+      "name": "Baizhu"
+    },
+    {
+      "name": "Barbara",
+      "skins": [
+        {
+          "name": "Summertime Sparkle",
+          "folder": "Barbara-Summertime"
+        }
+      ]
+    },
+    {
+      "name": "Dehya"
+    },
+    {
+      "name": "Kamisato Ayaka",
+      "skins": [
+        {
+          "name": "Springbloom Missive",
+          "folder": "Ayaka-Springbloom"
+        }
+      ]
+    },
+    {
+      "name": "Kaveh"
+    },
+    {
+      "name": "Neuvillette"
+    },
+    {
+      "name": "Xiao"
+    },
+    {
+      "name": "Zhongli"
+    },
+    {
+      "name": "Sethos"
+    },
+    {
+      "name": "Kinich"
+    },
+    {
+      "name": "Sayu"
+    },
+    {
+      "name": "Shikanoin Heizou"
+    },
+    {
+      "name": "Kachina"
+    },
+    {
+      "name": "Yumemizuki Mizuki"
+    },
+    {
+      "name": "Alhaitham"
+    },
+    {
+      "name": "Venti"
+    },
+    {
+      "name": "Wanderer"
+    },
+    {
+      "name": "Aino"
+    },
+    {
+      "name": "Aloy"
+    },
+    {
+      "name": "Diona"
+    },
+    {
+      "name": "Yanfei"
+    },
+    {
+      "name": "Arlecchino"
+    },
+    {
+      "name": "Paimon"
+    },
+    {
+      "name": "Albedo"
+    },
+    {
+      "name": "Amber",
+      "skins": [
+        {
+          "name": "AmberCN",
+          "folder": "Amber-CN"
+        }
+      ]
+    },
+    {
+      "name": "Ganyu",
+      "skins": [
+        {
+          "name": "Twilight Blossom",
+          "folder": "GanyuTwilight"
+        }
+      ]
+    },
+    {
+      "name": "Keqing",
+      "skins": [
+        {
+          "name": "Opulent Splendor",
+          "folder": "KeqingOpulent"
+        }
+      ]
+    },
+    {
+      "name": "Layla"
+    },
+    {
+      "name": "Cyno"
+    },
+    {
+      "name": "Faruzan"
+    },
+    {
+      "name": "Ningguang",
+      "skins": [
+        {
+          "name": "Orchid's Evening Gown",
+          "folder": "NingguangOrchid"
+        }
+      ]
+    },
+    {
+      "name": "Mavuika"
+    },
+    {
+      "name": "Columbina"
+    },
+    {
+      "name": "Kaedehara Kazuha"
+    },
+    {
+      "name": "Kujou Sara"
+    },
+    {
+      "name": "Aether",
+      "skins": [
+        {
+          "name": "As Heaven and Earth Are Made Anew",
+          "folder": "Aether Skin"
+        }
+      ]
+    },
+    {
+      "name": "Mualani"
+    },
+    {
+      "name": "Chongyun"
+    },
+    {
+      "name": "Sucrose"
+    },
+    {
+      "name": "Dahlia"
+    },
+    {
+      "name": "Manekina"
+    },
+    {
+      "name": "Navia"
+    },
+    {
+      "name": "Chiori"
+    },
+    {
+      "name": "Clorinde"
+    },
+    {
+      "name": "Gorou"
+    },
+    {
+      "name": "Kuki Shinobu"
+    },
+    {
+      "name": "Qiqi"
+    },
+    {
+      "name": "Sangonomiya Kokomi"
+    },
+    {
+      "name": "Wriothesley"
+    },
+    {
+      "name": "Escoffier"
+    },
+    {
+      "name": "Klee",
+      "skins": [
+        {
+          "name": "Blossoming Starlight",
+          "folder": "Klee-Blossoming"
+        }
+      ]
+    },
+    {
+      "name": "Shenhe",
+      "skins": [
+        {
+          "name": "Frostflower Dew",
+          "folder": "Shenhe-Frostflower"
+        }
+      ]
+    },
+    {
+      "name": "Yae Miko"
+    },
+    {
+      "name": "Durin"
+    },
+    {
+      "name": "Nilou",
+      "skins": [
+        {
+          "name": "Breeze of Sabaa",
+          "folder": "Nilou-Breeze"
+        }
+      ]
+    },
+    {
+      "name": "Hu Tao",
+      "skins": [
+        {
+          "name": "Cherries Snow-Laden",
+          "folder": "Cherry-HuTao"
+        }
+      ]
+    },
+    {
+      "name": "Freminet"
+    },
+    {
+      "name": "Gaming"
+    },
+    {
+      "name": "Xilonen"
+    },
+    {
+      "name": "Bennett",
+      "skins": [
+        {
+          "name": "Adventures in Blazing Hue",
+          "folder": "Bennett-Adventure"
+        }
+      ]
+    },
+    {
+      "name": "Collei"
+    },
+    {
+      "name": "Dori"
+    },
+    {
+      "name": "Beidou"
+    },
+    {
+      "name": "Kirara",
+      "skins": [
+        {
+          "name": "Phantom in Boots",
+          "folder": "Kirara-Phantom"
+        }
+      ]
+    },
+    {
+      "name": "Lynette"
+    },
+    {
+      "name": "Ineffa"
+    },
+    {
+      "name": "Fischl",
+      "skins": [
+        {
+          "name": "Ein Immernachtstraum",
+          "folder": "Fischl-Highness"
+        }
+      ]
+    },
+    {
+      "name": "Kamisato Ayato"
+    },
+    {
+      "name": "Illuga"
+    },
+    {
+      "name": "Arataki Itto"
+    }
+  ],
+  "hsr": [
+    {
+      "name": "Argenti"
+    },
+    {
+      "name": "Hanya"
+    },
+    {
+      "name": "Firefly",
+      "skins": [
+        {
+          "name": "Firefly Spring Missive",
+          "folder": "FireflySchoolGirl"
+        }
+      ]
+    },
+    {
+      "name": "Dan Heng - PT"
+    },
+    {
+      "name": "Jingliu"
+    },
+    {
+      "name": "Pela"
+    },
+    {
+      "name": "Rappa"
+    },
+    {
+      "name": "Aglaea"
+    },
+    {
+      "name": "Cerydra"
+    },
+    {
+      "name": "Huohuo"
+    },
+    {
+      "name": "Xueyi"
+    },
+    {
+      "name": "Boothill"
+    },
+    {
+      "name": "Sunday"
+    },
+    {
+      "name": "Arlan"
+    },
+    {
+      "name": "Himeko"
+    },
+    {
+      "name": "Sampo"
+    },
+    {
+      "name": "Serval"
+    },
+    {
+      "name": "Sparxie"
+    },
+    {
+      "name": "Yao Guang"
+    },
+    {
+      "name": "Blade"
+    },
+    {
+      "name": "Jing Yuan"
+    },
+    {
+      "name": "Saber"
+    },
+    {
+      "name": "Dan Heng • Permansor Terrae"
+    },
+    {
+      "name": "Luocha"
+    },
+    {
+      "name": "Mydei"
+    },
+    {
+      "name": "Anaxa"
+    },
+    {
+      "name": "Archer"
+    },
+    {
+      "name": "Kafka"
+    },
+    {
+      "name": "Sushang"
+    },
+    {
+      "name": "Yanqing"
+    },
+    {
+      "name": "Dr. Ratio"
+    },
+    {
+      "name": "Misha"
+    },
+    {
+      "name": "The Herta"
+    },
+    {
+      "name": "Phainon"
+    },
+    {
+      "name": "Evernight"
+    },
+    {
+      "name": "Lynx"
+    },
+    {
+      "name": "Black Swan"
+    },
+    {
+      "name": "Fugue"
+    },
+    {
+      "name": "Tribbie"
+    },
+    {
+      "name": "The Dahlia"
+    },
+    {
+      "name": "Luka"
+    },
+    {
+      "name": "March 7th",
+      "skins": [
+        {
+          "name": "March7Hunt",
+          "folder": "March7thHunt"
+        },
+        {
+          "name": "Nascent Spring",
+          "folder": "MarchNS"
+        }
+      ]
+    },
+    {
+      "name": "Natasha"
+    },
+    {
+      "name": "Tingyun"
+    },
+    {
+      "name": "Welt"
+    },
+    {
+      "name": "Hyacine"
+    },
+    {
+      "name": "Dan Heng • Imbibitor Lunae"
+    },
+    {
+      "name": "Acheron"
+    },
+    {
+      "name": "Gallagher"
+    },
+    {
+      "name": "Yunli"
+    },
+    {
+      "name": "Hook"
+    },
+    {
+      "name": "Yukong"
+    },
+    {
+      "name": "Ruan Mei"
+    },
+    {
+      "name": "Topaz and Numby"
+    },
+    {
+      "name": "Jiaoqiu"
+    },
+    {
+      "name": "Moze"
+    },
+    {
+      "name": "Gepard"
+    },
+    {
+      "name": "Aventurine"
+    },
+    {
+      "name": "Jade"
+    },
+    {
+      "name": "Castorice"
+    },
+    {
+      "name": "Seele"
+    },
+    {
+      "name": "Bronya"
+    },
+    {
+      "name": "Dan Heng"
+    },
+    {
+      "name": "Guinaifen"
+    },
+    {
+      "name": "Feixiao"
+    },
+    {
+      "name": "Lingsha"
+    },
+    {
+      "name": "{NICKNAME}"
+    },
+    {
+      "name": "Qingque"
+    },
+    {
+      "name": "Fu Xuan"
+    },
+    {
+      "name": "Ashveil"
+    },
+    {
+      "name": "Cyrene"
+    },
+    {
+      "name": "Asta"
+    },
+    {
+      "name": "Bailu"
+    },
+    {
+      "name": "Clara"
+    },
+    {
+      "name": "Robin"
+    },
+    {
+      "name": "Hysilens"
+    },
+    {
+      "name": "Dan Heng - IL"
+    },
+    {
+      "name": "Sparkle"
+    },
+    {
+      "name": "Cipher"
+    },
+    {
+      "name": "Topaz \u0026 Numby"
+    },
+    {
+      "name": "Trailblazer"
+    },
+    {
+      "name": "Herta"
+    },
+    {
+      "name": "Silver Wolf"
+    }
+  ],
+  "wuwa": [
+    {
+      "name": "Encore"
+    },
+    {
+      "name": "Aemeath"
+    },
+    {
+      "name": "Lynae"
+    },
+    {
+      "name": "Chixia"
+    },
+    {
+      "name": "Yangyang"
+    },
+    {
+      "name": "Yuanwu"
+    },
+    {
+      "name": "Mortefi"
+    },
+    {
+      "name": "Youhu"
+    },
+    {
+      "name": "Iuno"
+    },
+    {
+      "name": "Chisa"
+    },
+    {
+      "name": "Rover: Havoc"
+    },
+    {
+      "name": "Calcharo"
+    },
+    {
+      "name": "Changli",
+      "skins": [
+        {
+          "name": "Laurel Nymph",
+          "folder": "LaurelNymph"
+        }
+      ]
+    },
+    {
+      "name": "Lumi"
+    },
+    {
+      "name": "Roccia"
+    },
+    {
+      "name": "Phoebe"
+    },
+    {
+      "name": "Cantarella"
+    },
+    {
+      "name": "Ciaccona"
+    },
+    {
+      "name": "Galbrena"
+    },
+    {
+      "name": "Jiyan"
+    },
+    {
+      "name": "Baizhi"
+    },
+    {
+      "name": "Lupa"
+    },
+    {
+      "name": "Qiuyuan"
+    },
+    {
+      "name": "Luuk Herssen"
+    },
+    {
+      "name": "Rover: Aero"
+    },
+    {
+      "name": "Xiangli Yao"
+    },
+    {
+      "name": "Sanhua",
+      "skins": [
+        {
+          "name": "Exorcistic Adjuration",
+          "folder": "ExorcisticAdjuration"
+        }
+      ]
+    },
+    {
+      "name": "Jinhsi",
+      "skins": [
+        {
+          "name": "Peach Blossom",
+          "folder": "PeachBlossom"
+        }
+      ]
+    },
+    {
+      "name": "Camellya"
+    },
+    {
+      "name": "Buling"
+    },
+    {
+      "name": "Danjin"
+    },
+    {
+      "name": "Taoqi"
+    },
+    {
+      "name": "Verina"
+    },
+    {
+      "name": "Yinlin"
+    },
+    {
+      "name": "Brant"
+    },
+    {
+      "name": "Zani"
+    },
+    {
+      "name": "Cartethyia"
+    },
+    {
+      "name": "Phrolova"
+    },
+    {
+      "name": "Lingyang"
+    },
+    {
+      "name": "Zhezhi"
+    },
+    {
+      "name": "Carlotta",
+      "skins": [
+        {
+          "name": "Splashing Summer",
+          "folder": "SplashingSummer"
+        }
+      ]
+    },
+    {
+      "name": "Augusta"
+    },
+    {
+      "name": "Mornye"
+    },
+    {
+      "name": "Rover"
+    },
+    {
+      "name": "Aalto"
+    },
+    {
+      "name": "Xiangliyao"
+    },
+    {
+      "name": "Shorekeeper"
+    },
+    {
+      "name": "Rover: Spectro"
+    },
+    {
+      "name": "Jianxin"
+    }
+  ],
+  "zzz": [
+    {
+      "name": "Nekomata",
+      "skins": [
+        {
+          "name": "Nekomata: Cat's Gratitude",
+          "folder": "3110210"
+        }
+      ]
+    },
+    {
+      "name": "Caesar",
+      "skins": [
+        {
+          "name": "Caesar: Inferno Joyride",
+          "folder": "3110710"
+        }
+      ]
+    },
+    {
+      "name": "Astra",
+      "skins": [
+        {
+          "name": "Astra Chandelier",
+          "folder": "AstraChandelier"
+        }
+      ]
+    },
+    {
+      "name": "Evelyn",
+      "skins": [
+        {
+          "name": "Evelyn: A Moth to Light",
+          "folder": "3113210"
+        }
+      ]
+    },
+    {
+      "name": "Lighter",
+      "skins": [
+        {
+          "name": "Lighter: Everburn Embers",
+          "folder": "3111610"
+        }
+      ]
+    },
+    {
+      "name": "Astra Yao",
+      "skins": [
+        {
+          "name": "Astra Yao: Chandelier",
+          "folder": "3113111"
+        },
+        {
+          "name": "Astra Yao: Scarlet Rock",
+          "folder": "3113110"
+        }
+      ]
+    },
+    {
+      "name": "Ye Shunguang",
+      "skins": [
+        {
+          "name": "Ye Shunguang: Clouddrift Illumination",
+          "folder": "3114310"
+        },
+        {
+          "name": "Ye Shunguang: Touch of Dawnlight",
+          "folder": "3114311"
+        }
+      ]
+    },
+    {
+      "name": "Zhao",
+      "skins": [
+        {
+          "name": "Zhao: Cuddly Executor",
+          "folder": "3113410"
+        }
+      ]
+    },
+    {
+      "name": "Rina",
+      "skins": [
+        {
+          "name": "Rina: Head Maid's Perfection",
+          "folder": "3112110"
+        }
+      ]
+    },
+    {
+      "name": "Zhu Yuan",
+      "skins": [
+        {
+          "name": "Zhu Yuan: Suppressor of Evil",
+          "folder": "3112410"
+        }
+      ]
+    },
+    {
+      "name": "Corin",
+      "skins": [
+        {
+          "name": "Corin: Matcha Profiterole",
+          "folder": "3110610"
+        }
+      ]
+    },
+    {
+      "name": "Yanagi",
+      "skins": [
+        {
+          "name": "Tsukishiro Yanagi: Flowing Moonshade",
+          "folder": "3112210"
+        }
+      ]
+    },
+    {
+      "name": "Pulchra",
+      "skins": [
+        {
+          "name": "Pulchra: Rest for a Weary Tail",
+          "folder": "3113510"
+        }
+      ]
+    },
+    {
+      "name": "Aria",
+      "skins": [
+        {
+          "name": "Aria: Discordant Note",
+          "folder": "3115011"
+        },
+        {
+          "name": "Aria: Energetic Idol",
+          "folder": "3115010"
+        }
+      ]
+    },
+    {
+      "name": "Koleda",
+      "skins": [
+        {
+          "name": "Koleda: Heart \u0026 Hammer",
+          "folder": "3111010"
+        }
+      ]
+    },
+    {
+      "name": "Lycaon",
+      "skins": [
+        {
+          "name": "Lycaon: Moonlight Prowl",
+          "folder": "3111410"
+        }
+      ]
+    },
+    {
+      "name": "Billy",
+      "skins": [
+        {
+          "name": "Billy: Shining Starlight Costume",
+          "folder": "3110810"
+        }
+      ]
+    },
+    {
+      "name": "Lucy",
+      "skins": [
+        {
+          "name": "Lucy: Ironfist Gentlewoman",
+          "folder": "3111510"
+        }
+      ]
+    },
+    {
+      "name": "Soukaku",
+      "skins": [
+        {
+          "name": "Soukaku: Dance of Azure Ice",
+          "folder": "3111310"
+        }
+      ]
+    },
+    {
+      "name": "Trigger",
+      "skins": [
+        {
+          "name": "Trigger: Gaze Into the Light",
+          "folder": "3113610"
+        }
+      ]
+    },
+    {
+      "name": "Hugo",
+      "skins": [
+        {
+          "name": "Hugo: Crownless Rebellion",
+          "folder": "3112910"
+        }
+      ]
+    },
+    {
+      "name": "Alice",
+      "skins": [
+        {
+          "name": "Alice Sea of Thyme",
+          "folder": "AliceSkin"
+        },
+        {
+          "name": "Alice: Celestian Etiquette",
+          "folder": "3114010"
+        },
+        {
+          "name": "Alice: Sea of Thyme",
+          "folder": "3114011"
+        }
+      ]
+    },
+    {
+      "name": "Anby",
+      "skins": [
+        {
+          "name": "Anby: Street Streak",
+          "folder": "3110110"
+        }
+      ]
+    },
+    {
+      "name": "Ben",
+      "skins": [
+        {
+          "name": "Ben: Fluffy Beastking",
+          "folder": "3111210"
+        }
+      ]
+    },
+    {
+      "name": "Jane",
+      "skins": [
+        {
+          "name": "Jane: Hidden Nightfade",
+          "folder": "3112610"
+        },
+        {
+          "name": "Jane: Nocturne of Light",
+          "folder": "3112611"
+        }
+      ]
+    },
+    {
+      "name": "Seth",
+      "skins": [
+        {
+          "name": "Seth: Incorruptible Heart",
+          "folder": "3112710"
+        }
+      ]
+    },
+    {
+      "name": "Silver Soldier - Anby"
+    },
+    {
+      "name": "Ju Fufu",
+      "skins": [
+        {
+          "name": "Ju Fufu: Summit's Cute Tiger",
+          "folder": "3113910"
+        }
+      ]
+    },
+    {
+      "name": "Manato",
+      "skins": [
+        {
+          "name": "White Heart Silhouette",
+          "folder": "ManatoSkin"
+        },
+        {
+          "name": "Komano Manato: Loyal Wild Soul",
+          "folder": "3114410"
+        },
+        {
+          "name": "Komano Manato: White Heart Silhouette",
+          "folder": "3114411"
+        }
+      ]
+    },
+    {
+      "name": "Dialyn",
+      "skins": [
+        {
+          "name": "Dialyn: Ringing Judgment",
+          "folder": "3114810"
+        }
+      ]
+    },
+    {
+      "name": "Belle",
+      "skins": [
+        {
+          "name": "Belle Delicate Sunlight",
+          "folder": "BelleDelicateSunlight"
+        },
+        {
+          "name": "Belle Summer Skies",
+          "folder": "BelleSummerSkin"
+        }
+      ]
+    },
+    {
+      "name": "Ellen",
+      "skins": [
+        {
+          "name": "Ellen On Campus",
+          "folder": "EllenOnCampus"
+        },
+        {
+          "name": "Ellen: Ellen Scissorhands",
+          "folder": "3111910"
+        },
+        {
+          "name": "Ellen: On Campus",
+          "folder": "3111911"
+        }
+      ]
+    },
+    {
+      "name": "Harumasa",
+      "skins": [
+        {
+          "name": "Asaba Harumasa: Full-Fledged Strings",
+          "folder": "3112010"
+        }
+      ]
+    },
+    {
+      "name": "Yixuan",
+      "skins": [
+        {
+          "name": "YixuanTrailsofInkr",
+          "folder": "YixuanTrailsofInk"
+        },
+        {
+          "name": "Yixuan: Summit of Clouds",
+          "folder": "3113710"
+        },
+        {
+          "name": "Yixuan: Trails of Ink",
+          "folder": "3113711"
+        }
+      ]
+    },
+    {
+      "name": "Yuzuha",
+      "skins": [
+        {
+          "name": "Yuzuha Tanuki in Broad Daylight",
+          "folder": "YuzuhaSkin"
+        },
+        {
+          "name": "Yuzuha: Tanuki Under the Shade",
+          "folder": "3114110"
+        },
+        {
+          "name": "Yuzuha: Tanuki in Broad Daylight",
+          "folder": "3114111"
+        }
+      ]
+    },
+    {
+      "name": "Grace",
+      "skins": [
+        {
+          "name": "Grace: The Iron Witch",
+          "folder": "3111810"
+        }
+      ]
+    },
+    {
+      "name": "Soldier 11",
+      "skins": [
+        {
+          "name": "Soldier 11: Elite Soldier",
+          "folder": "3110410"
+        }
+      ]
+    },
+    {
+      "name": "Nicole",
+      "skins": [
+        {
+          "name": "Nicole Cunning Cutie",
+          "folder": "NicoleCunningCutie"
+        },
+        {
+          "name": "Nicole: Cunning Cutie",
+          "folder": "3110311"
+        },
+        {
+          "name": "Nicole: Lil Sassy",
+          "folder": "3110310"
+        }
+      ]
+    },
+    {
+      "name": "Miyabi",
+      "skins": [
+        {
+          "name": "Hoshimi Miyabi: Frostgleam Dew",
+          "folder": "3110910"
+        }
+      ]
+    },
+    {
+      "name": "Lucia",
+      "skins": [
+        {
+          "name": "Lucia: Whispering Dreams",
+          "folder": "3114510"
+        }
+      ]
+    },
+    {
+      "name": "Sunna",
+      "skins": [
+        {
+          "name": "Sunna: Afternoon Tea Break",
+          "folder": "3114911"
+        },
+        {
+          "name": "Sunna: Dreams on Loop",
+          "folder": "3114910"
+        }
+      ]
+    },
+    {
+      "name": "Wise",
+      "skins": [
+        {
+          "name": "Wise Soaring Crane",
+          "folder": "WiseSoaringCrane"
+        },
+        {
+          "name": "Wise Peaceful Waves",
+          "folder": "WiseSummerSkin"
+        }
+      ]
+    },
+    {
+      "name": "Piper",
+      "skins": [
+        {
+          "name": "Piper: Lazy Speed",
+          "folder": "3112810"
+        }
+      ]
+    },
+    {
+      "name": "Qingyi",
+      "skins": [
+        {
+          "name": "Qingyi: Clarity, Peace, and Joy",
+          "folder": "3112510"
+        }
+      ]
+    },
+    {
+      "name": "Burnice",
+      "skins": [
+        {
+          "name": "Burnice: Wildfire Rave",
+          "folder": "3111710"
+        }
+      ]
+    },
+    {
+      "name": "Vivian",
+      "skins": [
+        {
+          "name": "Vivian: Fluttering Violet",
+          "folder": "3113310"
+        },
+        {
+          "name": "Vivian: Iris of the Shore",
+          "folder": "3113311"
+        },
+        {
+          "name": "Iris of the Shore",
+          "folder": "VivianSkin"
+        }
+      ]
+    },
+    {
+      "name": "Pan Yinhu",
+      "skins": [
+        {
+          "name": "Pan Yinhu: Culinary Jewel",
+          "folder": "3114211"
+        },
+        {
+          "name": "Pan Yinhu: Hundred Flavors",
+          "folder": "3114210"
+        }
+      ]
+    },
+    {
+      "name": "Banyue",
+      "skins": [
+        {
+          "name": "Banyue: Blazestone Heart",
+          "folder": "3114710"
+        }
+      ]
+    },
+    {
+      "name": "Orphie \u0026 Magus",
+      "skins": [
+        {
+          "name": "Orphie \u0026 Magus: Two Banks of the River",
+          "folder": "3113010"
+        }
+      ]
+    },
+    {
+      "name": "Anton",
+      "skins": [
+        {
+          "name": "Anton: Earthshaking Axle",
+          "folder": "3111110"
+        }
+      ]
+    },
+    {
+      "name": "Orphie"
+    },
+    {
+      "name": "Seed",
+      "skins": [
+        {
+          "name": "Seed: Flower in Bloom",
+          "folder": "3114610"
+        }
+      ]
+    },
+    {
+      "name": "Yidhari",
+      "skins": [
+        {
+          "name": "Yidhari: Stream of Consciousness",
+          "folder": "3110510"
+        }
+      ]
+    },
+    {
+      "name": "Soldier 0 - Anby",
+      "skins": [
+        {
+          "name": "Soldier 0 - Anby: Silver Soldier",
+          "folder": "3113810"
+        }
+      ]
+    }
+  ]
+}
