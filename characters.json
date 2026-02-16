@@ -784,9 +784,6 @@
       "name": "Chisa"
     },
     {
-      "name": "Rover: Havoc"
-    },
-    {
       "name": "Calcharo"
     },
     {
@@ -794,7 +791,7 @@
       "skins": [
         {
           "name": "Laurel Nymph",
-          "folder": "LaurelNymph"
+          "folder": "Laurel-Nymph"
         }
       ]
     },
@@ -832,9 +829,6 @@
       "name": "Luuk Herssen"
     },
     {
-      "name": "Rover: Aero"
-    },
-    {
       "name": "Xiangli Yao"
     },
     {
@@ -842,7 +836,7 @@
       "skins": [
         {
           "name": "Exorcistic Adjuration",
-          "folder": "ExorcisticAdjuration"
+          "folder": "Exorcistic-Adjuration"
         }
       ]
     },
@@ -851,7 +845,7 @@
       "skins": [
         {
           "name": "Peach Blossom",
-          "folder": "PeachBlossom"
+          "folder": "Peach-Blossom"
         }
       ]
     },
@@ -877,7 +871,13 @@
       "name": "Brant"
     },
     {
-      "name": "Zani"
+      "name": "Zani",
+      "skins": [
+        {
+          "name": "Laurel Nymph",
+          "folder": "Downtown-Repose"
+        }
+      ]
     },
     {
       "name": "Cartethyia"
@@ -896,7 +896,7 @@
       "skins": [
         {
           "name": "Splashing Summer",
-          "folder": "SplashingSummer"
+          "folder": "Splashing-Summer"
         }
       ]
     },
@@ -917,9 +917,6 @@
     },
     {
       "name": "Shorekeeper"
-    },
-    {
-      "name": "Rover: Spectro"
     },
     {
       "name": "Jianxin"
