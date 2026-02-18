@@ -256,29 +256,23 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 		json.Unmarshal(data, &oldConfig)
 	}
 
-	// 2. Remove old files with retry for Windows file locking issues
-	if err := utils.RemoveAllWithRetry(targetPath, 5); err != nil {
-		return fmt.Errorf("error removing old mod (file may be in use by another program): %v", err)
+	// 2. Clear mod contents but preserve .modconfig.json
+	if err := s.clearModContents(targetPath, true); err != nil {
+		return fmt.Errorf("error clearing mod contents (file may be in use by another program): %v", err)
 	}
 
-	// 3. Re-create directory
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
-		return fmt.Errorf("error creating mod directory: %v", err)
-	}
-
-	// 4. Copy new files
+	// 3. Copy new files
 	if err := s.copyModFiles(sourcePath, targetPath); err != nil {
 		return err
 	}
 
-	// 5. Restore/Update config
+	// 4. Update config - ONLY update LastChecked, preserve original DateAdded
 	if oldConfig.Id == "" {
 		oldConfig.Id = utils.GenerateUUID()
 	}
 
-	// Update date
-	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
-	oldConfig.LastChecked = oldConfig.DateAdded
+	// IMPORTANT: Preserve original DateAdded, only update LastChecked
+	oldConfig.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
 	oldConfig.CustomName = modName
 
 	// Write config
@@ -287,7 +281,7 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+	return os.WriteFile(configPath, data, 0644)
 }
 
 // UpdateModFromZipWithRoot updates a mod from a ZIP
@@ -303,17 +297,12 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		json.Unmarshal(data, &oldConfig)
 	}
 
-	// 2. Remove old mod with retry for Windows file locking issues
-	if err := utils.RemoveAllWithRetry(targetPath, 5); err != nil {
-		return fmt.Errorf("error removing old mod (file may be in use by another program): %v", err)
+	// 2. Clear mod contents but preserve .modconfig.json
+	if err := s.clearModContents(targetPath, true); err != nil {
+		return fmt.Errorf("error clearing mod contents (file may be in use by another program): %v", err)
 	}
 
-	// 3. Re-create directory
-	if err := os.MkdirAll(targetPath, 0755); err != nil {
-		return fmt.Errorf("error creating mod directory: %v", err)
-	}
-
-	// 4. Copy files from temp zip
+	// 3. Copy files from temp zip
 	selectedRootPath := filepath.Join(tempZipDir, selectedRoot)
 	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
@@ -323,12 +312,12 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		return err
 	}
 
-	// 5. Restore config
+	// 4. Update config - ONLY update LastChecked, preserve original DateAdded
 	if oldConfig.Id == "" {
 		oldConfig.Id = utils.GenerateUUID()
 	}
-	oldConfig.DateAdded = time.Now().Format("02/01/2006 03:04:05 p. m.")
-	oldConfig.LastChecked = oldConfig.DateAdded
+	// IMPORTANT: Preserve original DateAdded, only update LastChecked
+	oldConfig.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
 	oldConfig.CustomName = modName
 
 	data, err := json.MarshalIndent(oldConfig, "", "  ")
@@ -336,7 +325,7 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(targetPath, ".modconfig.json"), data, 0644)
+	return os.WriteFile(configPath, data, 0644)
 }
 
 // createModConfig creates .modconfig.json file in mod directory
@@ -554,6 +543,29 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 	return nil
 }
 
+// clearModContents removes all files and directories except .modconfig.json
+// This is used during mod updates to preserve the config while replacing mod files
+func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
+	entries, err := os.ReadDir(modPath)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		// Skip .modconfig.json if preserveConfig is true
+		if preserveConfig && entry.Name() == ".modconfig.json" {
+			continue
+		}
+
+		fullPath := filepath.Join(modPath, entry.Name())
+		if err := utils.RemoveAllWithRetry(fullPath, 5); err != nil {
+			return fmt.Errorf("error removing %s: %v", entry.Name(), err)
+		}
+	}
+
+	return nil
+}
+
 // copyModFiles copies mod files
 func (s *Service) copyModFiles(sourcePath, targetPath string) error {
 	return filepath.Walk(sourcePath, func(path string, info os.FileInfo, err error) error {
@@ -624,17 +636,23 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 					}
 
 					// Parse dates
-					// Local date format: "02/01/2006 03:04:05 p. m." (from createModConfig)
+					// Use LastChecked for comparison (when the mod was last verified/updated locally)
 					// We need to normalize "p. m." to "PM" and "a. m." to "AM" for Go's parser
-					normalizedDate := strings.ReplaceAll(config.DateAdded, "p. m.", "PM")
+					localDateToCompare := config.LastChecked
+					if localDateToCompare == "" {
+						// Fallback to DateAdded if LastChecked is empty (backward compatibility)
+						localDateToCompare = config.DateAdded
+					}
+
+					normalizedDate := strings.ReplaceAll(localDateToCompare, "p. m.", "PM")
 					normalizedDate = strings.ReplaceAll(normalizedDate, "a. m.", "AM")
 
 					localTime, err := time.Parse("02/01/2006 03:04:05 PM", normalizedDate)
 					if err != nil {
 						// Try fallback to standard format just in case
-						localTime, err = time.Parse("2006-01-02 15:04:05", config.DateAdded)
+						localTime, err = time.Parse("2006-01-02 15:04:05", localDateToCompare)
 						if err != nil {
-							fmt.Printf("Error parsing local date %s: %v\n", config.DateAdded, err)
+							fmt.Printf("Error parsing local date %s: %v\n", localDateToCompare, err)
 							continue
 						}
 					}
@@ -646,15 +664,34 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 						continue
 					}
 
-					// Compare dates
-					if remoteTime.After(localTime) {
+					// Compare dates: remote (GameBanana) vs local (LastChecked)
+					updateAvailable := remoteTime.After(localTime)
+
+					if updateAvailable {
 						updates = append(updates, ModUpdate{
 							CharacterName: charName,
 							ModName:       mod.Name,
 							ModUrl:        config.ModUrl,
-							LocalDate:     config.DateAdded,
+							LocalDate:     localDateToCompare,
 							RemoteDate:    remoteTime.Format("2006-01-02 15:04:05"),
 						})
+						fmt.Printf("[CheckForUpdates] Update available for %s: remote=%s > local=%s\n",
+							mod.Name, remoteTime.Format("2006-01-02"), localTime.Format("2006-01-02"))
+					}
+
+					// ALWAYS update LastChecked after checking (whether update is available or not)
+					config.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
+
+					// Save updated config back to file
+					updatedData, err := json.MarshalIndent(config, "", "  ")
+					if err != nil {
+						fmt.Printf("Error marshaling updated config for %s: %v\n", mod.Name, err)
+					} else {
+						if err := os.WriteFile(configPath, updatedData, 0644); err != nil {
+							fmt.Printf("Error saving updated LastChecked for %s: %v\n", mod.Name, err)
+						} else {
+							fmt.Printf("[CheckForUpdates] Updated LastChecked for %s to %s\n", mod.Name, config.LastChecked)
+						}
 					}
 				}
 			}
