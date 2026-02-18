@@ -42,11 +42,14 @@ jobs:
       - name: Copy characters.json to build directory
         run: cp characters.json build/bin/
 
+      - name: Create dist directory
+        run: mkdir -p dist
+
       - name: Package Windows binary
-        run: cd build/bin && zip ../../dist/Tsunagu-windows-amd64.zip Tsunagu.exe characters.json
+        run: zip dist/Tsunagu-windows-amd64.zip build/bin/Tsunagu.exe build/bin/characters.json
 
       - name: Package Linux binary
-        run: cd build/bin && zip ../../dist/Tsunagu-linux-amd64.zip Tsunagu characters.json
+        run: zip dist/Tsunagu-linux-amd64.zip build/bin/Tsunagu build/bin/characters.json
 
       - name: Get version (from git tag or fallback)
         id: get_version
@@ -56,7 +59,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
@@ -64,7 +67,7 @@ jobs:
           prerelease: false
 
       - name: Upload binaries to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
           files: |
