@@ -17,4 +17,4 @@
 - ~~agregar que se pueda modever los mods~~
 - ~~checar que cargue bien la iamgen cuando es mod nsfw~~
 - mejorar el como se sacan las skins de los personajes
-- cambiar que las characters se tomen estaticamente de characters.json ya se quito de gitignore
+- ~~cambiar que las characters se tomen estaticamente de characters.json ya se quito de gitignore~~

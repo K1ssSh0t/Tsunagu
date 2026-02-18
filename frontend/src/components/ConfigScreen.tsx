@@ -1,21 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Folder, Download, RefreshCw } from "lucide-react";
+import { Folder } from "lucide-react";
 import { ModeToggle } from "./mode-toggle";
 import { GameSelector } from "./game-selector";
-import { UpdateCharactersDatabase } from "../../wailsjs/go/main/App";
-import { EventsOn } from "../../wailsjs/runtime/runtime";
-
-interface UpdateResult {
-    newCharacters: number;
-    updatedCharacters: number;
-    totalCharacters: number;
-    errors?: string[];
-}
 
 interface ConfigScreenProps {
     isAppConfigured: boolean | null;
@@ -42,47 +32,6 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
     onSelectDirectory,
     onSave,
 }) => {
-    const [updating, setUpdating] = useState(false);
-    const [updateProgress, setUpdateProgress] = useState("");
-    const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
-
-    useEffect(() => {
-        // Listen for progress updates from backend
-        const unsubProgress = EventsOn("character-update-progress", (progress: string) => {
-            setUpdateProgress(progress);
-        });
-
-        const unsubComplete = EventsOn("character-update-complete", (result: UpdateResult) => {
-            setUpdating(false);
-            setUpdateResult(result);
-        });
-
-        const unsubError = EventsOn("character-update-error", (error: string) => {
-            setUpdating(false);
-            alert(`Update failed: ${error}`);
-        });
-
-        return () => {
-            unsubProgress();
-            unsubComplete();
-            unsubError();
-        };
-    }, []);
-
-    const handleUpdateDatabase = async () => {
-        setUpdating(true);
-        setUpdateProgress("Starting update...");
-
-        try {
-            const result = await UpdateCharactersDatabase();
-            setUpdateResult(result);
-        } catch (error) {
-            alert(`Update failed: ${error}`);
-        } finally {
-            setUpdating(false);
-        }
-    };
-
     if (!(!isAppConfigured || showConfig)) return null;
 
     return (
@@ -150,33 +99,6 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                                 Selecciona la carpeta donde se guardarán los mods para este juego.
                             </p>
                         </div>
-
-                        <div className="pt-4 border-t">
-                            <div className="space-y-2">
-                                <Label>Base de Datos de Personajes</Label>
-                                <p className="text-sm text-muted-foreground">
-                                    Actualiza la lista de personajes desde hakush.in
-                                </p>
-                                <Button
-                                    onClick={handleUpdateDatabase}
-                                    disabled={updating}
-                                    variant="outline"
-                                    className="w-full"
-                                >
-                                    {updating ? (
-                                        <>
-                                            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                                            Actualizando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Download className="mr-2 h-4 w-4" />
-                                            Actualizar Base de Datos
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
                     </div>
                 </CardContent>
                 <CardFooter>
@@ -189,59 +111,6 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                     </Button>
                 </CardFooter>
             </Card>
-
-            {/* Progress Dialog */}
-            <Dialog open={updating} onOpenChange={() => {}}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Actualizando Base de Datos</DialogTitle>
-                        <DialogDescription>
-                            Descargando información de personajes desde hakush.in...
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <div className="text-sm text-gray-600 mb-4">{updateProgress}</div>
-                        <div className="flex justify-center">
-                            <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* Result Dialog */}
-            <Dialog open={updateResult !== null} onOpenChange={() => setUpdateResult(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Actualización Completa</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl">✅</span>
-                            <span>Nuevos personajes: <strong>{updateResult?.newCharacters || 0}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl">🔄</span>
-                            <span>Personajes actualizados: <strong>{updateResult?.updatedCharacters || 0}</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl">📊</span>
-                            <span>Total de personajes: <strong>{updateResult?.totalCharacters || 0}</strong></span>
-                        </div>
-
-                        {updateResult?.errors && updateResult.errors.length > 0 && (
-                            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                                <div className="font-semibold text-destructive mb-2">⚠️ Errores:</div>
-                                {updateResult.errors.map((err, i) => (
-                                    <div key={i} className="text-sm text-destructive/80">{err}</div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={() => setUpdateResult(null)}>Cerrar</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 };

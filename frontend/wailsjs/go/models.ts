@@ -178,29 +178,6 @@ export namespace mod {
 
 }
 
-export namespace updater {
-	
-	export class UpdateResult {
-	    newCharacters: number;
-	    updatedCharacters: number;
-	    totalCharacters: number;
-	    errors?: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new UpdateResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.newCharacters = source["newCharacters"];
-	        this.updatedCharacters = source["updatedCharacters"];
-	        this.totalCharacters = source["totalCharacters"];
-	        this.errors = source["errors"];
-	    }
-	}
-
-}
-
 export namespace utils {
 	
 	export class ZipFile {
