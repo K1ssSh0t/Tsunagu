@@ -18,3 +18,4 @@
 - ~~checar que cargue bien la iamgen cuando es mod nsfw~~
 - mejorar el como se sacan las skins de los personajes
 - ~~cambiar que las characters se tomen estaticamente de characters.json ya se quito de gitignore~~
+- checar la forma de evitar que windows bloque el accesso a la caprta de un mod pra hacerle toggle o actulizarlo, dicce archivo bloquedo sin permiso o esta siendo ocupado por otro proceso
