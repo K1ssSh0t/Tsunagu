@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"golift.io/xtractr"
 )
@@ -97,4 +98,24 @@ func ExtractArchive(source, destination string) error {
 	}
 
 	return nil
+}
+
+// RemoveAllWithRetry removes a directory with retries on Windows
+// This handles the common "file in use" error when antivirus or other processes lock files
+func RemoveAllWithRetry(path string, maxRetries int) error {
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		lastErr = os.RemoveAll(path)
+		if lastErr == nil {
+			return nil
+		}
+
+		// On Windows, wait before retrying to allow other processes to release the file
+		if runtime.GOOS == "windows" {
+			time.Sleep(time.Duration(100*(i+1)) * time.Millisecond)
+		}
+	}
+
+	return fmt.Errorf("failed to remove %s after %d attempts: %v", path, maxRetries, lastErr)
 }

@@ -256,9 +256,9 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 		json.Unmarshal(data, &oldConfig)
 	}
 
-	// 2. Remove old files
-	if err := os.RemoveAll(targetPath); err != nil {
-		return fmt.Errorf("error removing old mod: %v", err)
+	// 2. Remove old files with retry for Windows file locking issues
+	if err := utils.RemoveAllWithRetry(targetPath, 5); err != nil {
+		return fmt.Errorf("error removing old mod (file may be in use by another program): %v", err)
 	}
 
 	// 3. Re-create directory
@@ -303,9 +303,9 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		json.Unmarshal(data, &oldConfig)
 	}
 
-	// 2. Remove old mod
-	if err := os.RemoveAll(targetPath); err != nil {
-		return fmt.Errorf("error removing old mod: %v", err)
+	// 2. Remove old mod with retry for Windows file locking issues
+	if err := utils.RemoveAllWithRetry(targetPath, 5); err != nil {
+		return fmt.Errorf("error removing old mod (file may be in use by another program): %v", err)
 	}
 
 	// 3. Re-create directory
@@ -454,12 +454,29 @@ func (s *Service) RemoveMod(characterName string, modName string) error {
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 
-	// Try to remove both versions (active and inactive)
+	// Try to remove both versions (active and inactive) with retry for Windows
 	activePath := filepath.Join(characterPath, modName)
 	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
 
-	os.RemoveAll(activePath)
-	os.RemoveAll(disabledPath)
+	// Attempt to remove both paths, but don't fail immediately
+	var activeErr, disabledErr error
+
+	if _, err := os.Stat(activePath); err == nil {
+		activeErr = utils.RemoveAllWithRetry(activePath, 3)
+	}
+
+	if _, err := os.Stat(disabledPath); err == nil {
+		disabledErr = utils.RemoveAllWithRetry(disabledPath, 3)
+	}
+
+	// Return error if either removal failed
+	if activeErr != nil && disabledErr != nil {
+		return fmt.Errorf("failed to remove mod (files may be in use): %v, %v", activeErr, disabledErr)
+	} else if activeErr != nil {
+		return fmt.Errorf("failed to remove active mod: %v", activeErr)
+	} else if disabledErr != nil {
+		return fmt.Errorf("failed to remove disabled mod: %v", disabledErr)
+	}
 
 	return nil
 }
@@ -527,11 +544,11 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 		return fmt.Errorf("failed to copy mod to target: %v", err)
 	}
 
-	// Remove mod from source
-	if err := os.RemoveAll(sourcePath); err != nil {
+	// Remove mod from source with retry for Windows file locking
+	if err := utils.RemoveAllWithRetry(sourcePath, 5); err != nil {
 		// If removal fails, try to clean up the copied files
-		os.RemoveAll(targetPath)
-		return fmt.Errorf("failed to remove mod from source: %v", err)
+		utils.RemoveAllWithRetry(targetPath, 3)
+		return fmt.Errorf("failed to remove mod from source (file may be in use): %v", err)
 	}
 
 	return nil
