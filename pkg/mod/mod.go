@@ -139,13 +139,13 @@ func (s *Service) ToggleMod(characterName string, modName string) error {
 	// Check if mod is active (no DISABLED_)
 	if _, err := os.Stat(activePath); err == nil {
 		// It's active -> deactivate (rename to DISABLED_)
-		return os.Rename(activePath, disabledPath)
+		return utils.RenameWithRetry(activePath, disabledPath, 5)
 	}
 
 	// Check if mod is inactive (with DISABLED_)
 	if _, err := os.Stat(disabledPath); err == nil {
 		// It's inactive -> activate (remove DISABLED_)
-		return os.Rename(disabledPath, activePath)
+		return utils.RenameWithRetry(disabledPath, activePath, 5)
 	}
 
 	return os.ErrNotExist
@@ -169,7 +169,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 			// If it's an active mod (no DISABLED_), deactivate it
 			if !strings.HasPrefix(currentModName, "DISABLED_") {
 				disabledPath := filepath.Join(characterPath, "DISABLED_"+currentModName)
-				if err := os.Rename(filepath.Join(characterPath, currentModName), disabledPath); err != nil {
+				if err := utils.RenameWithRetry(filepath.Join(characterPath, currentModName), disabledPath, 5); err != nil {
 					return err
 				}
 			}
@@ -182,7 +182,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 
 	// If the mod is deactivated, activate it
 	if _, err := os.Stat(targetDisabledPath); err == nil {
-		return os.Rename(targetDisabledPath, targetActivePath)
+		return utils.RenameWithRetry(targetDisabledPath, targetActivePath, 5)
 	}
 
 	return nil

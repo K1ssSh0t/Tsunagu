@@ -119,3 +119,23 @@ func RemoveAllWithRetry(path string, maxRetries int) error {
 
 	return fmt.Errorf("failed to remove %s after %d attempts: %v", path, maxRetries, lastErr)
 }
+
+// RenameWithRetry renames a file/directory with retries on Windows
+// This handles the common "file in use" or "access denied" errors when processes lock files
+func RenameWithRetry(oldpath, newpath string, maxRetries int) error {
+	var lastErr error
+
+	for i := 0; i < maxRetries; i++ {
+		lastErr = os.Rename(oldpath, newpath)
+		if lastErr == nil {
+			return nil
+		}
+
+		// On Windows, wait before retrying to allow other processes to release the file lock
+		if runtime.GOOS == "windows" {
+			time.Sleep(time.Duration(100*(i+1)) * time.Millisecond)
+		}
+	}
+
+	return fmt.Errorf("failed to rename %s to %s after %d attempts: %v", oldpath, newpath, maxRetries, lastErr)
+}
