@@ -22,6 +22,7 @@ export const GameSelector: React.FC<GameSelectorProps> = ({
         { id: "wuwa", name: "Wuthering Waves" },
         { id: "hsr", name: "Honkai: Star Rail" },
         { id: "zzz", name: "Zenless Zone Zero" },
+        { id: "enfield", name: "Arknights: Endfield" },
     ];
 
     const currentGame = games.find((g) => g.id === selectedGame) || games[0];
