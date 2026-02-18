@@ -3,6 +3,9 @@ name: Manual Makefile Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: ubuntu-22.04
@@ -57,19 +60,11 @@ jobs:
           VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "manual-$(date +%Y%m%d%H%M%S)")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create Release
-        id: create_release
+      - name: Create Release & Upload
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: Upload binaries to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.get_version.outputs.version }}
           files: |
             dist/Tsunagu-windows-amd64.zip
             dist/Tsunagu-linux-amd64.zip
