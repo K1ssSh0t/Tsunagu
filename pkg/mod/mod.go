@@ -320,15 +320,7 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
 
-	// Lock source directory during installation
-	utils.LogDebug("[AddModFromZip] Locking source directory...")
-	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
-	if err := dirLocker.LockAllFiles(); err != nil {
-		utils.LogError("[AddModFromZip] Failed to lock source directory: %v", err)
-		return fmt.Errorf("failed to lock source directory: %w", err)
-	}
-	defer dirLocker.ReleaseAllFiles()
-	utils.LogDebug("[AddModFromZip] Locked %d files in source directory", dirLocker.GetLockedCount())
+	utils.LogDebug("[AddModFromZip] Source directory verified, proceeding with copy")
 
 	// Copy files from temp directory already extracted
 	utils.LogInfo("[AddModFromZip] Copying mod files...")
@@ -460,15 +452,7 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
 
-	// Lock source directory during update
-	utils.LogDebug("[UpdateModFromZip] Locking source directory...")
-	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
-	if err := dirLocker.LockAllFiles(); err != nil {
-		utils.LogError("[UpdateModFromZip] Failed to lock source directory: %v", err)
-		return fmt.Errorf("failed to lock source directory: %w", err)
-	}
-	defer dirLocker.ReleaseAllFiles()
-	utils.LogDebug("[UpdateModFromZip] Locked %d files in source directory", dirLocker.GetLockedCount())
+	utils.LogDebug("[UpdateModFromZip] Source directory verified, proceeding with copy")
 
 	utils.LogInfo("[UpdateModFromZip] Copying new mod files...")
 	if err := s.copyModFiles(selectedRootPath, targetPath); err != nil {
