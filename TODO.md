@@ -19,7 +19,7 @@
 - mejorar el como se sacan las skins de los personajes
 - ~~cambiar que las characters se tomen estaticamente de characters.json ya se quito de gitignore~~
 - checar la forma de evitar que windows bloque el accesso a la caprta de un mod pra hacerle toggle o actulizarlo, dicce archivo bloquedo sin permiso o esta siendo ocupado por otro proceso
-
+- agregar filtro por cantidada de mods
 
 El programa JASM utiliza tres estrategias principales para evitar que Windows bloquee el acceso a archivos durante actualizaciones y cambio de modos:
 

@@ -395,14 +395,17 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 		return err
 	}
 
-	// 4. Update config - ONLY update LastChecked, preserve original DateAdded
+	// 4. Update config - update BOTH DateAdded and LastChecked
 	if oldConfig.Id == "" {
 		oldConfig.Id = utils.GenerateUUID()
 	}
 
-	// IMPORTANT: Preserve original DateAdded, only update LastChecked
-	oldConfig.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
+	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
+	oldConfig.DateAdded = now
+	oldConfig.LastChecked = now
 	oldConfig.CustomName = modName
+
+	utils.LogDebug("[UpdateMod] Updated DateAdded and LastChecked to: %s", now)
 
 	// Write config
 	utils.LogDebug("[UpdateMod] Writing updated config...")
@@ -473,13 +476,17 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 		return err
 	}
 
-	// 4. Update config - ONLY update LastChecked, preserve original DateAdded
+	// 4. Update config - update BOTH DateAdded and LastChecked
 	if oldConfig.Id == "" {
 		oldConfig.Id = utils.GenerateUUID()
 	}
-	// IMPORTANT: Preserve original DateAdded, only update LastChecked
-	oldConfig.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
+
+	now := time.Now().Format("02/01/2006 03:04:05 p. m.")
+	oldConfig.DateAdded = now
+	oldConfig.LastChecked = now
 	oldConfig.CustomName = modName
+
+	utils.LogDebug("[UpdateModFromZip] Updated DateAdded and LastChecked to: %s", now)
 
 	utils.LogDebug("[UpdateModFromZip] Writing updated config...")
 	data, err := json.MarshalIndent(oldConfig, "", "  ")
@@ -829,18 +836,14 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 					// Fetch GameBanana page
 					remoteDate, err := s.fetchGameBananaDate(config.ModUrl)
 					if err != nil {
-						fmt.Printf("Error fetching date for %s: %v\n", config.ModUrl, err)
+						utils.LogWarn("[CheckForUpdates] Error fetching date for %s: %v", config.ModUrl, err)
 						continue
 					}
 
 					// Parse dates
-					// Use LastChecked for comparison (when the mod was last verified/updated locally)
+					// Use DateAdded for comparison (actual mod modification date)
 					// We need to normalize "p. m." to "PM" and "a. m." to "AM" for Go's parser
-					localDateToCompare := config.LastChecked
-					if localDateToCompare == "" {
-						// Fallback to DateAdded if LastChecked is empty (backward compatibility)
-						localDateToCompare = config.DateAdded
-					}
+					localDateToCompare := config.DateAdded
 
 					normalizedDate := strings.ReplaceAll(localDateToCompare, "p. m.", "PM")
 					normalizedDate = strings.ReplaceAll(normalizedDate, "a. m.", "AM")
@@ -850,7 +853,7 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 						// Try fallback to standard format just in case
 						localTime, err = time.Parse("2006-01-02 15:04:05", localDateToCompare)
 						if err != nil {
-							fmt.Printf("Error parsing local date %s: %v\n", localDateToCompare, err)
+							utils.LogWarn("[CheckForUpdates] Error parsing local date %s: %v", localDateToCompare, err)
 							continue
 						}
 					}
@@ -858,12 +861,15 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 					// Remote date format (ISO 8601 from JSON-LD): "2024-09-10T19:33:05+00:00"
 					remoteTime, err := time.Parse(time.RFC3339, remoteDate)
 					if err != nil {
-						fmt.Printf("Error parsing remote date %s: %v\n", remoteDate, err)
+						utils.LogWarn("[CheckForUpdates] Error parsing remote date %s: %v", remoteDate, err)
 						continue
 					}
 
-					// Compare dates: remote (GameBanana) vs local (LastChecked)
+					// Compare dates: remote (GameBanana) vs local (DateAdded - actual mod date)
 					updateAvailable := remoteTime.After(localTime)
+
+					utils.LogDebug("[CheckForUpdates] Mod '%s': remote=%s vs local(DateAdded)=%s, update=%v",
+						mod.Name, remoteTime.Format("2006-01-02"), localTime.Format("2006-01-02"), updateAvailable)
 
 					if updateAvailable {
 						updates = append(updates, ModUpdate{
@@ -873,22 +879,21 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 							LocalDate:     localDateToCompare,
 							RemoteDate:    remoteTime.Format("2006-01-02 15:04:05"),
 						})
-						fmt.Printf("[CheckForUpdates] Update available for %s: remote=%s > local=%s\n",
+						utils.LogInfo("[CheckForUpdates] Update available for '%s': remote=%s > local=%s",
 							mod.Name, remoteTime.Format("2006-01-02"), localTime.Format("2006-01-02"))
 					}
 
-					// ALWAYS update LastChecked after checking (whether update is available or not)
+					// Update LastChecked after checking (tracks when we last checked for updates)
 					config.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
+					utils.LogDebug("[CheckForUpdates] Updated LastChecked for '%s' to %s", mod.Name, config.LastChecked)
 
 					// Save updated config back to file
 					updatedData, err := json.MarshalIndent(config, "", "  ")
 					if err != nil {
-						fmt.Printf("Error marshaling updated config for %s: %v\n", mod.Name, err)
+						utils.LogWarn("[CheckForUpdates] Error marshaling config for %s: %v", mod.Name, err)
 					} else {
 						if err := os.WriteFile(configPath, updatedData, 0644); err != nil {
-							fmt.Printf("Error saving updated LastChecked for %s: %v\n", mod.Name, err)
-						} else {
-							fmt.Printf("[CheckForUpdates] Updated LastChecked for %s to %s\n", mod.Name, config.LastChecked)
+							utils.LogWarn("[CheckForUpdates] Error saving config for %s: %v", mod.Name, err)
 						}
 					}
 				}
