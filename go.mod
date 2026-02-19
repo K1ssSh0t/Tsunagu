@@ -3,7 +3,9 @@ module tsunagu
 go 1.23
 
 require (
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/wailsapp/wails/v2 v2.10.2
+	golang.org/x/sys v0.30.0
 	golift.io/xtractr v0.2.2
 )
 
@@ -46,7 +48,6 @@ require (
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )
 

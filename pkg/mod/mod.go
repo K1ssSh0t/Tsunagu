@@ -10,7 +10,10 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
 
 	"tsunagu/pkg/config"
 	"tsunagu/pkg/gamebanana"
@@ -60,12 +63,38 @@ type ModUpdate struct {
 
 type Service struct {
 	configService *config.Service
+	mu            sync.Mutex
+	watcher       *ModWatcherManager
 }
 
 func NewService(cfg *config.Service) *Service {
 	return &Service{
 		configService: cfg,
+		watcher:       NewModWatcherManager(),
 	}
+}
+
+func (s *Service) SetWatcher(watcher *ModWatcherManager) {
+	s.watcher = watcher
+}
+
+func (s *Service) GetWatcher() *ModWatcherManager {
+	return s.watcher
+}
+
+func (s *Service) StartWatchingModsPath() error {
+	modsPath := s.configService.CurrentModsPath()
+	if modsPath == "" {
+		return nil
+	}
+
+	return s.watcher.AddWatcher(modsPath, func(event fsnotify.Event) {
+		_ = event
+	})
+}
+
+func (s *Service) StopWatching() error {
+	return s.watcher.Close()
 }
 
 // GetModsForCharacter gets the mods for a specific character
@@ -131,6 +160,12 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 
 // ToggleMod toggles a mod active/inactive
 func (s *Service) ToggleMod(characterName string, modName string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	activePath := filepath.Join(characterPath, modName)
@@ -153,6 +188,12 @@ func (s *Service) ToggleMod(characterName string, modName string) error {
 
 // ActivateSingleMod activates one mod and deactivates others for the same character
 func (s *Service) ActivateSingleMod(characterName string, modName string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 
@@ -190,10 +231,23 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 
 // AddMod adds a new mod (creates character folder if not exists)
 func (s *Service) AddMod(characterName string, modName string, sourcePath string, gameBananaUrl string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
+
+	// Lock source directory during installation (like JASM)
+	dirLocker := utils.NewDirectoryLocker(sourcePath)
+	if err := dirLocker.LockAllFiles(); err != nil {
+		return fmt.Errorf("failed to lock source directory: %w", err)
+	}
+	defer dirLocker.ReleaseAllFiles()
 
 	// Create character directory if not exists
 	if err := os.MkdirAll(characterPath, 0755); err != nil {
@@ -216,6 +270,12 @@ func (s *Service) AddMod(characterName string, modName string, sourcePath string
 
 // AddModFromZipWithRoot adds a mod from ZIP using a specific root
 func (s *Service) AddModFromZipWithRoot(characterName string, modName string, tempZipDir string, selectedRoot string, gameBananaUrl string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
@@ -234,6 +294,13 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
 
+	// Lock source directory during installation
+	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
+	if err := dirLocker.LockAllFiles(); err != nil {
+		return fmt.Errorf("failed to lock source directory: %w", err)
+	}
+	defer dirLocker.ReleaseAllFiles()
+
 	// Copy files from temp directory already extracted
 	if err := s.copyModFiles(selectedRootPath, targetPath); err != nil {
 		return err
@@ -245,10 +312,23 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 
 // UpdateMod updates an existing mod from a folder
 func (s *Service) UpdateMod(characterName string, modName string, sourcePath string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
+
+	// Lock source directory during update (like JASM)
+	dirLocker := utils.NewDirectoryLocker(sourcePath)
+	if err := dirLocker.LockAllFiles(); err != nil {
+		return fmt.Errorf("failed to lock source directory: %w", err)
+	}
+	defer dirLocker.ReleaseAllFiles()
 
 	// 1. Read existing config to preserve ID and URL
 	var oldConfig ModConfig
@@ -286,6 +366,12 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 
 // UpdateModFromZipWithRoot updates a mod from a ZIP
 func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string, tempZipDir string, selectedRoot string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
@@ -307,6 +393,13 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
+
+	// Lock source directory during update
+	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
+	if err := dirLocker.LockAllFiles(); err != nil {
+		return fmt.Errorf("failed to lock source directory: %w", err)
+	}
+	defer dirLocker.ReleaseAllFiles()
 
 	if err := s.copyModFiles(selectedRootPath, targetPath); err != nil {
 		return err
@@ -440,6 +533,12 @@ func (s *Service) createModConfig(modPath string, modName string, gameBananaUrl 
 
 // RemoveMod removes a mod
 func (s *Service) RemoveMod(characterName string, modName string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 
@@ -472,6 +571,12 @@ func (s *Service) RemoveMod(characterName string, modName string) error {
 
 // MoveMod moves a mod from one character to another (including skins)
 func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacter string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	reenableWatcher := s.watcher.DisableAll()
+	defer reenableWatcher()
+
 	modsPath := s.configService.CurrentModsPath()
 	sourceCharacterPath := filepath.Join(modsPath, "character", sourceCharacter)
 	targetCharacterPath := filepath.Join(modsPath, "character", targetCharacter)

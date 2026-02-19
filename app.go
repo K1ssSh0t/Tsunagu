@@ -51,6 +51,19 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize GameBanana client
 	a.gameBananaClient = gamebanana.NewClient(cacheDir)
+
+	// Start watching mods path for changes (with ability to disable during operations)
+	if err := a.modService.StartWatchingModsPath(); err != nil {
+		fmt.Printf("Warning: failed to start mod watcher: %v\n", err)
+	}
+}
+
+// shutdown is called when the app is closing
+func (a *App) shutdown(ctx context.Context) {
+	// Stop watching mods
+	if err := a.modService.StopWatching(); err != nil {
+		fmt.Printf("Warning: failed to stop mod watcher: %v\n", err)
+	}
 }
 
 // SaveConfig saves the configuration
