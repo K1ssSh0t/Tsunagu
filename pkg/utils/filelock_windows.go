@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -248,4 +249,88 @@ func WithDirectoryLock(dir string, timeout time.Duration, fn func() error) error
 	}
 
 	return fmt.Errorf("could not acquire lock after %v: %w", timeout, lastErr)
+}
+
+const (
+	MOVEFILE_REPLACE_EXISTING      = 0x00000001
+	MOVEFILE_COPY_ALLOWED          = 0x00000002
+	MOVEFILE_DELAY_UNTIL_REBOOT    = 0x00000004
+	MOVEFILE_WRITE_THROUGH         = 0x00000008
+	MOVEFILE_CREATE_HARDLINK       = 0x00000010
+	MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x00000020
+)
+
+var (
+	kernel32       = windows.NewLazySystemDLL("kernel32.dll")
+	moveFileExProc = kernel32.NewProc("MoveFileExW")
+)
+
+// MoveFileEx moves a file or directory using Windows MoveFileEx API
+// This can handle cases where files are partially locked by using MOVEFILE_COPY_ALLOWED
+func MoveFileEx(oldpath, newpath string) error {
+	LogInfo("[MoveFileEx] Attempting Windows API move: %s -> %s", oldpath, newpath)
+
+	oldpathPtr, err := windows.UTF16PtrFromString(oldpath)
+	if err != nil {
+		LogError("[MoveFileEx] Failed to convert old path: %v", err)
+		return fmt.Errorf("failed to convert old path: %w", err)
+	}
+
+	newpathPtr, err := windows.UTF16PtrFromString(newpath)
+	if err != nil {
+		LogError("[MoveFileEx] Failed to convert new path: %v", err)
+		return fmt.Errorf("failed to convert new path: %w", err)
+	}
+
+	flags := uint32(MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING)
+	LogDebug("[MoveFileEx] Using flags: COPY_ALLOWED | REPLACE_EXISTING")
+
+	ret, _, callErr := moveFileExProc.Call(
+		uintptr(unsafe.Pointer(oldpathPtr)),
+		uintptr(unsafe.Pointer(newpathPtr)),
+		uintptr(flags),
+	)
+
+	if ret == 0 {
+		errCode := windows.GetLastError()
+		LogError("[MoveFileEx] MoveFileEx failed with error code: %d", errCode)
+		LogError("[MoveFileEx] Call error: %v", callErr)
+		return fmt.Errorf("MoveFileEx failed with error %d: %w", errCode, callErr)
+	}
+
+	LogInfo("[MoveFileEx] Successfully moved via Windows API")
+	return nil
+}
+
+// MoveFileExWithReboot schedules a file/directory to be moved/deleted on next reboot
+func MoveFileExWithReboot(oldpath, newpath string) error {
+	LogInfo("[MoveFileExWithReboot] Scheduling for reboot: %s -> %s", oldpath, newpath)
+
+	oldpathPtr, err := windows.UTF16PtrFromString(oldpath)
+	if err != nil {
+		return fmt.Errorf("failed to convert old path: %w", err)
+	}
+
+	var newpathPtr *uint16
+	if newpath != "" {
+		newpathPtr, err = windows.UTF16PtrFromString(newpath)
+		if err != nil {
+			return fmt.Errorf("failed to convert new path: %w", err)
+		}
+	}
+
+	ret, _, callErr := moveFileExProc.Call(
+		uintptr(unsafe.Pointer(oldpathPtr)),
+		uintptr(unsafe.Pointer(newpathPtr)),
+		uintptr(MOVEFILE_DELAY_UNTIL_REBOOT),
+	)
+
+	if ret == 0 {
+		errCode := windows.GetLastError()
+		LogError("[MoveFileExWithReboot] Failed with error code: %d", errCode)
+		return fmt.Errorf("MoveFileEx reboot failed with error %d: %w", errCode, callErr)
+	}
+
+	LogInfo("[MoveFileExWithReboot] Successfully scheduled for next reboot")
+	return nil
 }

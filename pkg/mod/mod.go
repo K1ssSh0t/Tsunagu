@@ -174,13 +174,14 @@ func (s *Service) ToggleMod(characterName string, modName string) error {
 	// Check if mod is active (no DISABLED_)
 	if _, err := os.Stat(activePath); err == nil {
 		// It's active -> deactivate (rename to DISABLED_)
-		return utils.RenameWithRetry(activePath, disabledPath, 5)
+		// Use ForceRename for maximum reliability (retries + MoveFileEx + copy fallback)
+		return utils.ForceRename(activePath, disabledPath)
 	}
 
 	// Check if mod is inactive (with DISABLED_)
 	if _, err := os.Stat(disabledPath); err == nil {
 		// It's inactive -> activate (remove DISABLED_)
-		return utils.RenameWithRetry(disabledPath, activePath, 5)
+		return utils.ForceRename(disabledPath, activePath)
 	}
 
 	return os.ErrNotExist
@@ -210,7 +211,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 			// If it's an active mod (no DISABLED_), deactivate it
 			if !strings.HasPrefix(currentModName, "DISABLED_") {
 				disabledPath := filepath.Join(characterPath, "DISABLED_"+currentModName)
-				if err := utils.RenameWithRetry(filepath.Join(characterPath, currentModName), disabledPath, 5); err != nil {
+				if err := utils.ForceRename(filepath.Join(characterPath, currentModName), disabledPath); err != nil {
 					return err
 				}
 			}
@@ -223,7 +224,7 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 
 	// If the mod is deactivated, activate it
 	if _, err := os.Stat(targetDisabledPath); err == nil {
-		return utils.RenameWithRetry(targetDisabledPath, targetActivePath, 5)
+		return utils.ForceRename(targetDisabledPath, targetActivePath)
 	}
 
 	return nil
@@ -237,35 +238,54 @@ func (s *Service) AddMod(characterName string, modName string, sourcePath string
 	reenableWatcher := s.watcher.DisableAll()
 	defer reenableWatcher()
 
+	utils.LogInfo("[AddMod] Adding new mod '%s' (character: %s)", modName, characterName)
+	utils.LogDebug("[AddMod] Source path: %s", sourcePath)
+
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Lock source directory during installation (like JASM)
+	utils.LogDebug("[AddMod] Locking source directory...")
 	dirLocker := utils.NewDirectoryLocker(sourcePath)
 	if err := dirLocker.LockAllFiles(); err != nil {
+		utils.LogError("[AddMod] Failed to lock source directory: %v", err)
 		return fmt.Errorf("failed to lock source directory: %w", err)
 	}
 	defer dirLocker.ReleaseAllFiles()
+	utils.LogDebug("[AddMod] Locked %d files in source directory", dirLocker.GetLockedCount())
 
 	// Create character directory if not exists
+	utils.LogDebug("[AddMod] Creating character directory...")
 	if err := os.MkdirAll(characterPath, 0755); err != nil {
+		utils.LogError("[AddMod] Failed to create character directory: %v", err)
 		return err
 	}
 
 	// Create mod directory
+	utils.LogDebug("[AddMod] Creating mod directory...")
 	if err := os.MkdirAll(targetPath, 0755); err != nil {
+		utils.LogError("[AddMod] Failed to create mod directory: %v", err)
 		return err
 	}
 
 	// Copy mod files
+	utils.LogInfo("[AddMod] Copying mod files...")
 	if err := s.copyModFiles(sourcePath, targetPath); err != nil {
+		utils.LogError("[AddMod] Failed to copy mod files: %v", err)
 		return err
 	}
 
 	// Create mod config file
-	return s.createModConfig(targetPath, modName, gameBananaUrl)
+	utils.LogDebug("[AddMod] Creating mod config...")
+	if err := s.createModConfig(targetPath, modName, gameBananaUrl); err != nil {
+		utils.LogError("[AddMod] Failed to create mod config: %v", err)
+		return err
+	}
+
+	utils.LogInfo("[AddMod] Successfully added mod '%s'", modName)
+	return nil
 }
 
 // AddModFromZipWithRoot adds a mod from ZIP using a specific root
@@ -276,13 +296,18 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 	reenableWatcher := s.watcher.DisableAll()
 	defer reenableWatcher()
 
+	utils.LogInfo("[AddModFromZip] Adding new mod '%s' (character: %s)", modName, characterName)
+	utils.LogDebug("[AddModFromZip] Temp dir: %s, Selected root: %s", tempZipDir, selectedRoot)
+
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Create character directory if not exists
+	utils.LogDebug("[AddModFromZip] Creating character directory...")
 	if err := os.MkdirAll(characterPath, 0755); err != nil {
+		utils.LogError("[AddModFromZip] Failed to create character directory: %v", err)
 		return err
 	}
 
@@ -291,23 +316,36 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 
 	// Verify selected directory exists
 	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
+		utils.LogError("[AddModFromZip] Selected root directory does not exist: %s", selectedRoot)
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
 
 	// Lock source directory during installation
+	utils.LogDebug("[AddModFromZip] Locking source directory...")
 	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
 	if err := dirLocker.LockAllFiles(); err != nil {
+		utils.LogError("[AddModFromZip] Failed to lock source directory: %v", err)
 		return fmt.Errorf("failed to lock source directory: %w", err)
 	}
 	defer dirLocker.ReleaseAllFiles()
+	utils.LogDebug("[AddModFromZip] Locked %d files in source directory", dirLocker.GetLockedCount())
 
 	// Copy files from temp directory already extracted
+	utils.LogInfo("[AddModFromZip] Copying mod files...")
 	if err := s.copyModFiles(selectedRootPath, targetPath); err != nil {
+		utils.LogError("[AddModFromZip] Failed to copy mod files: %v", err)
 		return err
 	}
 
 	// Create mod config file
-	return s.createModConfig(targetPath, modName, gameBananaUrl)
+	utils.LogDebug("[AddModFromZip] Creating mod config...")
+	if err := s.createModConfig(targetPath, modName, gameBananaUrl); err != nil {
+		utils.LogError("[AddModFromZip] Failed to create mod config: %v", err)
+		return err
+	}
+
+	utils.LogInfo("[AddModFromZip] Successfully added mod '%s'", modName)
+	return nil
 }
 
 // UpdateMod updates an existing mod from a folder
@@ -318,31 +356,42 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 	reenableWatcher := s.watcher.DisableAll()
 	defer reenableWatcher()
 
+	utils.LogInfo("[UpdateMod] Starting update for mod '%s' (character: %s)", modName, characterName)
+	utils.LogDebug("[UpdateMod] Source path: %s", sourcePath)
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
 	// Lock source directory during update (like JASM)
+	utils.LogDebug("[UpdateMod] Locking source directory...")
 	dirLocker := utils.NewDirectoryLocker(sourcePath)
 	if err := dirLocker.LockAllFiles(); err != nil {
+		utils.LogError("[UpdateMod] Failed to lock source directory: %v", err)
 		return fmt.Errorf("failed to lock source directory: %w", err)
 	}
 	defer dirLocker.ReleaseAllFiles()
+	utils.LogDebug("[UpdateMod] Locked %d files in source directory", dirLocker.GetLockedCount())
 
 	// 1. Read existing config to preserve ID and URL
+	utils.LogDebug("[UpdateMod] Reading existing config...")
 	var oldConfig ModConfig
 	if data, err := os.ReadFile(configPath); err == nil {
 		json.Unmarshal(data, &oldConfig)
 	}
 
 	// 2. Clear mod contents but preserve .modconfig.json
+	utils.LogInfo("[UpdateMod] Clearing old mod contents (preserving config)...")
 	if err := s.clearModContents(targetPath, true); err != nil {
-		return fmt.Errorf("error clearing mod contents (file may be in use by another program): %v", err)
+		utils.LogError("[UpdateMod] Failed to clear mod contents: %v", err)
+		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
 
 	// 3. Copy new files
+	utils.LogInfo("[UpdateMod] Copying new mod files...")
 	if err := s.copyModFiles(sourcePath, targetPath); err != nil {
+		utils.LogError("[UpdateMod] Failed to copy new files: %v", err)
 		return err
 	}
 
@@ -356,12 +405,19 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 	oldConfig.CustomName = modName
 
 	// Write config
+	utils.LogDebug("[UpdateMod] Writing updated config...")
 	data, err := json.MarshalIndent(oldConfig, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(configPath, data, 0644)
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		utils.LogError("[UpdateMod] Failed to write config: %v", err)
+		return err
+	}
+
+	utils.LogInfo("[UpdateMod] Successfully updated mod '%s'", modName)
+	return nil
 }
 
 // UpdateModFromZipWithRoot updates a mod from a ZIP
@@ -372,36 +428,48 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 	reenableWatcher := s.watcher.DisableAll()
 	defer reenableWatcher()
 
+	utils.LogInfo("[UpdateModFromZip] Starting update for mod '%s' (character: %s)", modName, characterName)
+	utils.LogDebug("[UpdateModFromZip] Temp dir: %s, Selected root: %s", tempZipDir, selectedRoot)
+
 	modsPath := s.configService.CurrentModsPath()
 	characterPath := filepath.Join(modsPath, "character", characterName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
 	// 1. Read existing config
+	utils.LogDebug("[UpdateModFromZip] Reading existing config...")
 	var oldConfig ModConfig
 	if data, err := os.ReadFile(configPath); err == nil {
 		json.Unmarshal(data, &oldConfig)
 	}
 
 	// 2. Clear mod contents but preserve .modconfig.json
+	utils.LogInfo("[UpdateModFromZip] Clearing old mod contents (preserving config)...")
 	if err := s.clearModContents(targetPath, true); err != nil {
-		return fmt.Errorf("error clearing mod contents (file may be in use by another program): %v", err)
+		utils.LogError("[UpdateModFromZip] Failed to clear mod contents: %v", err)
+		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
 
 	// 3. Copy files from temp zip
 	selectedRootPath := filepath.Join(tempZipDir, selectedRoot)
 	if _, err := os.Stat(selectedRootPath); os.IsNotExist(err) {
+		utils.LogError("[UpdateModFromZip] Selected root directory does not exist: %s", selectedRoot)
 		return fmt.Errorf("selected root directory does not exist: %s", selectedRoot)
 	}
 
 	// Lock source directory during update
+	utils.LogDebug("[UpdateModFromZip] Locking source directory...")
 	dirLocker := utils.NewDirectoryLocker(selectedRootPath)
 	if err := dirLocker.LockAllFiles(); err != nil {
+		utils.LogError("[UpdateModFromZip] Failed to lock source directory: %v", err)
 		return fmt.Errorf("failed to lock source directory: %w", err)
 	}
 	defer dirLocker.ReleaseAllFiles()
+	utils.LogDebug("[UpdateModFromZip] Locked %d files in source directory", dirLocker.GetLockedCount())
 
+	utils.LogInfo("[UpdateModFromZip] Copying new mod files...")
 	if err := s.copyModFiles(selectedRootPath, targetPath); err != nil {
+		utils.LogError("[UpdateModFromZip] Failed to copy new files: %v", err)
 		return err
 	}
 
@@ -413,12 +481,19 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 	oldConfig.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
 	oldConfig.CustomName = modName
 
+	utils.LogDebug("[UpdateModFromZip] Writing updated config...")
 	data, err := json.MarshalIndent(oldConfig, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(configPath, data, 0644)
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		utils.LogError("[UpdateModFromZip] Failed to write config: %v", err)
+		return err
+	}
+
+	utils.LogInfo("[UpdateModFromZip] Successfully updated mod '%s'", modName)
+	return nil
 }
 
 // createModConfig creates .modconfig.json file in mod directory
@@ -550,11 +625,11 @@ func (s *Service) RemoveMod(characterName string, modName string) error {
 	var activeErr, disabledErr error
 
 	if _, err := os.Stat(activePath); err == nil {
-		activeErr = utils.RemoveAllWithRetry(activePath, 3)
+		activeErr = utils.RemoveAllWithRetryAdvanced(activePath, 15, 100*time.Millisecond, 3*time.Second)
 	}
 
 	if _, err := os.Stat(disabledPath); err == nil {
-		disabledErr = utils.RemoveAllWithRetry(disabledPath, 3)
+		disabledErr = utils.RemoveAllWithRetryAdvanced(disabledPath, 15, 100*time.Millisecond, 3*time.Second)
 	}
 
 	// Return error if either removal failed
@@ -638,11 +713,11 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 		return fmt.Errorf("failed to copy mod to target: %v", err)
 	}
 
-	// Remove mod from source with retry for Windows file locking
-	if err := utils.RemoveAllWithRetry(sourcePath, 5); err != nil {
-		// If removal fails, try to clean up the copied files
-		utils.RemoveAllWithRetry(targetPath, 3)
-		return fmt.Errorf("failed to remove mod from source (file may be in use): %v", err)
+	// Remove mod from source with advanced retry for Windows file locking
+	if err := utils.RemoveAllWithRetryAdvanced(sourcePath, 20, 100*time.Millisecond, 2*time.Second); err != nil {
+		// If removal fails, mark for deletion and log warning
+		utils.MarkDirectoryForDeletion(sourcePath)
+		utils.LogWarn("[MoveMod] Could not remove source, marked for later deletion: %s", sourcePath)
 	}
 
 	return nil
@@ -651,23 +726,41 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 // clearModContents removes all files and directories except .modconfig.json
 // This is used during mod updates to preserve the config while replacing mod files
 func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
+	utils.LogInfo("[clearModContents] Starting to clear: %s (preserveConfig: %v)", modPath, preserveConfig)
+
 	entries, err := os.ReadDir(modPath)
 	if err != nil {
+		utils.LogError("[clearModContents] Failed to read directory: %v", err)
 		return err
 	}
+
+	utils.LogDebug("[clearModContents] Found %d entries to process", len(entries))
+
+	removedCount := 0
+	failedCount := 0
 
 	for _, entry := range entries {
 		// Skip .modconfig.json if preserveConfig is true
 		if preserveConfig && entry.Name() == ".modconfig.json" {
+			utils.LogDebug("[clearModContents] Skipping preserved file: %s", entry.Name())
 			continue
 		}
 
 		fullPath := filepath.Join(modPath, entry.Name())
-		if err := utils.RemoveAllWithRetry(fullPath, 5); err != nil {
-			return fmt.Errorf("error removing %s: %v", entry.Name(), err)
+		utils.LogDebug("[clearModContents] Removing: %s", entry.Name())
+
+		// Use advanced retry with 20 attempts and exponential backoff
+		err := utils.RemoveAllWithRetryAdvanced(fullPath, 20, 100*time.Millisecond, 2*time.Second)
+		if err != nil {
+			failedCount++
+			utils.LogError("[clearModContents] Failed to remove '%s': %v", entry.Name(), err)
+			utils.LogError("[clearModContents] TIP: This file may be open in an editor, explorer, or locked by antivirus")
+			return fmt.Errorf("error removing %s: %v (Close any programs using this file and try again)", entry.Name(), err)
 		}
+		removedCount++
 	}
 
+	utils.LogInfo("[clearModContents] Completed: removed %d items, failed %d", removedCount, failedCount)
 	return nil
 }
 

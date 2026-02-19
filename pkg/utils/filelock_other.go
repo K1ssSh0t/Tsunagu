@@ -176,3 +176,15 @@ func WithDirectoryLock(dir string, timeout time.Duration, fn func() error) error
 
 	return fmt.Errorf("could not acquire lock after %v: %w", timeout, lastErr)
 }
+
+// MoveFileEx is a stub for non-Windows systems that just uses os.Rename
+func MoveFileEx(oldpath, newpath string) error {
+	LogInfo("[MoveFileEx] Non-Windows: falling back to os.Rename")
+	return os.Rename(oldpath, newpath)
+}
+
+// MoveFileExWithReboot is a stub for non-Windows systems
+func MoveFileExWithReboot(oldpath, newpath string) error {
+	LogWarn("[MoveFileExWithReboot] Non-Windows: reboot move not supported, removing instead")
+	return os.RemoveAll(oldpath)
+}

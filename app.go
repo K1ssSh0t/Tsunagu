@@ -43,10 +43,18 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.configService.LoadConfig()
 
+	// Initialize logger
+	logDir := filepath.Join(".", ".logs")
+	if err := utils.InitLogger(logDir); err != nil {
+		fmt.Printf("Warning: failed to initialize logger: %v\n", err)
+	} else {
+		utils.LogInfo("=== Tsunagu started ===")
+	}
+
 	// Create cache directory for mod downloads
 	cacheDir := filepath.Join(".", ".cache", "mod-downloads")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		fmt.Printf("Warning: failed to create cache directory: %v\n", err)
+		utils.LogError("Failed to create cache directory: %v", err)
 	}
 
 	// Initialize GameBanana client
@@ -54,16 +62,23 @@ func (a *App) startup(ctx context.Context) {
 
 	// Start watching mods path for changes (with ability to disable during operations)
 	if err := a.modService.StartWatchingModsPath(); err != nil {
-		fmt.Printf("Warning: failed to start mod watcher: %v\n", err)
+		utils.LogWarn("Failed to start mod watcher: %v", err)
 	}
+
+	utils.LogInfo("Startup completed successfully")
 }
 
 // shutdown is called when the app is closing
 func (a *App) shutdown(ctx context.Context) {
+	utils.LogInfo("Shutting down...")
+
 	// Stop watching mods
 	if err := a.modService.StopWatching(); err != nil {
-		fmt.Printf("Warning: failed to stop mod watcher: %v\n", err)
+		utils.LogWarn("Failed to stop mod watcher: %v", err)
 	}
+
+	utils.LogInfo("=== Tsunagu shutdown complete ===")
+	utils.CloseLogger()
 }
 
 // SaveConfig saves the configuration
