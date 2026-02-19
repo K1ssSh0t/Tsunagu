@@ -16,12 +16,15 @@
 - ~~en el menu de personajes no muestra correctamenta la cantidad de mods que tiene si hay mods de skin~~
 - ~~agregar que se pueda modever los mods~~
 - ~~checar que cargue bien la iamgen cuando es mod nsfw~~
-- mejorar el como se sacan las skins de los personajes
+- ~~mejorar el como se sacan las skins de los personajes~~
 - ~~cambiar que las characters se tomen estaticamente de characters.json ya se quito de gitignore~~
 - checar la forma de evitar que windows bloque el accesso a la caprta de un mod pra hacerle toggle o actulizarlo, dicce archivo bloquedo sin permiso o esta siendo ocupado por otro proceso
 - ~~agregar filtro por cantidada de mods~~
-- cehcar como se guardan las carpetas de los characters si es mayuscualas o en mayusclas como se manejan los espacios etc.
+- ~~cehcar como se guardan las carpetas de los characters si es mayuscualas o en mayusclas como se manejan los espacios etc.~~
 - cehcar si alguna formad e bloquear todas la caprete de mods  dejar solo lectura para losd emadsn procesor y escrituroa solo para la app , si se peuden filtrar que procesor tineen perimsos y dejar solo a la app como escritura lo demas como escritura
+- corergir nombres de slins para que no tengan underscore
+
+
 
 El programa JASM utiliza tres estrategias principales para evitar que Windows bloquee el acceso a archivos durante actualizaciones y cambio de modos:
 
