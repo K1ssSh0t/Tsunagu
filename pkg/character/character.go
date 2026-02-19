@@ -191,7 +191,7 @@ func (s *Service) GetCharacters() ([]Character, error) {
 		var processedSkins []Skin
 		for _, skin := range charDef.Skins {
 			// Construct folder name: {Character}_skin_{SkinFolder}
-			// e.g. Arlecchino + boss -> Arlecchino_skin_boss
+			// e.g. Arlecchino + boss -> arlecchino_skin_boss (all lowercase)
 			// We only apply this if the folder doesn't already look like a full path (simple heuristic)
 			// But user requested "automatic construction based on character", so we enforce it.
 
@@ -203,16 +203,19 @@ func (s *Service) GetCharacters() ([]Character, error) {
 			}
 		}
 
+		// Normalize character name for folder operations (all lowercase)
+		normalizedName := strings.ToLower(charDef.Name)
+
 		character := Character{
-			Name:      charDef.Name,
+			Name:      charDef.Name, // Keep original name for display in UI
 			Mods:      []mod.Mod{},
-			HasFolder: existingFolders[strings.ToLower(charDef.Name)],
+			HasFolder: existingFolders[normalizedName],
 			Skins:     processedSkins,
 		}
 
 		// If folder exists, load mods (for the main character folder)
 		if character.HasFolder {
-			mods, err := s.modService.GetModsForCharacter(charDef.Name)
+			mods, err := s.modService.GetModsForCharacter(normalizedName)
 			if err == nil {
 				character.Mods = mods
 			}

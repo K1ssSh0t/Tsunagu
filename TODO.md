@@ -21,6 +21,7 @@
 - checar la forma de evitar que windows bloque el accesso a la caprta de un mod pra hacerle toggle o actulizarlo, dicce archivo bloquedo sin permiso o esta siendo ocupado por otro proceso
 - ~~agregar filtro por cantidada de mods~~
 - cehcar como se guardan las carpetas de los characters si es mayuscualas o en mayusclas como se manejan los espacios etc.
+- cehcar si alguna formad e bloquear todas la caprete de mods  dejar solo lectura para losd emadsn procesor y escrituroa solo para la app , si se peuden filtrar que procesor tineen perimsos y dejar solo a la app como escritura lo demas como escritura
 
 El programa JASM utiliza tres estrategias principales para evitar que Windows bloquee el acceso a archivos durante actualizaciones y cambio de modos:
 

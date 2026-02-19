@@ -97,10 +97,16 @@ func (s *Service) StopWatching() error {
 	return s.watcher.Close()
 }
 
+// normalizeCharacterName converts character name to lowercase for consistent folder handling
+func normalizeCharacterName(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
+}
+
 // GetModsForCharacter gets the mods for a specific character
 func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	mods := []Mod{}
 
 	entries, err := os.ReadDir(characterPath)
@@ -124,7 +130,7 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 
 			mod := Mod{
 				ID:        actualModName,
-				Character: characterName,
+				Character: normalizedName,
 				Name:      actualModName,
 				IsActive:  isActive,
 				FullPath:  filepath.Join(characterPath, modName),
@@ -167,7 +173,8 @@ func (s *Service) ToggleMod(characterName string, modName string) error {
 	defer reenableWatcher()
 
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	activePath := filepath.Join(characterPath, modName)
 	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
 
@@ -196,7 +203,8 @@ func (s *Service) ActivateSingleMod(characterName string, modName string) error 
 	defer reenableWatcher()
 
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 
 	// First deactivate all mods for the character
 	entries, err := os.ReadDir(characterPath)
@@ -243,7 +251,8 @@ func (s *Service) AddMod(characterName string, modName string, sourcePath string
 
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Lock source directory during installation (like JASM)
@@ -301,7 +310,8 @@ func (s *Service) AddModFromZipWithRoot(characterName string, modName string, te
 
 	modName = strings.TrimSpace(modName)
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
 
 	// Create character directory if not exists
@@ -352,7 +362,8 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 	utils.LogDebug("[UpdateMod] Source path: %s", sourcePath)
 
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -427,7 +438,8 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 	utils.LogDebug("[UpdateModFromZip] Temp dir: %s, Selected root: %s", tempZipDir, selectedRoot)
 
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
@@ -606,7 +618,8 @@ func (s *Service) RemoveMod(characterName string, modName string) error {
 	defer reenableWatcher()
 
 	modsPath := s.configService.CurrentModsPath()
-	characterPath := filepath.Join(modsPath, "character", characterName)
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
 
 	// Try to remove both versions (active and inactive) with retry for Windows
 	activePath := filepath.Join(characterPath, modName)
@@ -644,11 +657,13 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 	defer reenableWatcher()
 
 	modsPath := s.configService.CurrentModsPath()
-	sourceCharacterPath := filepath.Join(modsPath, "character", sourceCharacter)
-	targetCharacterPath := filepath.Join(modsPath, "character", targetCharacter)
+	normalizedSource := normalizeCharacterName(sourceCharacter)
+	normalizedTarget := normalizeCharacterName(targetCharacter)
+	sourceCharacterPath := filepath.Join(modsPath, "character", normalizedSource)
+	targetCharacterPath := filepath.Join(modsPath, "character", normalizedTarget)
 
 	// Check if source and target are the same
-	if strings.EqualFold(sourceCharacter, targetCharacter) {
+	if strings.EqualFold(normalizedSource, normalizedTarget) {
 		return fmt.Errorf("source and target character cannot be the same")
 	}
 
