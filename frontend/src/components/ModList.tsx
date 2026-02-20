@@ -106,11 +106,11 @@ export const ModList: React.FC<ModListProps> = ({
                             {mods.map((mod) => {
                                 const hasUpdate = updates.some(
                                     (u) =>
-                                        u.characterName === mod.character && u.modName === mod.name
+                                        u.characterName.toLowerCase() === mod.character.toLowerCase() && u.modName === mod.name
                                 );
                                 const updateInfo = updates.find(
                                     (u) =>
-                                        u.characterName === mod.character && u.modName === mod.name
+                                        u.characterName.toLowerCase() === mod.character.toLowerCase() && u.modName === mod.name
                                 );
 
                                 return (
