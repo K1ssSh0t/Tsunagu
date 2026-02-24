@@ -14,7 +14,7 @@
       "skins": [
         {
           "name": "Bamboo Rain",
-          "folder": "Xingqiu-Bamboo"
+          "folder": "Bamboo"
         }
       ]
     },
@@ -32,7 +32,7 @@
       "skins": [
         {
           "name": "A Sobriquet Under Shade",
-          "folder": "Lisa-Sobriquet"
+          "folder": "Sobriquet"
         }
       ]
     },
@@ -47,7 +47,7 @@
       "skins": [
         {
           "name": "Tranquil Banquet",
-          "folder": "Yelan-Tranquil"
+          "folder": "Tranquil"
         }
       ]
     },
@@ -62,7 +62,7 @@
       "skins": [
         {
           "name": "As Heaven and Earth Are Made Anew",
-          "folder": "Lumine-Skin"
+          "folder": "Skin"
         }
       ]
     },
@@ -80,7 +80,7 @@
       "skins": [
         {
           "name": "RosariaCN",
-          "folder": "Rosaria-CN"
+          "folder": "CN"
         }
       ]
     },
@@ -104,7 +104,7 @@
       "skins": [
         {
           "name": "Sailwind Shadow",
-          "folder": "Kaeya-Sailwind"
+          "folder": "Sailwind"
         }
       ]
     },
@@ -119,7 +119,7 @@
       "skins": [
         {
           "name": "Red Dead of Night",
-          "folder": "Diluc-Flamme"
+          "folder": "Flamme"
         }
       ]
     },
@@ -161,7 +161,7 @@
       "skins": [
         {
           "name": "New Year's Cheer",
-          "folder": "Xiangling-Newyear"
+          "folder": "Newyear"
         }
       ]
     },
@@ -185,7 +185,7 @@
       "skins": [
         {
           "name": "Rainlit Bamboo Reverie",
-          "folder": "Yaoyao-Rainlit-Bamboo-Reverie"
+          "folder": "Rainlit"
         }
       ]
     },
@@ -200,11 +200,11 @@
       "skins": [
         {
           "name": "JeanCN",
-          "folder": "Jean-CN"
+          "folder": "CN"
         },
         {
           "name": "Sea Breeze Dandelion",
-          "folder": "Jean-Sea"
+          "folder": "Sea"
         }
       ]
     },
@@ -216,7 +216,7 @@
       "skins": [
         {
           "name": "Summertime Sparkle",
-          "folder": "Barbara-Summertime"
+          "folder": "Summertime"
         }
       ]
     },
@@ -228,7 +228,7 @@
       "skins": [
         {
           "name": "Springbloom Missive",
-          "folder": "Ayaka-Springbloom"
+          "folder": "Springbloom"
         }
       ]
     },
@@ -240,7 +240,7 @@
       "skins": [
         {
           "name": "Melusent Gift",
-          "folder": "Melusent-Gift"
+          "folder": "Melusent"
         }
       ]
     },
@@ -303,7 +303,7 @@
       "skins": [
         {
           "name": "AmberCN",
-          "folder": "Amber-CN"
+          "folder": "CN"
         }
       ]
     },
@@ -312,7 +312,7 @@
       "skins": [
         {
           "name": "Twilight Blossom",
-          "folder": "GanyuTwilight"
+          "folder": "Twilight"
         }
       ]
     },
@@ -321,7 +321,7 @@
       "skins": [
         {
           "name": "Opulent Splendor",
-          "folder": "KeqingOpulent"
+          "folder": "Opulent"
         }
       ]
     },
@@ -339,7 +339,7 @@
       "skins": [
         {
           "name": "Orchid's Evening Gown",
-          "folder": "NingguangOrchid"
+          "folder": "Orchid"
         }
       ]
     },
@@ -360,7 +360,7 @@
       "skins": [
         {
           "name": "As Heaven and Earth Are Made Anew",
-          "folder": "Aether Skin"
+          "folder": "Skin"
         }
       ]
     },
@@ -411,7 +411,7 @@
       "skins": [
         {
           "name": "Blossoming Starlight",
-          "folder": "Klee-Blossoming"
+          "folder": "Blossoming"
         }
       ]
     },
@@ -420,7 +420,7 @@
       "skins": [
         {
           "name": "Frostflower Dew",
-          "folder": "Shenhe-Frostflower"
+          "folder": "Frostflower"
         }
       ]
     },
@@ -435,7 +435,7 @@
       "skins": [
         {
           "name": "Breeze of Sabaa",
-          "folder": "Nilou-Breeze"
+          "folder": "Breeze"
         }
       ]
     },
@@ -444,7 +444,7 @@
       "skins": [
         {
           "name": "Cherries Snow-Laden",
-          "folder": "Cherry-HuTao"
+          "folder": "Cherry"
         }
       ]
     },
@@ -462,7 +462,7 @@
       "skins": [
         {
           "name": "Adventures in Blazing Hue",
-          "folder": "Bennett-Adventure"
+          "folder": "Adventure"
         }
       ]
     },
@@ -480,7 +480,7 @@
       "skins": [
         {
           "name": "Phantom in Boots",
-          "folder": "Kirara-Phantom"
+          "folder": "Phantom"
         }
       ]
     },
@@ -495,7 +495,7 @@
       "skins": [
         {
           "name": "Ein Immernachtstraum",
-          "folder": "Fischl-Highness"
+          "folder": "Highness"
         }
       ]
     },
@@ -521,7 +521,7 @@
       "skins": [
         {
           "name": "Firefly Spring Missive",
-          "folder": "Firefly-SchoolGirl"
+          "folder": "SchoolGirl"
         }
       ]
     },
@@ -641,11 +641,11 @@
       "skins": [
         {
           "name": "March7Hunt",
-          "folder": "March-7thHunt"
+          "folder": "Hunt"
         },
         {
           "name": "Nascent Spring",
-          "folder": "March-NS"
+          "folder": "Nascent"
         }
       ]
     },
@@ -680,7 +680,13 @@
       "name": "Yukong"
     },
     {
-      "name": "Ruan Mei"
+      "name": "Ruan Mei",
+      "skins": [
+        {
+          "name": "Plumblossom Letter",
+          "folder": "Plumblossom"
+        }
+      ]
     },
     {
       "name": "Jiaoqiu"
@@ -803,7 +809,7 @@
       "skins": [
         {
           "name": "Laurel Nymph",
-          "folder": "Laurel-Nymph"
+          "folder": "Nymph"
         }
       ]
     },
@@ -848,7 +854,7 @@
       "skins": [
         {
           "name": "Exorcistic Adjuration",
-          "folder": "Exorcistic-Adjuration"
+          "folder": "Exorcistic"
         }
       ]
     },
@@ -857,7 +863,7 @@
       "skins": [
         {
           "name": "Peach Blossom",
-          "folder": "Peach-Blossom"
+          "folder": "Peach"
         }
       ]
     },
@@ -887,7 +893,7 @@
       "skins": [
         {
           "name": "Laurel Nymph",
-          "folder": "Downtown-Repose"
+          "folder": "Downtown"
         }
       ]
     },
@@ -908,7 +914,7 @@
       "skins": [
         {
           "name": "Splashing Summer",
-          "folder": "Splashing-Summer"
+          "folder": "Splashing"
         }
       ]
     },
@@ -945,8 +951,8 @@
       "name": "Astra Yao",
       "skins": [
         {
-          "name": "Astra Chandelier",
-          "folder": "Astra-Chandelier"
+          "name": "Chandelier",
+          "folder": "Chandelier"
         }
       ]
     },
@@ -960,8 +966,8 @@
       "name": "Ye Shunguang",
       "skins": [
         {
-          "name": "Ye Shunguang: Touch of Dawnlight",
-          "folder": "YeShunguang-Dress"
+          "name": "Touch of Dawnlight",
+          "folder": "Dress"
         }
       ]
     },
@@ -1021,8 +1027,8 @@
       "name": "Alice",
       "skins": [
         {
-          "name": "Alice Sea of Thyme",
-          "folder": "Alice-Skin"
+          "name": "Sea of Thyme",
+          "folder": "Sea"
         }
       ]
     },
@@ -1036,8 +1042,8 @@
       "name": "Jane Doe",
       "skins": [
         {
-          "name": "Jane: Nocturne of Light",
-          "folder": "Jane-Summer"
+          "name": "Nocturne of Light",
+          "folder": "Summer"
         }
       ]
     },
@@ -1055,7 +1061,7 @@
       "skins": [
         {
           "name": "White Heart Silhouette",
-          "folder": "Manato-Skin"
+          "folder": "White"
         }
       ]
     },
@@ -1067,11 +1073,11 @@
       "skins": [
         {
           "name": "Belle Delicate Sunlight",
-          "folder": "BelleDelicateSunlight"
+          "folder": "Sunlight"
         },
         {
           "name": "Belle Summer Skies",
-          "folder": "BelleSummerSkin"
+          "folder": "Summer"
         }
       ]
     },
@@ -1079,8 +1085,8 @@
       "name": "Ellen",
       "skins": [
         {
-          "name": "Ellen On Campus",
-          "folder": "EllenOnCampus"
+          "name": "On Campus",
+          "folder": "Campus"
         }
       ]
     },
@@ -1091,8 +1097,8 @@
       "name": "Yixuan",
       "skins": [
         {
-          "name": "YixuanTrailsofInkr",
-          "folder": "YixuanTrailsofInk"
+          "name": "Trails of Ink",
+          "folder": "Ink"
         }
       ]
     },
@@ -1100,8 +1106,8 @@
       "name": "Yuzuha",
       "skins": [
         {
-          "name": "Yuzuha Tanuki in Broad Daylight",
-          "folder": "YuzuhaSkin"
+          "name": "Tanuki in Broad Daylight",
+          "folder": "Tranquil"
         }
       ]
     },
@@ -1115,8 +1121,8 @@
       "name": "Nicole",
       "skins": [
         {
-          "name": "Nicole Cunning Cutie",
-          "folder": "NicoleCunningCutie"
+          "name": "Cunning Cutie",
+          "folder": "Cunning"
         }
       ]
     },
@@ -1143,12 +1149,12 @@
       "name": "Wise",
       "skins": [
         {
-          "name": "Wise Soaring Crane",
-          "folder": "WiseSoaringCrane"
+          "name": "Soaring Crane",
+          "folder": "Sobriquet"
         },
         {
-          "name": "Wise Peaceful Waves",
-          "folder": "WiseSummerSkin"
+          "name": "Peaceful Waves",
+          "folder": "Summer"
         }
       ]
     },
@@ -1166,7 +1172,7 @@
       "skins": [
         {
           "name": "Iris of the Shore",
-          "folder": "VivianSkin"
+          "folder": "Summer"
         }
       ]
     },
