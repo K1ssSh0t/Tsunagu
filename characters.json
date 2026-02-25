@@ -5,7 +5,7 @@
       "skins": [
         {
           "name": "MonaCN",
-          "folder": "Mona-CN"
+          "folder": "CN"
         }
       ]
     },
@@ -520,8 +520,8 @@
       "name": "Firefly",
       "skins": [
         {
-          "name": "Firefly Spring Missive",
-          "folder": "SchoolGirl"
+          "name": "Spring Missive",
+          "folder": "Spring"
         }
       ]
     },
@@ -931,9 +931,6 @@
       "name": "Aalto"
     },
     {
-      "name": "Xiangliyao"
-    },
-    {
       "name": "Shorekeeper"
     },
     {
@@ -1072,11 +1069,11 @@
       "name": "Belle",
       "skins": [
         {
-          "name": "Belle Delicate Sunlight",
+          "name": "Delicate Sunlight",
           "folder": "Sunlight"
         },
         {
-          "name": "Belle Summer Skies",
+          "name": "Summer Skies",
           "folder": "Summer"
         }
       ]
@@ -1107,7 +1104,7 @@
       "skins": [
         {
           "name": "Tanuki in Broad Daylight",
-          "folder": "Tranquil"
+          "folder": "Summer"
         }
       ]
     },
@@ -1136,12 +1133,8 @@
       "name": "Sunna",
       "skins": [
         {
-          "name": "Sunna: Afternoon Tea Break",
-          "folder": "3114911"
-        },
-        {
-          "name": "Sunna: Dreams on Loop",
-          "folder": "3114910"
+          "name": "Afternoon Tea Break",
+          "folder": "Succubus"
         }
       ]
     },
@@ -1180,12 +1173,8 @@
       "name": "Pan Yinhu",
       "skins": [
         {
-          "name": "Pan Yinhu: Culinary Jewel",
-          "folder": "3114211"
-        },
-        {
-          "name": "Pan Yinhu: Hundred Flavors",
-          "folder": "3114210"
+          "name": " Culinary Jewel",
+          "folder": "Culinary"
         }
       ]
     },
