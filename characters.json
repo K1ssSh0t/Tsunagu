@@ -293,7 +293,7 @@
       "name": "Arlecchino"
     },
     {
-      "name": "Paimon"
+      "name": "Other"
     },
     {
       "name": "Albedo"
@@ -768,6 +768,9 @@
     },
     {
       "name": "Silver Wolf"
+    },
+    {
+      "name": "Other"
     }
   ],
   "wuwa": [
@@ -935,6 +938,9 @@
     },
     {
       "name": "Jianxin"
+    },
+    {
+      "name":"Other"
     }
   ],
   "zzz": [
@@ -1188,7 +1194,7 @@
       "name": "Anton"
     },
     {
-      "name": "Orphie"
+      "name": "Other"
     },
     {
       "name": "Seed"
@@ -1266,6 +1272,9 @@
     },
     {
       "name": "Yvonne"
+    },
+    {
+      "name": "Other"
     }
   ]
 }
