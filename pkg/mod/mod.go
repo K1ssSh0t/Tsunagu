@@ -365,6 +365,16 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 	normalizedName := normalizeCharacterName(characterName)
 	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
+
+	// If the folder doesn't exist, check for DISABLED_ prefix
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
+		if _, err := os.Stat(disabledPath); err == nil {
+			utils.LogDebug("[UpdateMod] Mod folder not found at '%s', using disabled path '%s'", targetPath, disabledPath)
+			targetPath = disabledPath
+		}
+	}
+
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
 	// Lock source directory during update (like JASM)
@@ -441,6 +451,16 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 	normalizedName := normalizeCharacterName(characterName)
 	characterPath := filepath.Join(modsPath, "character", normalizedName)
 	targetPath := filepath.Join(characterPath, modName)
+
+	// If the folder doesn't exist, check for DISABLED_ prefix
+	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
+		disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
+		if _, err := os.Stat(disabledPath); err == nil {
+			utils.LogDebug("[UpdateModFromZip] Mod folder not found at '%s', using disabled path '%s'", targetPath, disabledPath)
+			targetPath = disabledPath
+		}
+	}
+
 	configPath := filepath.Join(targetPath, ".modconfig.json")
 
 	// 1. Read existing config
