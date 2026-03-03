@@ -832,67 +832,86 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 				}
 
 				if config.ModUrl != "" && strings.Contains(config.ModUrl, "gamebanana.com") {
-					// Fetch GameBanana page
-					remoteDate, err := s.fetchGameBananaDate(config.ModUrl)
+					// Fetch individual files from GameBanana (per-file date comparison)
+					remoteFiles, err := s.fetchGameBananaFiles(config.ModUrl)
 					if err != nil {
-						utils.LogWarn("[CheckForUpdates] Error fetching date for %s: %v", config.ModUrl, err)
+						utils.LogWarn("[CheckForUpdates] Error fetching files for %s: %v", config.ModUrl, err)
 						continue
 					}
 
-					// Parse dates
-					// Use DateAdded for comparison (actual mod modification date)
-					// We need to normalize "p. m." to "PM" and "a. m." to "AM" for Go's parser
-					localDateToCompare := config.DateAdded
+					// Determine local reference date using fallback chain:
+					// LastChecked -> DateAdded -> zero time (marks everything as new)
+					var localRef time.Time
+					localDateSource := "zero"
+					localDateRaw := config.LastChecked
+					if localDateRaw == "" {
+						localDateRaw = config.DateAdded
+						localDateSource = "DateAdded"
+					} else {
+						localDateSource = "LastChecked"
+					}
 
-					normalizedDate := strings.ReplaceAll(localDateToCompare, "p. m.", "PM")
-					normalizedDate = strings.ReplaceAll(normalizedDate, "a. m.", "AM")
+					if localDateRaw != "" {
+						// Normalize "p. m." / "a. m." to "PM" / "AM" for Go's parser
+						normalized := strings.ReplaceAll(localDateRaw, "p. m.", "PM")
+						normalized = strings.ReplaceAll(normalized, "a. m.", "AM")
 
-					localTime, err := time.Parse("02/01/2006 03:04:05 PM", normalizedDate)
-					if err != nil {
-						// Try fallback to standard format just in case
-						localTime, err = time.Parse("2006-01-02 15:04:05", localDateToCompare)
+						localRef, err = time.Parse("02/01/2006 03:04:05 PM", normalized)
 						if err != nil {
-							utils.LogWarn("[CheckForUpdates] Error parsing local date %s: %v", localDateToCompare, err)
-							continue
+							localRef, err = time.Parse("2006-01-02 15:04:05", localDateRaw)
+							if err != nil {
+								utils.LogWarn("[CheckForUpdates] Error parsing local date (%s) %s: %v", localDateSource, localDateRaw, err)
+								continue
+							}
+						}
+					}
+					// If localDateRaw is empty, localRef stays as zero time -> all files are "new"
+
+					// Per-file comparison: any file uploaded after our local reference = update available
+					anyNew := false
+					var newestRemote time.Time
+					for _, file := range remoteFiles {
+						if file.DateAdded.After(localRef) {
+							anyNew = true
+						}
+						if file.DateAdded.After(newestRemote) {
+							newestRemote = file.DateAdded
 						}
 					}
 
-					// Remote date format (ISO 8601 from JSON-LD): "2024-09-10T19:33:05+00:00"
-					remoteTime, err := time.Parse(time.RFC3339, remoteDate)
-					if err != nil {
-						utils.LogWarn("[CheckForUpdates] Error parsing remote date %s: %v", remoteDate, err)
-						continue
-					}
+					utils.LogDebug("[CheckForUpdates] Mod '%s': %d remote files, newest=%s vs local(%s)=%s, update=%v",
+						mod.Name, len(remoteFiles), newestRemote.Format("2006-01-02"),
+						localDateSource, localRef.Format("2006-01-02"), anyNew)
 
-					// Compare dates: remote (GameBanana) vs local (DateAdded - actual mod date)
-					updateAvailable := remoteTime.After(localTime)
-
-					utils.LogDebug("[CheckForUpdates] Mod '%s': remote=%s vs local(DateAdded)=%s, update=%v",
-						mod.Name, remoteTime.Format("2006-01-02"), localTime.Format("2006-01-02"), updateAvailable)
-
-					if updateAvailable {
+					if anyNew {
 						updates = append(updates, ModUpdate{
 							CharacterName: charName,
 							ModName:       mod.Name,
 							ModUrl:        config.ModUrl,
-							LocalDate:     localDateToCompare,
-							RemoteDate:    remoteTime.Format("2006-01-02 15:04:05"),
+							LocalDate:     localDateRaw,
+							RemoteDate:    newestRemote.Format("2006-01-02 15:04:05"),
 						})
-						utils.LogInfo("[CheckForUpdates] Update available for '%s': remote=%s > local=%s",
-							mod.Name, remoteTime.Format("2006-01-02"), localTime.Format("2006-01-02"))
+						utils.LogInfo("[CheckForUpdates] Update available for '%s': newest file=%s > local(%s)=%s",
+							mod.Name, newestRemote.Format("2006-01-02"), localDateSource, localRef.Format("2006-01-02"))
 					}
 
-					// Update LastChecked after checking (tracks when we last checked for updates)
-					config.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
-					utils.LogDebug("[CheckForUpdates] Updated LastChecked for '%s' to %s", mod.Name, config.LastChecked)
+					// Only advance LastChecked when NO update was found.
+					// If there IS an update, keep LastChecked unchanged so the update
+					// is re-detected on future checks (since notifications are ephemeral
+					// and lost on app restart). LastChecked gets updated when the user
+					// actually installs the update (via UpdateMod/UpdateModFromZip).
+					if !anyNew {
+						config.LastChecked = time.Now().Format("02/01/2006 03:04:05 p. m.")
+						utils.LogDebug("[CheckForUpdates] No updates, advanced LastChecked for '%s' to %s", mod.Name, config.LastChecked)
 
-					// Save updated config back to file
-					updatedData, err := json.MarshalIndent(config, "", "  ")
-					if err != nil {
-						utils.LogWarn("[CheckForUpdates] Error marshaling config for %s: %v", mod.Name, err)
-					} else {
-						if err := os.WriteFile(configPath, updatedData, 0644); err != nil {
-							utils.LogWarn("[CheckForUpdates] Error saving config for %s: %v", mod.Name, err)
+						// Save updated config back to file
+						updatedData, err := json.MarshalIndent(config, "", "  ")
+						if err != nil {
+							utils.LogWarn("[CheckForUpdates] Error marshaling config for %s: %v", mod.Name, err)
+						} else {
+							if err := os.WriteFile(configPath, updatedData, 0644); err != nil {
+								utils.LogWarn("[CheckForUpdates] Error saving config for %s: %v", mod.Name, err)
+							}
 						}
 					}
 				}
@@ -903,25 +922,16 @@ func (s *Service) CheckForUpdates(characters []string) ([]ModUpdate, error) {
 	return updates, nil
 }
 
-// fetchGameBananaDate fetches the modification date from a GameBanana URL using API
-func (s *Service) fetchGameBananaDate(url string) (string, error) {
-	// Extract mod ID
+// fetchGameBananaFiles fetches the list of files from a GameBanana mod page using API
+// Returns individual files with their upload dates for per-file update comparison
+func (s *Service) fetchGameBananaFiles(url string) ([]gamebanana.ModFile, error) {
 	modID, err := gamebanana.ExtractModID(url)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Create temporary GameBanana client
 	client := gamebanana.NewClient("")
-
-	// Get mod info from API
-	modInfo, err := client.GetModInfo(modID)
-	if err != nil {
-		return "", err
-	}
-
-	// Return date in RFC3339 format (compatible with existing parsing logic)
-	return modInfo.DateModified.Format(time.RFC3339), nil
+	return client.GetModFiles(modID)
 }
 
 // fetchGameBananaImage fetches the main image URL from a GameBanana mod page using the API

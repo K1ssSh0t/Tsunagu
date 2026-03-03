@@ -15,12 +15,13 @@ import (
 
 // ModFile representa un archivo disponible para descargar
 type ModFile struct {
-	DownloadURL string `json:"downloadUrl"`
-	FileName    string `json:"fileName"`
-	FileSize    int64  `json:"fileSize"`
-	MD5Checksum string `json:"md5Checksum"`
-	Description string `json:"description"`
-	FileID      int64  `json:"fileId"`
+	DownloadURL string    `json:"downloadUrl"`
+	FileName    string    `json:"fileName"`
+	FileSize    int64     `json:"fileSize"`
+	MD5Checksum string    `json:"md5Checksum"`
+	Description string    `json:"description"`
+	FileID      int64     `json:"fileId"`
+	DateAdded   time.Time `json:"dateAdded"`
 }
 
 // ModInfo contiene información básica del mod
@@ -217,6 +218,11 @@ func (c *Client) GetModFiles(modID string) ([]ModFile, error) {
 
 		if description, ok := fileMap["_sDescription"].(string); ok {
 			modFile.Description = description
+		}
+
+		// Parsear fecha de subida del archivo (timestamp Unix)
+		if tsDateAdded, ok := fileMap["_tsDateAdded"].(float64); ok {
+			modFile.DateAdded = time.Unix(int64(tsDateAdded), 0)
 		}
 
 		// Agregar versión si existe
