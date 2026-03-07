@@ -21,13 +21,14 @@ import (
 )
 
 type Mod struct {
-	ID            string `json:"id"`
-	Character     string `json:"character"`
-	Name          string `json:"name"`
-	IsActive      bool   `json:"isActive"`
-	FullPath      string `json:"fullPath"`
-	GameBananaUrl string `json:"gameBananaUrl"`
-	ImagePath     string `json:"imagePath"`
+	ID            string        `json:"id"`
+	Character     string        `json:"character"`
+	Name          string        `json:"name"`
+	IsActive      bool          `json:"isActive"`
+	FullPath      string        `json:"fullPath"`
+	GameBananaUrl string        `json:"gameBananaUrl"`
+	ImagePath     string        `json:"imagePath"`
+	KeySwaps      []KeySwapInfo `json:"keySwaps"`
 }
 
 type ModConfig struct {
@@ -151,6 +152,9 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 					}
 				}
 			}
+
+			// Parse KeySwap sections from .ini files in the mod folder
+			mod.KeySwaps = ParseKeySwapsFromModFolder(mod.FullPath)
 
 			mods = append(mods, mod)
 		}
