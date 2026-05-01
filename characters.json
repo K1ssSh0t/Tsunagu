@@ -592,6 +592,12 @@
       "name": "Saber"
     },
     {
+      "name": "Silver Wolf Lv.999"
+    },
+    {
+      "name": "Evanescia"
+    },
+    {
       "name": "Dan Heng • Permansor Terrae"
     },
     {
@@ -716,7 +722,13 @@
       "name": "Jade"
     },
     {
-      "name": "Castorice"
+      "name": "Castorice",
+      "skins": [
+        {
+          "name": "Gossamer Flutter",
+          "folder": "Gossamer"
+        }
+      ]
     },
     {
       "name": "Seele"
