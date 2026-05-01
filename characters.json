@@ -1278,45 +1278,15 @@
       "name": "Pyrois"
     }
   ],
-  "enfield": [
-    {
-      "name": "Akekuri"
-    },
-    {
-      "name": "Alesh"
-    },
-    {
-      "name": "Antal"
-    },
-    {
-      "name": "Arclight"
-    },
+  "endfield": [
     {
       "name": "Ardelia"
-    },
-    {
-      "name": "Avywenna"
-    },
-    {
-      "name": "Catcher"
-    },
-    {
-      "name": "Chen Qianyu"
-    },
-    {
-      "name": "Da Pan"
     },
     {
       "name": "Ember"
     },
     {
       "name": "Endministrator"
-    },
-    {
-      "name": "Estella"
-    },
-    {
-      "name": "Fluorite"
     },
     {
       "name": "Gilberta"
@@ -1331,10 +1301,28 @@
       "name": "Lifeng"
     },
     {
-      "name": "Perlica"
+      "name": "Pogranichnik"
     },
     {
-      "name": "Pogranichnik"
+      "name": "Yvonne"
+    },
+    {
+      "name": "Alesh"
+    },
+    {
+      "name": "Arclight"
+    },
+    {
+      "name": "Avywenna"
+    },
+    {
+      "name": "Chen Qianyu"
+    },
+    {
+      "name": "Da Pan"
+    },
+    {
+      "name": "Perlica"
     },
     {
       "name": "Snowshine"
@@ -1346,7 +1334,31 @@
       "name": "Xaihi"
     },
     {
-      "name": "Yvonne"
+      "name": "Akekuri"
+    },
+    {
+      "name": "Antal"
+    },
+    {
+      "name": "Catcher"
+    },
+    {
+      "name": "Estella"
+    },
+    {
+      "name": "Fluorite"
+    },
+    {
+      "name": "Tangtang"
+    },
+    {
+      "name": "Rossi"
+    },
+    {
+      "name": "Zhuang Fangyi"
+    },
+    {
+      "name": "Mi Fu"
     },
     {
       "name": "Others"
