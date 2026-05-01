@@ -175,3 +175,6 @@ public class DisableWatcher : IDisposable
 }
 ```
 https://deepwiki.com/search/como-es-que-el-progrma-evita-q_c3a405c6-653b-47f3-b6e4-44923694feb1?mode=deep
+
+
+- [ ]  Agregar link a los XXMI
