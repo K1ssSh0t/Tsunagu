@@ -506,6 +506,18 @@
       "name": "Illuga"
     },
     {
+      "name": "Linnea"
+    },
+    {
+      "name": "Nicole"
+    },
+    {
+      "name": "Lohen"
+    },
+    {
+      "name": "Prune"
+    },
+    {
       "name": "Arataki Itto"
     }
   ],
@@ -925,7 +937,13 @@
       "name": "Augusta"
     },
     {
-      "name": "Mornye"
+      "name": "Mornye",
+      "skins": [
+        {
+          "name": "Plush Dream",
+          "folder": "Plush"
+        }
+      ]
     },
     {
       "name": "Rover"
@@ -938,6 +956,18 @@
     },
     {
       "name": "Jianxin"
+    },
+    {
+      "name": "Sigrika"
+    },
+    {
+      "name": "Hiyuki"
+    },
+    {
+      "name": "Denia"
+    },
+    {
+      "name": "Lucilla"
     },
     {
       "name":"Other"
@@ -1130,7 +1160,13 @@
       ]
     },
     {
-      "name": "Miyabi"
+      "name": "Miyabi",
+      "skins": [
+        {
+          "name": "Dignified Blossom",
+          "folder": "Dignified"
+        }
+      ]
     },
     {
       "name": "Lucia"
@@ -1179,7 +1215,7 @@
       "name": "Pan Yinhu",
       "skins": [
         {
-          "name": " Culinary Jewel",
+          "name": "Culinary Jewel",
           "folder": "Culinary"
         }
       ]
@@ -1201,6 +1237,36 @@
     },
     {
       "name": "Yidhari"
+    },
+    {
+      "name": "Nangong Yu",
+      "skins": [
+        {
+          "name": "Rhapsody's Muse",
+          "folder": "Rhapsody"
+        }
+      ]
+    },
+    {
+      "name": "Cissia"
+    },
+    {
+      "name": "Promeia"
+    },
+    {
+      "name": "Starlight Billy"
+    },
+    {
+      "name": "Velina"
+    },
+    {
+      "name": "Norma"
+    },
+    {
+      "name": "Pyrois"
+    },
+    {
+      "name": "Other"
     }
   ],
   "enfield": [
