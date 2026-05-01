@@ -293,7 +293,7 @@
       "name": "Arlecchino"
     },
     {
-      "name": "Other"
+      "name": "Others"
     },
     {
       "name": "Albedo"
@@ -782,7 +782,7 @@
       "name": "Silver Wolf"
     },
     {
-      "name": "Other"
+      "name": "Others"
     }
   ],
   "wuwa": [
@@ -970,7 +970,7 @@
       "name": "Lucilla"
     },
     {
-      "name":"Other"
+      "name": "Others"
     }
   ],
   "zzz": [
@@ -1230,7 +1230,7 @@
       "name": "Anton"
     },
     {
-      "name": "Other"
+      "name": "Others"
     },
     {
       "name": "Seed"
@@ -1264,9 +1264,6 @@
     },
     {
       "name": "Pyrois"
-    },
-    {
-      "name": "Other"
     }
   ],
   "enfield": [
@@ -1340,7 +1337,7 @@
       "name": "Yvonne"
     },
     {
-      "name": "Other"
+      "name": "Others"
     }
   ]
 }
