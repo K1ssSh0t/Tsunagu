@@ -969,7 +969,9 @@ const App: React.FC = () => {
                             ? "SRMI"
                             : selectedGame === "zzz"
                               ? "ZZMI"
-                              : "Launcher"}
+                              : selectedGame === "endfield"
+                                ? "EFMI"
+                                : "Launcher"}
                     </Button>
                   )}
                   <GameSelector

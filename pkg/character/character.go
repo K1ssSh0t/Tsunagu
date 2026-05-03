@@ -87,6 +87,9 @@ func (s *Service) LoadCharactersList() ([]CharacterDefinition, error) {
 		"zzz": {
 			"ellen", "zhu yuan", "jane doe",
 		},
+		"endfield": {
+			"ardelia", "perlica", "wulfgard",
+		},
 	}
 
 	selectedGame := s.configService.GetCurrentGame()
