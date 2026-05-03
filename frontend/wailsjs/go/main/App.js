@@ -66,6 +66,10 @@ export function IsConfigured() {
   return window['go']['main']['App']['IsConfigured']();
 }
 
+export function LaunchXXMI() {
+  return window['go']['main']['App']['LaunchXXMI']();
+}
+
 export function MoveMod(arg1, arg2, arg3) {
   return window['go']['main']['App']['MoveMod'](arg1, arg2, arg3);
 }
@@ -90,6 +94,10 @@ export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
 }
 
+export function SelectExecutable() {
+  return window['go']['main']['App']['SelectExecutable']();
+}
+
 export function SelectFile() {
   return window['go']['main']['App']['SelectFile']();
 }
@@ -100,6 +108,10 @@ export function SetGame(arg1) {
 
 export function ToggleMod(arg1, arg2) {
   return window['go']['main']['App']['ToggleMod'](arg1, arg2);
+}
+
+export function UpdateGameExecutable(arg1, arg2) {
+  return window['go']['main']['App']['UpdateGameExecutable'](arg1, arg2);
 }
 
 export function UpdateGamePath(arg1, arg2) {

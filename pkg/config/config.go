@@ -7,7 +7,8 @@ import (
 )
 
 type GameConfig struct {
-	ModsPath string `json:"modsPath"`
+	ModsPath       string `json:"modsPath"`
+	ExecutablePath string `json:"executablePath"`
 }
 
 type Config struct {
@@ -98,7 +99,20 @@ func (s *Service) UpdateGamePath(game string, path string) error {
 	if s.config.Games == nil {
 		s.config.Games = make(map[string]GameConfig)
 	}
-	s.config.Games[game] = GameConfig{ModsPath: path}
+	gameConf := s.config.Games[game]
+	gameConf.ModsPath = path
+	s.config.Games[game] = gameConf
+	return s.SaveConfig()
+}
+
+// UpdateGameExecutable updates the executable path for a specific game
+func (s *Service) UpdateGameExecutable(game string, path string) error {
+	if s.config.Games == nil {
+		s.config.Games = make(map[string]GameConfig)
+	}
+	gameConf := s.config.Games[game]
+	gameConf.ExecutablePath = path
+	s.config.Games[game] = gameConf
 	return s.SaveConfig()
 }
 

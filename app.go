@@ -106,6 +106,41 @@ func (a *App) UpdateGamePath(game string, path string) error {
 	return a.configService.UpdateGamePath(game, path)
 }
 
+// UpdateGameExecutable updates the executable path for a specific game
+func (a *App) UpdateGameExecutable(game string, path string) error {
+	return a.configService.UpdateGameExecutable(game, path)
+}
+
+// LaunchXXMI launches the XXMI executable for the current game
+func (a *App) LaunchXXMI() error {
+	game := a.configService.GetCurrentGame()
+	conf := a.configService.GetGamesConfig()
+	if gameConf, ok := conf.Games[game]; ok && gameConf.ExecutablePath != "" {
+		return utils.OpenUrl(gameConf.ExecutablePath)
+	}
+	return fmt.Errorf("no se ha configurado el ejecutable para %s", game)
+}
+
+// SelectExecutable opens the system file selector for .exe and .lnk files
+func (a *App) SelectExecutable() (string, error) {
+	dialogOptions := wailsruntime.OpenDialogOptions{
+		Title: "Seleccionar Lanzador de Mods (XXMI)",
+		Filters: []wailsruntime.FileFilter{
+			{
+				DisplayName: "Lanzadores (*.exe, *.lnk)",
+				Pattern:     "*.exe;*.lnk",
+			},
+		},
+	}
+
+	selectedFile, err := wailsruntime.OpenFileDialog(a.ctx, dialogOptions)
+	if err != nil {
+		return "", err
+	}
+
+	return selectedFile, nil
+}
+
 // SelectDirectory opens the system folder selector
 func (a *App) SelectDirectory() (string, error) {
 	dialogOptions := wailsruntime.OpenDialogOptions{

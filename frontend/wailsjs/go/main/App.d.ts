@@ -38,6 +38,8 @@ export function Greet(arg1:string):Promise<string>;
 
 export function IsConfigured():Promise<boolean>;
 
+export function LaunchXXMI():Promise<void>;
+
 export function MoveMod(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function OpenModFolder(arg1:string):Promise<void>;
@@ -50,11 +52,15 @@ export function SaveConfig():Promise<void>;
 
 export function SelectDirectory():Promise<string>;
 
+export function SelectExecutable():Promise<string>;
+
 export function SelectFile():Promise<string>;
 
 export function SetGame(arg1:string):Promise<string>;
 
 export function ToggleMod(arg1:string,arg2:string):Promise<void>;
+
+export function UpdateGameExecutable(arg1:string,arg2:string):Promise<void>;
 
 export function UpdateGamePath(arg1:string,arg2:string):Promise<void>;
 

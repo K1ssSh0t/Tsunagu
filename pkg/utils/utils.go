@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"golift.io/xtractr"
@@ -35,13 +36,26 @@ func IsDirectory(path string) bool {
 	return info.IsDir()
 }
 
-// OpenUrl opens a URL in the default browser
+// OpenUrl opens a URL or file in the default system handler
 func OpenUrl(url string) error {
 	var cmd string
 	var args []string
 
 	switch runtime.GOOS {
 	case "windows":
+		// Check if it's a local file and a .lnk or .exe
+		if _, err := os.Stat(url); err == nil {
+			ext := strings.ToLower(filepath.Ext(url))
+			if ext == ".exe" || ext == ".lnk" {
+				// Use "cmd /c start" with /d to set working directory.
+				// The "" after start is for the title (required if the path has spaces)
+				dir, _ := filepath.Abs(filepath.Dir(url))
+				base := filepath.Base(url)
+				cmd = "cmd"
+				args = []string{"/c", "start", "/d", dir, "", base}
+				return exec.Command(cmd, args...).Start()
+			}
+		}
 		cmd = "cmd"
 		args = []string{"/c", "start", url}
 	case "darwin":

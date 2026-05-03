@@ -22,6 +22,9 @@ import {
   GetCurrentGame,
   GetGamesConfig,
   UpdateGamePath,
+  UpdateGameExecutable,
+  LaunchXXMI,
+  SelectExecutable,
   GetModDownloadFiles,
   DownloadModUpdate,
   CleanupCachedFile,
@@ -29,7 +32,7 @@ import {
 import { character, mod, utils } from "../wailsjs/go/models";
 import { ModeToggle } from "./components/mode-toggle";
 import { GameSelector } from "./components/game-selector";
-import { Settings } from "lucide-react";
+import { Settings, Gamepad2 } from "lucide-react";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -78,6 +81,7 @@ const App: React.FC = () => {
   const [newModName, setNewModName] = useState("");
   const [gameBananaUrl, setGameBananaUrl] = useState("");
   const [configPath, setConfigPath] = useState("");
+  const [executablePath, setExecutablePath] = useState("");
   const [showZipModal, setShowZipModal] = useState(false);
   const [zipStructure, setZipStructure] = useState<ZipFile[]>([]);
   const [selectedRoot, setSelectedRoot] = useState("");
@@ -132,9 +136,11 @@ const App: React.FC = () => {
       setGamesConfig(config);
 
       if (config.games && config.games[game]) {
-        setConfigPath(config.games[game].modsPath);
+        setConfigPath(config.games[game].modsPath || "");
+        setExecutablePath(config.games[game].executablePath || "");
       } else {
         setConfigPath("");
+        setExecutablePath("");
       }
 
       const configured = await IsConfigured();
@@ -159,9 +165,11 @@ const App: React.FC = () => {
       const config = await GetGamesConfig();
       setGamesConfig(config);
       if (config.games && config.games[game]) {
-        setConfigPath(config.games[game].modsPath);
+        setConfigPath(config.games[game].modsPath || "");
+        setExecutablePath(config.games[game].executablePath || "");
       } else {
         setConfigPath("");
+        setExecutablePath("");
       }
 
       const configured = await IsConfigured();
@@ -192,7 +200,7 @@ const App: React.FC = () => {
       if (availableUpdates && availableUpdates.length > 0) {
         setUpdates(availableUpdates);
         toast.info(
-          `Se encontraron ${availableUpdates.length} actualizaciones disponibles`
+          `Se encontraron ${availableUpdates.length} actualizaciones disponibles`,
         );
       } else {
         setUpdates([]);
@@ -228,7 +236,9 @@ const App: React.FC = () => {
     await loadCharacterMods(characterName);
   };
 
-  const handleSkinSelect = async (skin: { name: string; folder: string } | null) => {
+  const handleSkinSelect = async (
+    skin: { name: string; folder: string } | null,
+  ) => {
     setSelectedSkin(skin);
     if (skin) {
       await loadCharacterMods(skin.folder);
@@ -251,13 +261,13 @@ const App: React.FC = () => {
     try {
       await ToggleMod(targetFolder, modName);
       await loadCharacterMods(targetFolder);
-      // We don't need to reload all characters unless we want to update the "HasFolder" status, 
+      // We don't need to reload all characters unless we want to update the "HasFolder" status,
       // but for toggling mods it's not strictly necessary and avoids flickering.
-      // await loadCharacters(); 
+      // await loadCharacters();
       const mod = characterMods.find((m) => m.name === modName);
       if (mod) {
         toast.success(
-          `Mod ${modName} ${mod.isActive ? "activado" : "desactivado"} correctamente`
+          `Mod ${modName} ${mod.isActive ? "activado" : "desactivado"} correctamente`,
         );
       }
     } catch (error) {
@@ -327,7 +337,8 @@ const App: React.FC = () => {
         } catch (zipError) {
           console.error("Error reading ZIP structure:", zipError);
           toast.error(
-            "Error al leer la estructura del ZIP: " + (zipError as Error).message
+            "Error al leer la estructura del ZIP: " +
+              (zipError as Error).message,
           );
         }
       } else {
@@ -384,7 +395,7 @@ const App: React.FC = () => {
           modToUpdate.character, // This comes from the mod object, which should have the correct folder
           modToUpdate.modName,
           newModPath,
-          selectedRoot
+          selectedRoot,
         );
         toast.success(`Mod ${modToUpdate.modName} actualizado correctamente`);
 
@@ -394,12 +405,12 @@ const App: React.FC = () => {
               !(
                 u.characterName === modToUpdate.character &&
                 u.modName === modToUpdate.modName
-              )
-          )
+              ),
+          ),
         );
 
         setModToUpdate(null);
-        
+
         // If this was a downloaded file, show cleanup dialog
         if (cachedFilePath) {
           setShowCleanupDialog(true);
@@ -416,7 +427,7 @@ const App: React.FC = () => {
           trimmedModName,
           newModPath,
           selectedRoot,
-          gameBananaUrl
+          gameBananaUrl,
         );
         toast.success(`Mod ${trimmedModName} agregado correctamente`);
         setShowAddMod(false);
@@ -446,7 +457,7 @@ const App: React.FC = () => {
   const handleUpdateModClick = (
     character: string,
     modName: string,
-    modUrl: string
+    modUrl: string,
   ) => {
     // character here is the folder name (either character name or skin folder)
     setModToUpdate({ character, modName, currentUrl: modUrl });
@@ -484,7 +495,9 @@ const App: React.FC = () => {
         setShowZipModal(true);
         setIsLoading(false);
       } else {
-        toast.error("Por favor selecciona un archivo comprimido (.zip, .rar, .7z)");
+        toast.error(
+          "Por favor selecciona un archivo comprimido (.zip, .rar, .7z)",
+        );
         setIsLoading(false);
       }
     } catch (error) {
@@ -514,8 +527,8 @@ const App: React.FC = () => {
             !(
               u.characterName === modToUpdate.character &&
               u.modName === modToUpdate.modName
-            )
-        )
+            ),
+        ),
       );
 
       setModToUpdate(null);
@@ -537,7 +550,7 @@ const App: React.FC = () => {
 
       // Fetch available files from GameBanana API
       const files = await GetModDownloadFiles(modToUpdate.currentUrl);
-      
+
       if (!files || files.length === 0) {
         toast.error("No hay archivos disponibles para descargar");
         setIsLoading(false);
@@ -573,8 +586,11 @@ const App: React.FC = () => {
       setShowDownloadProgress(true);
 
       // Download the file
-      const downloadedPath = await DownloadModUpdate(file.downloadUrl, file.fileName);
-      
+      const downloadedPath = await DownloadModUpdate(
+        file.downloadUrl,
+        file.fileName,
+      );
+
       // Close download progress
       setShowDownloadProgress(false);
 
@@ -646,15 +662,22 @@ const App: React.FC = () => {
 
     try {
       await MoveMod(sourceCharacter, modName, targetCharacter);
-      
+
       // Reload mods for both source and target if we're viewing either
-      const currentFolder = selectedSkin ? selectedSkin.folder : selectedCharacter;
-      if (currentFolder === sourceCharacter || currentFolder === targetCharacter) {
+      const currentFolder = selectedSkin
+        ? selectedSkin.folder
+        : selectedCharacter;
+      if (
+        currentFolder === sourceCharacter ||
+        currentFolder === targetCharacter
+      ) {
         await loadCharacterMods(currentFolder);
       }
-      
+
       await loadCharacters();
-      toast.success(`Mod "${modName}" movido correctamente a ${targetCharacter}`);
+      toast.success(
+        `Mod "${modName}" movido correctamente a ${targetCharacter}`,
+      );
       setModToMove(null);
     } catch (error) {
       console.error("Error moving mod:", error);
@@ -698,12 +721,16 @@ const App: React.FC = () => {
   const handleUpdateGamePath = async () => {
     try {
       await UpdateGamePath(selectedGame, configPath);
+      await UpdateGameExecutable(selectedGame, executablePath);
       setIsAppConfigured(true);
       setShowConfig(false);
 
       const newConfig = { ...gamesConfig };
       if (!newConfig.games) newConfig.games = {};
-      newConfig.games[selectedGame] = { modsPath: configPath };
+      newConfig.games[selectedGame] = {
+        modsPath: configPath,
+        executablePath: executablePath,
+      };
       setGamesConfig(newConfig);
 
       await loadCharacters();
@@ -750,6 +777,36 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSelectExecutable = async () => {
+    try {
+      const selectedFile = await SelectExecutable();
+      if (selectedFile) {
+        setExecutablePath(selectedFile);
+      }
+    } catch (error) {
+      console.error("Error selecting executable:", error);
+      toast.error("Error al seleccionar el lanzador");
+    }
+  };
+
+  const handleLaunchXXMI = async () => {
+    if (!executablePath) {
+      toast.error(
+        "No se ha configurado el lanzador para este juego. Ve a configuración.",
+      );
+      setShowConfig(true);
+      return;
+    }
+
+    try {
+      await LaunchXXMI();
+      toast.success("Lanzador iniciado");
+    } catch (error) {
+      console.error("Error launching XXMI:", error);
+      toast.error("Error al iniciar el lanzador: " + error);
+    }
+  };
+
   if (isAppConfigured === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -767,7 +824,9 @@ const App: React.FC = () => {
   }
 
   // Find the currently selected character object to pass its skins
-  const currentCharacterObj = characters.find(c => c.name === selectedCharacter);
+  const currentCharacterObj = characters.find(
+    (c) => c.name === selectedCharacter,
+  );
 
   return (
     <div className="min-h-screen bg-background p-6 relative">
@@ -810,24 +869,31 @@ const App: React.FC = () => {
         showConfig={showConfig}
         selectedGame={selectedGame}
         configPath={configPath}
+        executablePath={executablePath}
         gamesConfig={gamesConfig}
         onClose={() => setShowConfig(false)}
         onGameSelect={(game) => {
           setSelectedGame(game);
           if (gamesConfig.games && gamesConfig.games[game]) {
-            setConfigPath(gamesConfig.games[game].modsPath);
+            setConfigPath(gamesConfig.games[game].modsPath || "");
+            setExecutablePath(gamesConfig.games[game].executablePath || "");
           } else {
             setConfigPath("");
+            setExecutablePath("");
           }
         }}
         onConfigPathChange={setConfigPath}
+        onExecutablePathChange={setExecutablePath}
         onSelectDirectory={handleSelectDirectory}
+        onSelectExecutable={handleSelectExecutable}
         onSave={handleUpdateGamePath}
       />
 
       <AddModDialog
         isOpen={showAddMod}
-        selectedCharacter={selectedSkin ? selectedSkin.folder : selectedCharacter}
+        selectedCharacter={
+          selectedSkin ? selectedSkin.folder : selectedCharacter
+        }
         newModName={newModName}
         newModPath={newModPath}
         gameBananaUrl={gameBananaUrl}
@@ -872,7 +938,7 @@ const App: React.FC = () => {
       />
 
       {/* Main Layout */}
-      {(!(!isAppConfigured || showConfig)) && (
+      {!(!isAppConfigured || showConfig) && (
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <Card className="border-0 shadow-sm">
@@ -887,10 +953,30 @@ const App: React.FC = () => {
                   </CardDescription>
                 </div>
                 <div className="flex items-center space-x-4">
+                  {executablePath && (
+                    <Button
+                      variant="default"
+                      onClick={handleLaunchXXMI}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Gamepad2 className="mr-2 h-4 w-4" />
+                      Lanzar{" "}
+                      {selectedGame === "genshin"
+                        ? "GIMI"
+                        : selectedGame === "wuwa"
+                          ? "WWMI"
+                          : selectedGame === "hsr"
+                            ? "SRMI"
+                            : selectedGame === "zzz"
+                              ? "ZZMI"
+                              : "Launcher"}
+                    </Button>
+                  )}
                   <GameSelector
                     selectedGame={selectedGame}
                     onGameSelect={handleGameSelect}
                   />
+
                   <Button
                     variant="outline"
                     size="icon"

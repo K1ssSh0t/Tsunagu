@@ -57,6 +57,7 @@ export namespace config {
 	
 	export class GameConfig {
 	    modsPath: string;
+	    executablePath: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new GameConfig(source);
@@ -65,6 +66,7 @@ export namespace config {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.modsPath = source["modsPath"];
+	        this.executablePath = source["executablePath"];
 	    }
 	}
 	export class Config {
