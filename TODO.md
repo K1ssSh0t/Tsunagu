@@ -177,4 +177,6 @@ public class DisableWatcher : IDisposable
 https://deepwiki.com/search/como-es-que-el-progrma-evita-q_c3a405c6-653b-47f3-b6e4-44923694feb1?mode=deep
 
 
-- [ ]  Agregar link a los XXMI
+- [X]  Agregar link a los XXMI
+- [ ] Arreglar que la lista de archivos a descargar de gamebanana se pueda hacer scroll
+- [ ] cehcar los nombres ya que en JASM algunos persojea son cnombre que llevan espacio los guaardo todo juento y tsunago no recoce esas carpetas
