@@ -88,7 +88,7 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="py-4 max-h-[50vh] overflow-y-auto">
           {files.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               No files available for download
