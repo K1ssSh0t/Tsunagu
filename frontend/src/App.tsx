@@ -80,6 +80,7 @@ const App: React.FC = () => {
   const [newModPath, setNewModPath] = useState("");
   const [newModName, setNewModName] = useState("");
   const [gameBananaUrl, setGameBananaUrl] = useState("");
+  const [autoNameEnabled, setAutoNameEnabled] = useState(true);
   const [configPath, setConfigPath] = useState("");
   const [executablePath, setExecutablePath] = useState("");
   const [showZipModal, setShowZipModal] = useState(false);
@@ -120,6 +121,11 @@ const App: React.FC = () => {
   } | null>(null);
 
   const hasCheckedConfig = React.useRef(false);
+
+  const deriveNameFromPath = (path: string, isZip: boolean): string => {
+    const basename = path.replace(/[\\/]/g, "/").split("/").pop() || "";
+    return isZip ? basename.replace(/\.(zip|rar|7z)$/i, "") : basename;
+  };
 
   useEffect(() => {
     if (hasCheckedConfig.current) return;
@@ -358,6 +364,17 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
       setLoadingMessage("");
+    }
+  };
+
+  const handleZipSelectRoot = (path: string) => {
+    setSelectedRoot(path);
+    if (autoNameEnabled) {
+      const trimmedName =
+        path === "."
+          ? deriveNameFromPath(newModPath, true)
+          : path.replace(/\\/g, "/").split("/").pop() || "";
+      setNewModName(trimmedName);
     }
   };
 
@@ -758,6 +775,9 @@ const App: React.FC = () => {
       const selectedPath = await SelectDirectory();
       if (selectedPath) {
         setNewModPath(selectedPath);
+        if (autoNameEnabled) {
+          setNewModName(deriveNameFromPath(selectedPath, false));
+        }
       }
     } catch (error) {
       console.error("Error selecting mod directory:", error);
@@ -770,6 +790,9 @@ const App: React.FC = () => {
       const selectedFile = await SelectFile();
       if (selectedFile) {
         setNewModPath(selectedFile);
+        if (autoNameEnabled) {
+          setNewModName(deriveNameFromPath(selectedFile, true));
+        }
       }
     } catch (error) {
       console.error("Error selecting mod file:", error);
@@ -897,9 +920,11 @@ const App: React.FC = () => {
         newModName={newModName}
         newModPath={newModPath}
         gameBananaUrl={gameBananaUrl}
+        autoNameEnabled={autoNameEnabled}
         onNameChange={setNewModName}
         onPathChange={setNewModPath}
         onUrlChange={setGameBananaUrl}
+        onToggleAutoName={setAutoNameEnabled}
         onSelectFile={handleSelectModFile}
         onSelectFolder={handleSelectModDirectory}
         onCancel={() => setShowAddMod(false)}
@@ -910,7 +935,7 @@ const App: React.FC = () => {
         isOpen={showZipModal}
         zipStructure={zipStructure}
         selectedRoot={selectedRoot}
-        onSelectRoot={setSelectedRoot}
+        onSelectRoot={handleZipSelectRoot}
         onCancel={handleZipModalCancel}
         onConfirm={handleZipModalConfirmAction}
       />

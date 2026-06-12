@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Folder, File } from "lucide-react";
 import {
     DropdownMenu,
@@ -17,9 +18,11 @@ interface AddModDialogProps {
     newModName: string;
     newModPath: string;
     gameBananaUrl: string;
+    autoNameEnabled: boolean;
     onNameChange: (val: string) => void;
     onPathChange: (val: string) => void;
     onUrlChange: (val: string) => void;
+    onToggleAutoName: (val: boolean) => void;
     onSelectFile: () => void;
     onSelectFolder: () => void;
     onCancel: () => void;
@@ -32,9 +35,11 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
     newModName,
     newModPath,
     gameBananaUrl,
+    autoNameEnabled,
     onNameChange,
     onPathChange,
     onUrlChange,
+    onToggleAutoName,
     onSelectFile,
     onSelectFolder,
     onCancel,
@@ -50,6 +55,19 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
                     <CardDescription>Agrega un mod para {selectedCharacter}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="autoName">Auto-nombrar</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Usar el nombre de la carpeta o archivo seleccionado
+                            </p>
+                        </div>
+                        <Switch
+                            id="autoName"
+                            checked={autoNameEnabled}
+                            onCheckedChange={onToggleAutoName}
+                        />
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="modName">Nombre del Mod</Label>
                         <Input
@@ -57,6 +75,7 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
                             value={newModName}
                             onChange={(e) => onNameChange(e.target.value)}
                             placeholder="Ej: Skin Verano"
+                            disabled={autoNameEnabled}
                         />
                     </div>
                     <div className="space-y-2">
