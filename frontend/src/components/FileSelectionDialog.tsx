@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
@@ -72,9 +72,21 @@ function timeAgo(date: Date): string {
 export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: FileSelectionDialogProps) {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  const sortedFiles = useMemo(
+    () =>
+      [...files].sort(
+        (a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+      ),
+    [files]
+  );
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [files]);
+
   const handleSelect = () => {
-    if (selectedIndex !== null && files[selectedIndex]) {
-      onSelectFile(files[selectedIndex]);
+    if (sortedFiles[selectedIndex]) {
+      onSelectFile(sortedFiles[selectedIndex]);
     }
   };
 
@@ -88,8 +100,8 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 max-h-[50vh] overflow-y-auto">
-          {files.length === 0 ? (
+        <div className="py-4 pr-2 max-h-[50vh] overflow-y-auto">
+          {sortedFiles.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               No files available for download
             </div>
@@ -99,7 +111,7 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
               onValueChange={(value) => setSelectedIndex(parseInt(value))}
               className="space-y-3"
             >
-              {files.map((file, index) => (
+              {sortedFiles.map((file, index) => (
                 <div
                   key={file.fileId || index}
                   className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -107,13 +119,13 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
                   <RadioGroupItem value={index.toString()} id={`file-${index}`} className="mt-1" />
                   <Label
                     htmlFor={`file-${index}`}
-                    className="flex-1 cursor-pointer space-y-1"
+                    className="flex-1 min-w-0 cursor-pointer space-y-1"
                   >
-                    <div className="flex items-center gap-2">
-                      <FileArchive className="h-4 w-4 text-muted-foreground" />
-                      <p className="font-medium text-sm">{file.fileName}</p>
+                    <div className="flex items-start gap-2">
+                      <FileArchive className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                      <p className="font-medium text-sm break-words min-w-0">{file.fileName}</p>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="font-mono">{formatBytes(file.fileSize)}</span>
                       {formatDate(file.dateAdded) && (
                         <>
@@ -121,13 +133,12 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
                           <span>{formatDate(file.dateAdded)}</span>
                         </>
                       )}
-                      {file.description && (
-                        <>
-                          <span>•</span>
-                          <span className="line-clamp-1">{file.description}</span>
-                        </>
-                      )}
                     </div>
+                    {file.description && (
+                      <p className="text-xs text-muted-foreground break-words">
+                        {file.description}
+                      </p>
+                    )}
                   </Label>
                 </div>
               ))}
@@ -139,7 +150,7 @@ export function FileSelectionDialog({ open, files, onSelectFile, onCancel }: Fil
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSelect} disabled={files.length === 0}>
+          <Button onClick={handleSelect} disabled={sortedFiles.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Download
           </Button>
