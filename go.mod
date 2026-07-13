@@ -1,15 +1,16 @@
 module tsunagu
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/wailsapp/wails/v2 v2.10.2
-	golang.org/x/sys v0.30.0
+	github.com/wailsapp/wails/v2 v2.13.0
+	golang.org/x/sys v0.44.0
 	golift.io/xtractr v0.2.2
 )
 
 require (
+	git.sr.ht/~jackmordaunt/go-toast/v2 v2.0.3 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/bodgit/plumbing v1.3.0 // indirect
@@ -43,12 +44,12 @@ require (
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wailsapp/go-webview2 v1.0.19 // indirect
+	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	go4.org v0.0.0-20230225012048-214862532bf5 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.54.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
 
 // replace github.com/wailsapp/wails/v2 v2.10.2 => C:\Users\angel\go\pkg\mod
