@@ -130,7 +130,13 @@
       "name": "Sigewinne"
     },
     {
-      "name": "Citlali"
+      "name": "Citlali",
+      "skins": [
+        {
+          "name": "Whispers of Stars and Smoke",
+          "folder": "Whispers"
+        }
+      ]
     },
     {
       "name": "Lan Yan"
@@ -139,7 +145,13 @@
       "name": "Jahoda"
     },
     {
-      "name": "Charlotte"
+      "name": "Charlotte",
+      "skins": [
+        {
+          "name": "Hurlock Variations",
+          "folder": "Hurlock"
+        }
+      ]
     },
     {
       "name": "Ororon"
@@ -377,9 +389,6 @@
       "name": "Dahlia"
     },
     {
-      "name": "Manekina"
-    },
-    {
       "name": "Navia"
     },
     {
@@ -428,7 +437,13 @@
       "name": "Yae Miko"
     },
     {
-      "name": "Durin"
+      "name": "Durin",
+      "skins": [
+        {
+          "name": "Toward the Distant Horizon",
+          "folder": "Horizon"
+        }
+      ]
     },
     {
       "name": "Nilou",
@@ -519,6 +534,18 @@
     },
     {
       "name": "Arataki Itto"
+    },
+    {
+      "name": "Sandrone"
+    },
+    {
+      "name": "Odette"
+    },
+    {
+      "name": "Alyosha"
+    },
+    {
+      "name": "Dainsleif"
     }
   ],
   "hsr": [
@@ -577,7 +604,13 @@
       "name": "Serval"
     },
     {
-      "name": "Sparxie"
+      "name": "Sparxie",
+      "skins": [
+        {
+          "name": "Candy-Coated Waves",
+          "folder": "Candy"
+        }
+      ]
     },
     {
       "name": "Yao Guang"
@@ -782,7 +815,7 @@
       "name": "Cipher"
     },
     {
-      "name": "Topaz "
+      "name": "Topaz"
     },
     {
       "name": "Trailblazer"
@@ -795,6 +828,30 @@
     },
     {
       "name": "Others"
+    },
+    {
+      "name": "Mortenax Blade"
+    },
+    {
+      "name": "Himeko - Nova"
+    },
+    {
+      "name": "Rin Tohsaka"
+    },
+    {
+      "name": "Gilgamesh"
+    },
+    {
+      "name": "Robin - Summeretto"
+    },
+    {
+      "name": "Aventurine - Waveflair"
+    },
+    {
+      "name": "Nihilux"
+    },
+    {
+      "name": "Pearl"
     }
   ],
   "wuwa": [
@@ -805,13 +862,25 @@
       "name": "Aemeath"
     },
     {
-      "name": "Lynae"
+      "name": "Lynae",
+      "skins": [
+        {
+          "name": "Peppermint",
+          "folder": "Peppermint"
+        }
+      ]
     },
     {
       "name": "Chixia"
     },
     {
-      "name": "Yangyang"
+      "name": "Yangyang",
+      "skins": [
+        {
+          "name": "Xuanling",
+          "folder": "Xuanling"
+        }
+      ]
     },
     {
       "name": "Yuanwu"
@@ -826,7 +895,13 @@
       "name": "Iuno"
     },
     {
-      "name": "Chisa"
+      "name": "Chisa",
+      "skins": [
+        {
+          "name": "Peach Parfait",
+          "folder": "Peach"
+        }
+      ]
     },
     {
       "name": "Calcharo"
@@ -958,7 +1033,13 @@
       ]
     },
     {
-      "name": "Rover"
+      "name": "Rover",
+      "skins": [
+        {
+          "name": "Perpetual Spark",
+          "folder": "Perpetual"
+        }
+      ]
     },
     {
       "name": "Aalto"
@@ -983,6 +1064,27 @@
     },
     {
       "name": "Others"
+    },
+    {
+      "name": "Lucy"
+    },
+    {
+      "name": "Rebecca"
+    },
+    {
+      "name": "Suisui"
+    },
+    {
+      "name": "Qingxiao"
+    },
+    {
+      "name": "Jingran"
+    },
+    {
+      "name": "Suoming"
+    },
+    {
+      "name": "Hsin"
     }
   ],
   "zzz": [
@@ -1123,6 +1225,10 @@
         {
           "name": "Summer Skies",
           "folder": "Summer"
+        },
+        {
+          "name": "Brilliance of Stars",
+          "folder": "Brilliance"
         }
       ]
     },
@@ -1202,6 +1308,10 @@
         {
           "name": "Peaceful Waves",
           "folder": "Summer"
+        },
+        {
+          "name": "Oath of Skies",
+          "folder": "Oath"
         }
       ]
     },
@@ -1236,7 +1346,7 @@
       "name": "Banyue"
     },
     {
-      "name": "Orphie and  Magus"
+      "name": "Orphie and Magus"
     },
     {
       "name": "Anton"
@@ -1269,13 +1379,25 @@
       "name": "Starlight Billy"
     },
     {
-      "name": "Velina"
+      "name": "Velina",
+      "skins": [
+        {
+          "name": "Shade of Leisure",
+          "folder": "Shade"
+        }
+      ]
     },
     {
       "name": "Norma"
     },
     {
       "name": "Pyrois"
+    },
+    {
+      "name": "Remielle Dan"
+    },
+    {
+      "name": "Sigrid"
     }
   ],
   "endfield": [
@@ -1362,6 +1484,15 @@
     },
     {
       "name": "Others"
+    },
+    {
+      "name": "Camille"
+    },
+    {
+      "name": "Arcane"
+    },
+    {
+      "name": "Liino"
     }
   ]
 }
