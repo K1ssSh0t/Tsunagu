@@ -26,7 +26,7 @@ function formatBytes(bytes: number): string {
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / k ** i) * 10) / 10 + " " + sizes[i];
+    return `${Math.round((bytes / k ** i) * 10) / 10} ${sizes[i]}`;
 }
 
 export function DownloadProgressDialog({
@@ -59,7 +59,7 @@ export function DownloadProgressDialog({
 
         // Subscribe to download:progress events
         // Using window.runtime.EventsOn from Wails
-        if (window.runtime && window.runtime.EventsOn) {
+        if (window.runtime?.EventsOn) {
             const unsubscribe = window.runtime.EventsOn(
                 "download:progress",
                 handleProgress,
@@ -120,7 +120,7 @@ declare global {
         runtime?: {
             EventsOn: (
                 eventName: string,
-                callback: (data: any) => void,
+                callback: (data: DownloadProgress) => void,
             ) => () => void;
         };
     }

@@ -88,7 +88,8 @@ export const ModCard: React.FC<ModCardProps> = ({
                 <div className="group relative flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 shadow-sm hover:shadow-md">
                     <div className="flex items-center gap-3 overflow-hidden flex-1">
                         {/* Mod Cover Image */}
-                        <div
+                        <button
+                            type="button"
                             className={`relative h-16 w-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 border ${
                                 imageData && !imageError
                                     ? "cursor-pointer hover:ring-2 hover:ring-primary transition-all"
@@ -123,7 +124,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                         : "bg-muted-foreground/30"
                                 }`}
                             />
-                        </div>
+                        </button>
 
                         <div className="flex flex-col overflow-hidden flex-1">
                             <div className="flex items-center gap-2">
@@ -179,15 +180,13 @@ export const ModCard: React.FC<ModCardProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {(mod as any).gameBananaUrl && (
+                        {mod.gameBananaUrl && (
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Ver en GameBanana"
-                                onClick={() =>
-                                    onOpenUrl((mod as any).gameBananaUrl)
-                                }
+                                onClick={() => onOpenUrl(mod.gameBananaUrl)}
                             >
                                 <Globe className="h-4 w-4" />
                             </Button>
@@ -274,7 +273,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 Atajos de teclado en el juego
                             </span>
                         </div>
-                        {mod.keySwaps.map((swap, index) => {
+                        {mod.keySwaps.map((swap) => {
                             // Display name: strip "KeySwap" or "Key" prefix to get the descriptive part
                             const displayName =
                                 swap.sectionName
@@ -284,7 +283,7 @@ export const ModCard: React.FC<ModCardProps> = ({
 
                             return (
                                 <div
-                                    key={index}
+                                    key={swap.sectionName}
                                     className="flex items-center gap-3 px-2 py-1.5 rounded-md bg-background/60 border border-border/50"
                                 >
                                     <div className="flex flex-col min-w-0 flex-shrink-0 max-w-[130px]">

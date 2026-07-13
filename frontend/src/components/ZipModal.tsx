@@ -84,20 +84,33 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                         key={`${file.path}-${file.isDir}`}
                         style={{ paddingLeft: `${level * 20}px` }}
                     >
+                        {/* biome-ignore lint/a11y/useSemanticElements: contiene un botón anidado, un <button> real sería HTML inválido */}
                         <div
                             className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
                                 selectedRoot === file.path
                                     ? "bg-blue-100 dark:bg-blue-900"
                                     : ""
                             }`}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => {
                                 if (file.isDir) {
                                     onSelectRoot(file.path);
                                 }
                             }}
+                            onKeyDown={(e) => {
+                                if (
+                                    (e.key === "Enter" || e.key === " ") &&
+                                    file.isDir
+                                ) {
+                                    e.preventDefault();
+                                    onSelectRoot(file.path);
+                                }
+                            }}
                         >
                             {file.isDir && (
-                                <span
+                                <button
+                                    type="button"
                                     className="mr-1 p-1"
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -109,7 +122,7 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                                     ) : (
                                         <ChevronRight className="w-4 h-4" />
                                     )}
-                                </span>
+                                </button>
                             )}
                             {file.isDir ? (
                                 <Folder className="w-4 h-4 mr-2 text-blue-500" />

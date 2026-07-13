@@ -60,7 +60,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     (a, b) => (a.mods?.length || 0) - (b.mods?.length || 0),
                 );
                 break;
-            case "name":
             default:
                 result.sort((a, b) => a.name.localeCompare(b.name));
         }
@@ -116,13 +115,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             );
 
                             // Check for updates in any of the character's skins
-                            const hasSkinUpdate =
-                                char.skins &&
-                                char.skins.some((skin) =>
-                                    updates.some(
-                                        (u) => u.characterName === skin.folder,
-                                    ),
-                                );
+                            const hasSkinUpdate = char.skins?.some((skin) =>
+                                updates.some(
+                                    (u) => u.characterName === skin.folder,
+                                ),
+                            );
 
                             const hasAnyUpdate = hasCharUpdate || hasSkinUpdate;
 

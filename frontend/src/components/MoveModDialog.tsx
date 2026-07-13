@@ -54,7 +54,7 @@ export const MoveModDialog: React.FC<MoveModDialogProps> = ({
 
         characters.forEach((char) => {
             // Skip the current character (we'll add it with its skins if it has any)
-            const isCurrentChar =
+            const _isCurrentChar =
                 char.name.toLowerCase() === currentCharacter.toLowerCase();
 
             // Add main character option

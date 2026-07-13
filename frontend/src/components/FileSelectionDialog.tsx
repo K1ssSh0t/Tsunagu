@@ -34,13 +34,13 @@ function formatBytes(bytes: number): string {
     const k = 1024;
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / k ** i) * 10) / 10 + " " + sizes[i];
+    return `${Math.round((bytes / k ** i) * 10) / 10} ${sizes[i]}`;
 }
 
 function formatDate(dateStr: string): string {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return "";
+    if (Number.isNaN(date.getTime())) return "";
     const formatted = date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -94,6 +94,7 @@ export function FileSelectionDialog({
         [files],
     );
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: resetear la selección cuando cambia la lista
     useEffect(() => {
         setSelectedIndex(0);
     }, [files]);
@@ -124,7 +125,7 @@ export function FileSelectionDialog({
                         <RadioGroup
                             value={selectedIndex.toString()}
                             onValueChange={(value) =>
-                                setSelectedIndex(parseInt(value))
+                                setSelectedIndex(parseInt(value, 10))
                             }
                             className="space-y-3"
                         >

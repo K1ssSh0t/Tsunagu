@@ -1,6 +1,5 @@
 import { Folder } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -21,7 +20,6 @@ interface ConfigScreenProps {
     selectedGame: string;
     configPath: string;
     executablePath: string;
-    gamesConfig: any;
     onClose: () => void;
     onGameSelect: (game: string) => void;
     onConfigPathChange: (path: string) => void;
@@ -37,7 +35,6 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
     selectedGame,
     configPath,
     executablePath,
-    gamesConfig,
     onClose,
     onGameSelect,
     onConfigPathChange,

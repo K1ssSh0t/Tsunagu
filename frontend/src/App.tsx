@@ -108,7 +108,9 @@ const App: React.FC = () => {
     } | null>(null);
 
     const [selectedGame, setSelectedGame] = useState("genshin");
-    const [gamesConfig, setGamesConfig] = useState<any>({});
+    const [gamesConfig, setGamesConfig] = useState<{
+        games?: Record<string, { modsPath?: string; executablePath?: string }>;
+    }>({});
 
     // Download-related states
     const [showFileSelection, setShowFileSelection] = useState(false);
@@ -130,6 +132,7 @@ const App: React.FC = () => {
         return isZip ? basename.replace(/\.(zip|rar|7z)$/i, "") : basename;
     };
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: solo debe correr al montar
     useEffect(() => {
         if (hasCheckedConfig.current) return;
         hasCheckedConfig.current = true;
@@ -144,7 +147,7 @@ const App: React.FC = () => {
             const config = await GetGamesConfig();
             setGamesConfig(config);
 
-            if (config.games && config.games[game]) {
+            if (config.games?.[game]) {
                 setConfigPath(config.games[game].modsPath || "");
                 setExecutablePath(config.games[game].executablePath || "");
             } else {
@@ -173,7 +176,7 @@ const App: React.FC = () => {
 
             const config = await GetGamesConfig();
             setGamesConfig(config);
-            if (config.games && config.games[game]) {
+            if (config.games?.[game]) {
                 setConfigPath(config.games[game].modsPath || "");
                 setExecutablePath(config.games[game].executablePath || "");
             } else {
@@ -256,7 +259,7 @@ const App: React.FC = () => {
         }
     };
 
-    const handleToggleMod = async (character: string, modName: string) => {
+    const handleToggleMod = async (_character: string, modName: string) => {
         // If a skin is selected, 'character' argument coming from ModList might be the skin folder name
         // or we should use the current context.
         // Actually, ModList passes the selectedCharacter prop, which is the main character name.
@@ -290,7 +293,10 @@ const App: React.FC = () => {
         }
     };
 
-    const handleActivateSingle = async (character: string, modName: string) => {
+    const handleActivateSingle = async (
+        _character: string,
+        modName: string,
+    ) => {
         const targetFolder = selectedSkin
             ? selectedSkin.folder
             : selectedCharacter;
@@ -376,7 +382,7 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.error("Error adding mod:", error);
-            toast.error("Error al agregar el mod: " + (error as Error).message);
+            toast.error(`Error al agregar el mod: ${(error as Error).message}`);
         } finally {
             setIsLoading(false);
             setLoadingMessage("");
@@ -484,7 +490,7 @@ const App: React.FC = () => {
             await checkForUpdates();
         } catch (error) {
             console.error("Error processing ZIP:", error);
-            toast.error("Error al procesar ZIP: " + error);
+            toast.error(`Error al procesar ZIP: ${error}`);
         } finally {
             setIsLoading(false);
             setLoadingMessage("");
@@ -574,14 +580,14 @@ const App: React.FC = () => {
             await loadCharacterMods(modToUpdate.character);
         } catch (error) {
             console.error("Error updating from folder:", error);
-            toast.error("Error al actualizar desde carpeta: " + error);
+            toast.error(`Error al actualizar desde carpeta: ${error}`);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleDownloadFromGameBanana = async () => {
-        if (!modToUpdate || !modToUpdate.currentUrl) return;
+        if (!modToUpdate?.currentUrl) return;
 
         try {
             setIsLoading(true);
@@ -608,7 +614,7 @@ const App: React.FC = () => {
             setIsLoading(false);
         } catch (error) {
             console.error("Error fetching mod files:", error);
-            toast.error("Error al obtener archivos: " + error);
+            toast.error(`Error al obtener archivos: ${error}`);
             setIsLoading(false);
         }
     };
@@ -657,7 +663,7 @@ const App: React.FC = () => {
             setShowZipModal(true);
         } catch (error) {
             console.error("Error downloading mod:", error);
-            toast.error("Error al descargar: " + error);
+            toast.error(`Error al descargar: ${error}`);
             setShowDownloadProgress(false);
             setIsLoading(false);
         }
@@ -673,7 +679,7 @@ const App: React.FC = () => {
             }
         } catch (error) {
             console.error("Error during cleanup:", error);
-            toast.error("Error al limpiar archivo: " + error);
+            toast.error(`Error al limpiar archivo: ${error}`);
         } finally {
             setShowCleanupDialog(false);
             setCachedFilePath("");
@@ -720,7 +726,7 @@ const App: React.FC = () => {
             setModToMove(null);
         } catch (error) {
             console.error("Error moving mod:", error);
-            toast.error("Error al mover el mod: " + (error as Error));
+            toast.error(`Error al mover el mod: ${error as Error}`);
         } finally {
             setIsLoading(false);
             setLoadingMessage("");
@@ -848,7 +854,7 @@ const App: React.FC = () => {
             toast.success("Lanzador iniciado");
         } catch (error) {
             console.error("Error launching XXMI:", error);
-            toast.error("Error al iniciar el lanzador: " + error);
+            toast.error(`Error al iniciar el lanzador: ${error}`);
         }
     };
 
@@ -919,11 +925,10 @@ const App: React.FC = () => {
                 selectedGame={selectedGame}
                 configPath={configPath}
                 executablePath={executablePath}
-                gamesConfig={gamesConfig}
                 onClose={() => setShowConfig(false)}
                 onGameSelect={(game) => {
                     setSelectedGame(game);
-                    if (gamesConfig.games && gamesConfig.games[game]) {
+                    if (gamesConfig.games?.[game]) {
                         setConfigPath(gamesConfig.games[game].modsPath || "");
                         setExecutablePath(
                             gamesConfig.games[game].executablePath || "",
