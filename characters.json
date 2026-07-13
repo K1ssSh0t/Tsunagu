@@ -874,13 +874,7 @@
       "name": "Chixia"
     },
     {
-      "name": "Yangyang",
-      "skins": [
-        {
-          "name": "Xuanling",
-          "folder": "Xuanling"
-        }
-      ]
+      "name": "Yangyang"
     },
     {
       "name": "Yuanwu"
@@ -1085,6 +1079,9 @@
     },
     {
       "name": "Hsin"
+    },
+    {
+      "name": "Yangyang: Xuanling"
     }
   ],
   "zzz": [
