@@ -1,12 +1,12 @@
-import React from "react";
+import { ChevronDown, Gamepad2 } from "lucide-react";
+import type React from "react";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Gamepad2, ChevronDown } from "lucide-react";
 
 interface GameSelectorProps {
     selectedGame: string;
@@ -24,7 +24,6 @@ export const GameSelector: React.FC<GameSelectorProps> = ({
         { id: "zzz", name: "Zenless Zone Zero" },
         { id: "endfield", name: "Arknights: Endfield" },
     ];
-
 
     const currentGame = games.find((g) => g.id === selectedGame) || games[0];
 

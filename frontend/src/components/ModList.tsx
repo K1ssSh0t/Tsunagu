@@ -1,10 +1,16 @@
-import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Folder, Gamepad2 } from "lucide-react";
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { mod } from "../../wailsjs/go/models";
 import { ModCard } from "./ModCard";
-import { mod } from "../../wailsjs/go/models";
 
 interface ModListProps {
     selectedCharacter: string;
@@ -95,8 +101,17 @@ export const ModList: React.FC<ModListProps> = ({
                 ) : mods.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
                         <Folder className="h-16 w-16 mb-4 opacity-20" />
-                        <p>No hay mods instalados para {selectedSkin ? `la skin ${selectedSkin.name}` : "este personaje"}</p>
-                        <Button variant="link" onClick={onAddMod} className="mt-2">
+                        <p>
+                            No hay mods instalados para{" "}
+                            {selectedSkin
+                                ? `la skin ${selectedSkin.name}`
+                                : "este personaje"}
+                        </p>
+                        <Button
+                            variant="link"
+                            onClick={onAddMod}
+                            className="mt-2"
+                        >
                             Agregar el primer mod
                         </Button>
                     </div>
@@ -106,11 +121,15 @@ export const ModList: React.FC<ModListProps> = ({
                             {mods.map((mod) => {
                                 const hasUpdate = updates.some(
                                     (u) =>
-                                        u.characterName.toLowerCase() === mod.character.toLowerCase() && u.modName === mod.name
+                                        u.characterName.toLowerCase() ===
+                                            mod.character.toLowerCase() &&
+                                        u.modName === mod.name,
                                 );
                                 const updateInfo = updates.find(
                                     (u) =>
-                                        u.characterName.toLowerCase() === mod.character.toLowerCase() && u.modName === mod.name
+                                        u.characterName.toLowerCase() ===
+                                            mod.character.toLowerCase() &&
+                                        u.modName === mod.name,
                                 );
 
                                 return (

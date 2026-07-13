@@ -1,9 +1,16 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
-import { utils } from "../../wailsjs/go/models";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { utils } from "../../wailsjs/go/models";
 
 interface ZipModalProps {
     isOpen: boolean;
@@ -22,7 +29,9 @@ export const ZipModal: React.FC<ZipModalProps> = ({
     onCancel,
     onConfirm,
 }) => {
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
+        new Set(),
+    );
 
     // Initialize expanded folders when structure changes (handled in parent usually, but we can do it here too if we pass initial expanded)
     // For now we'll manage local expansion state here or receive it.
@@ -34,7 +43,7 @@ export const ZipModal: React.FC<ZipModalProps> = ({
         if (isOpen && zipStructure.length > 0) {
             const initialExpanded = new Set<string>();
             const traverse = (files: utils.ZipFile[]) => {
-                files.forEach(f => {
+                files.forEach((f) => {
                     if (f.isDir) {
                         initialExpanded.add(f.path);
                         if (f.children) traverse(f.children);
@@ -45,7 +54,6 @@ export const ZipModal: React.FC<ZipModalProps> = ({
             setExpandedFolders(initialExpanded);
         }
     }, [isOpen, zipStructure]);
-
 
     const toggleFolder = (path: string) => {
         const newExpanded = new Set(expandedFolders);
@@ -77,8 +85,11 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                         style={{ paddingLeft: `${level * 20}px` }}
                     >
                         <div
-                            className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedRoot === file.path ? "bg-blue-100 dark:bg-blue-900" : ""
-                                }`}
+                            className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                                selectedRoot === file.path
+                                    ? "bg-blue-100 dark:bg-blue-900"
+                                    : ""
+                            }`}
                             onClick={() => {
                                 if (file.isDir) {
                                     onSelectRoot(file.path);
@@ -108,7 +119,8 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                             <span className="text-sm">{file.name}</span>
                             {file.isDir && (
                                 <span className="ml-2 text-xs text-gray-500">
-                                    ({file.children ? file.children.length : 0} items)
+                                    ({file.children ? file.children.length : 0}{" "}
+                                    items)
                                 </span>
                             )}
                         </div>
@@ -116,7 +128,10 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                             expandedFolders.has(file.path) &&
                             file.children &&
                             file.children.length > 0 && (
-                                <ZipFileTree files={file.children} level={level + 1} />
+                                <ZipFileTree
+                                    files={file.children}
+                                    level={level + 1}
+                                />
                             )}
                     </div>
                 ))}
@@ -132,8 +147,9 @@ export const ZipModal: React.FC<ZipModalProps> = ({
                 <CardHeader>
                     <CardTitle>Estructura del ZIP</CardTitle>
                     <CardDescription>
-                        Selecciona la carpeta raíz del mod dentro del archivo comprimido.
-                        Busca la carpeta que contiene los archivos .ini y .dds
+                        Selecciona la carpeta raíz del mod dentro del archivo
+                        comprimido. Busca la carpeta que contiene los archivos
+                        .ini y .dds
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 overflow-hidden">

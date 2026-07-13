@@ -1,16 +1,23 @@
-import React from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { File, Folder } from "lucide-react";
+import type React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Folder, File } from "lucide-react";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 interface AddModDialogProps {
     isOpen: boolean;
@@ -52,14 +59,17 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
             <Card className="w-full max-w-lg">
                 <CardHeader>
                     <CardTitle>Agregar Nuevo Mod</CardTitle>
-                    <CardDescription>Agrega un mod para {selectedCharacter}</CardDescription>
+                    <CardDescription>
+                        Agrega un mod para {selectedCharacter}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between rounded-lg border p-3">
                         <div className="space-y-0.5">
                             <Label htmlFor="autoName">Auto-nombrar</Label>
                             <p className="text-xs text-muted-foreground">
-                                Usar el nombre de la carpeta o archivo seleccionado
+                                Usar el nombre de la carpeta o archivo
+                                seleccionado
                             </p>
                         </div>
                         <Switch
@@ -79,7 +89,9 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="modPath">Archivo o Carpeta del Mod</Label>
+                        <Label htmlFor="modPath">
+                            Archivo o Carpeta del Mod
+                        </Label>
                         <div className="flex space-x-2">
                             <Input
                                 id="modPath"
@@ -107,7 +119,9 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="gameBananaUrl">URL de GameBanana (Opcional)</Label>
+                        <Label htmlFor="gameBananaUrl">
+                            URL de GameBanana (Opcional)
+                        </Label>
                         <Input
                             id="gameBananaUrl"
                             value={gameBananaUrl}
@@ -123,7 +137,10 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
                     <Button variant="outline" onClick={onCancel}>
                         Cancelar
                     </Button>
-                    <Button onClick={onConfirm} disabled={!newModName || !newModPath}>
+                    <Button
+                        onClick={onConfirm}
+                        disabled={!newModName || !newModPath}
+                    >
                         Agregar Mod
                     </Button>
                 </CardFooter>

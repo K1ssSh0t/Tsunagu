@@ -1,4 +1,5 @@
-import React from "react";
+import { CloudDownload, Download, File, Folder } from "lucide-react";
+import type React from "react";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -9,7 +10,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Download, File, Folder, CloudDownload } from "lucide-react";
 
 interface UpdateModDialogProps {
     isOpen: boolean;
@@ -38,8 +38,8 @@ export const UpdateModDialog: React.FC<UpdateModDialogProps> = ({
                 <AlertDialogHeader>
                     <AlertDialogTitle>Actualizar Mod</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Hay una actualización disponible para "{modName}". ¿Cómo deseas
-                        actualizarlo?
+                        Hay una actualización disponible para "{modName}". ¿Cómo
+                        deseas actualizarlo?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <div className="flex flex-col gap-3 py-4">
@@ -75,7 +75,10 @@ export const UpdateModDialog: React.FC<UpdateModDialogProps> = ({
                             </span>
                         </div>
                     </div>
-                    <Button onClick={onUpdateFromFile} className="w-full justify-start">
+                    <Button
+                        onClick={onUpdateFromFile}
+                        className="w-full justify-start"
+                    >
                         <File className="mr-2 h-4 w-4" />
                         Seleccionar archivo ZIP
                     </Button>
@@ -89,7 +92,9 @@ export const UpdateModDialog: React.FC<UpdateModDialogProps> = ({
                     </Button>
                 </div>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onCancel}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={onCancel}>
+                        Cancelar
+                    </AlertDialogCancel>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -31,12 +31,15 @@ export const DeleteAlertDialog: React.FC<DeleteAlertDialogProps> = ({
                 <AlertDialogHeader>
                     <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Esto eliminará permanentemente el
-                        mod "{modName}" de la carpeta de {characterName}.
+                        Esta acción no se puede deshacer. Esto eliminará
+                        permanentemente el mod "{modName}" de la carpeta de{" "}
+                        {characterName}.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                    <AlertDialogCancel onClick={onCancel}>Cancelar</AlertDialogCancel>
+                    <AlertDialogCancel onClick={onCancel}>
+                        Cancelar
+                    </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={onConfirm}
                         className="bg-red-600 hover:bg-red-700"

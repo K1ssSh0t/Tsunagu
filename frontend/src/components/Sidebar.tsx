@@ -1,9 +1,10 @@
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -11,8 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { character, mod } from "../../wailsjs/go/models";
+import type { character, mod } from "../../wailsjs/go/models";
 
 type SortOption = "name" | "mods-asc" | "mods-desc";
 
@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     const filteredCharacters = characters.filter((char) =>
-        char.name.toLowerCase().includes(searchQuery.toLowerCase())
+        char.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     const sortedCharacters = React.useMemo(() => {
@@ -51,10 +51,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         switch (sortBy) {
             case "mods-desc":
-                result.sort((a, b) => (b.mods?.length || 0) - (a.mods?.length || 0));
+                result.sort(
+                    (a, b) => (b.mods?.length || 0) - (a.mods?.length || 0),
+                );
                 break;
             case "mods-asc":
-                result.sort((a, b) => (a.mods?.length || 0) - (b.mods?.length || 0));
+                result.sort(
+                    (a, b) => (a.mods?.length || 0) - (b.mods?.length || 0),
+                );
                 break;
             case "name":
             default:
@@ -108,26 +112,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         {sortedCharacters.map((char) => {
                             // Check for updates in main character folder
                             const hasCharUpdate = updates.some(
-                                (u) => u.characterName === char.name
+                                (u) => u.characterName === char.name,
                             );
-                            
+
                             // Check for updates in any of the character's skins
-                            const hasSkinUpdate = char.skins && char.skins.some((skin) =>
-                                updates.some((u) => u.characterName === skin.folder)
-                            );
-                            
+                            const hasSkinUpdate =
+                                char.skins &&
+                                char.skins.some((skin) =>
+                                    updates.some(
+                                        (u) => u.characterName === skin.folder,
+                                    ),
+                                );
+
                             const hasAnyUpdate = hasCharUpdate || hasSkinUpdate;
-                            
+
                             return (
                                 <Button
                                     key={char.name}
                                     variant={
-                                        selectedCharacter === char.name ? "secondary" : "ghost"
+                                        selectedCharacter === char.name
+                                            ? "secondary"
+                                            : "ghost"
                                     }
                                     className="w-full justify-start capitalize relative"
                                     onClick={() => onSelectCharacter(char.name)}
                                 >
-                                    <span className="truncate">{char.name}</span>
+                                    <span className="truncate">
+                                        {char.name}
+                                    </span>
                                     <div className="ml-auto flex items-center gap-2">
                                         {hasAnyUpdate && (
                                             <span className="relative flex h-2 w-2">
@@ -135,9 +147,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                             </span>
                                         )}
-                                        {(char.hasFolder || (char.mods && char.mods.length > 0)) && (
-                                            <Badge variant="outline" className="text-xs">
-                                                {char.mods ? char.mods.length : 0}
+                                        {(char.hasFolder ||
+                                            (char.mods &&
+                                                char.mods.length > 0)) && (
+                                            <Badge
+                                                variant="outline"
+                                                className="text-xs"
+                                            >
+                                                {char.mods
+                                                    ? char.mods.length
+                                                    : 0}
                                             </Badge>
                                         )}
                                     </div>
@@ -146,7 +165,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         })}
                         {sortedCharacters.length === 0 && (
                             <div className="text-center text-muted-foreground py-4">
-                                {searchQuery ? "No se encontraron personajes" : "No hay personajes"}
+                                {searchQuery
+                                    ? "No se encontraron personajes"
+                                    : "No hay personajes"}
                             </div>
                         )}
                     </div>
