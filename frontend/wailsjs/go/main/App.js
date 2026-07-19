@@ -86,6 +86,10 @@ export function RemoveMod(arg1, arg2) {
   return window['go']['main']['App']['RemoveMod'](arg1, arg2);
 }
 
+export function RestoreModImage(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RestoreModImage'](arg1, arg2, arg3);
+}
+
 export function SaveConfig() {
   return window['go']['main']['App']['SaveConfig']();
 }

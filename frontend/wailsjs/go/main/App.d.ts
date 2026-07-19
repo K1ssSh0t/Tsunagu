@@ -48,6 +48,8 @@ export function OpenUrl(arg1:string):Promise<void>;
 
 export function RemoveMod(arg1:string,arg2:string):Promise<void>;
 
+export function RestoreModImage(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
+
 export function SaveConfig():Promise<void>;
 
 export function SelectDirectory():Promise<string>;

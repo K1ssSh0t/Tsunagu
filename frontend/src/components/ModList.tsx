@@ -27,6 +27,11 @@ interface ModListProps {
     onRemoveMod: (character: string, modName: string) => void;
     onSelectSkin: (skin: { name: string; folder: string } | null) => void;
     onMoveMod: (character: string, modName: string) => void;
+    onRestoreImage: (
+        character: string,
+        modName: string,
+        force: boolean,
+    ) => Promise<boolean>;
 }
 
 export const ModList: React.FC<ModListProps> = ({
@@ -44,6 +49,7 @@ export const ModList: React.FC<ModListProps> = ({
     onRemoveMod,
     onSelectSkin,
     onMoveMod,
+    onRestoreImage,
 }) => {
     return (
         <Card className="md:col-span-3 h-[calc(100vh-200px)] flex flex-col">
@@ -145,6 +151,7 @@ export const ModList: React.FC<ModListProps> = ({
                                         onOpenFolder={onOpenFolder}
                                         onRemove={onRemoveMod}
                                         onMove={onMoveMod}
+                                        onRestoreImage={onRestoreImage}
                                     />
                                 );
                             })}

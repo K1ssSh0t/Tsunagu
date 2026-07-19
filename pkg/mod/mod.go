@@ -32,14 +32,18 @@ type Mod struct {
 }
 
 type ModConfig struct {
-	Id          string `json:"Id"`
-	CustomName  string `json:"CustomName"`
-	Author      string `json:"Author"`
-	ModUrl      string `json:"ModUrl"`
-	ImagePath   string `json:"ImagePath"`
-	Description string `json:"Description"`
-	DateAdded   string `json:"DateAdded"`
-	LastChecked string `json:"LastChecked"`
+	Id                      string `json:"Id"`
+	CustomName              string `json:"CustomName"`
+	Author                  string `json:"Author"`
+	ModUrl                  string `json:"ModUrl"`
+	ImagePath               string `json:"ImagePath"`
+	Description             string `json:"Description"`
+	DateAdded               string `json:"DateAdded"`
+	LastChecked             string `json:"LastChecked"`
+	ImageRestoreLastAttempt string `json:"ImageRestoreLastAttempt,omitempty"`
+	ImageRestoreLastResult  string `json:"ImageRestoreLastResult,omitempty"`
+	ImageRestoreRetryCount  int    `json:"ImageRestoreRetryCount,omitempty"`
+	ImageRestoreNextRetry   string `json:"ImageRestoreNextRetry,omitempty"`
 }
 
 type JASMConfig struct {
@@ -67,6 +71,11 @@ type Service struct {
 	mu            sync.Mutex
 	watcher       *ModWatcherManager
 }
+
+const (
+	imageRestoreResultOK    = "ok"
+	imageRestoreResultError = "error"
+)
 
 func NewService(cfg *config.Service) *Service {
 	return &Service{
@@ -166,6 +175,247 @@ func (s *Service) GetModsForCharacter(characterName string) ([]Mod, error) {
 	})
 
 	return mods, nil
+}
+
+func imageRestoreBackoffDuration(retryCount int) time.Duration {
+	switch {
+	case retryCount <= 1:
+		return time.Hour
+	case retryCount == 2:
+		return 6 * time.Hour
+	default:
+		return 24 * time.Hour
+	}
+}
+
+func resolveImagePath(modPath, imagePath string) string {
+	trimmed := strings.TrimSpace(imagePath)
+	if trimmed == "" {
+		return ""
+	}
+	if filepath.IsAbs(trimmed) {
+		return trimmed
+	}
+	return filepath.Join(modPath, trimmed)
+}
+
+func isGameBananaURL(url string) bool {
+	return strings.Contains(strings.ToLower(strings.TrimSpace(url)), "gamebanana.com")
+}
+
+func isBrokenImageConfig(modPath string, config ModConfig) bool {
+	if !isGameBananaURL(config.ModUrl) {
+		return false
+	}
+	if strings.TrimSpace(config.ImagePath) == "" {
+		return false
+	}
+	imagePath := resolveImagePath(modPath, config.ImagePath)
+	if imagePath == "" {
+		return false
+	}
+	_, err := os.Stat(imagePath)
+	return os.IsNotExist(err)
+}
+
+func shouldAttemptImageRestore(config ModConfig, now time.Time, force bool) bool {
+	if force {
+		return true
+	}
+	if strings.TrimSpace(config.ImageRestoreNextRetry) == "" {
+		return true
+	}
+	nextRetry, err := time.Parse(time.RFC3339, config.ImageRestoreNextRetry)
+	if err != nil {
+		return true
+	}
+	return !now.Before(nextRetry)
+}
+
+func (s *Service) findModPath(characterName, modName string) (string, error) {
+	modsPath := s.configService.CurrentModsPath()
+	normalizedName := normalizeCharacterName(characterName)
+	characterPath := filepath.Join(modsPath, "character", normalizedName)
+	targetPath := filepath.Join(characterPath, modName)
+
+	if _, err := os.Stat(targetPath); err == nil {
+		return targetPath, nil
+	}
+
+	disabledPath := filepath.Join(characterPath, "DISABLED_"+modName)
+	if _, err := os.Stat(disabledPath); err == nil {
+		return disabledPath, nil
+	}
+
+	return "", fmt.Errorf("mod not found: %s", modName)
+}
+
+func (s *Service) readModConfig(configPath string) (ModConfig, error) {
+	var config ModConfig
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return config, err
+	}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return config, err
+	}
+	return config, nil
+}
+
+func (s *Service) writeModConfig(configPath string, config ModConfig) error {
+	updatedData, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(configPath, updatedData, 0644)
+}
+
+func (s *Service) restoreModImageAtPath(modPath, configPath string, force bool) (bool, error) {
+	config, err := s.readModConfig(configPath)
+	if err != nil {
+		return false, err
+	}
+	if !isBrokenImageConfig(modPath, config) {
+		return false, nil
+	}
+
+	now := time.Now()
+	if !shouldAttemptImageRestore(config, now, force) {
+		return false, nil
+	}
+
+	config.ImageRestoreLastAttempt = now.Format(time.RFC3339)
+
+	imageURL, err := s.fetchGameBananaImage(config.ModUrl)
+	if err != nil {
+		config.ImageRestoreLastResult = imageRestoreResultError
+		config.ImageRestoreRetryCount++
+		config.ImageRestoreNextRetry = now.Add(imageRestoreBackoffDuration(config.ImageRestoreRetryCount)).Format(time.RFC3339)
+		_ = s.writeModConfig(configPath, config)
+		return false, err
+	}
+
+	coverPath, err := s.downloadModCover(imageURL, modPath)
+	if err != nil {
+		config.ImageRestoreLastResult = imageRestoreResultError
+		config.ImageRestoreRetryCount++
+		config.ImageRestoreNextRetry = now.Add(imageRestoreBackoffDuration(config.ImageRestoreRetryCount)).Format(time.RFC3339)
+		_ = s.writeModConfig(configPath, config)
+		return false, err
+	}
+
+	config.ImagePath = coverPath
+	config.ImageRestoreLastResult = imageRestoreResultOK
+	config.ImageRestoreRetryCount = 0
+	config.ImageRestoreNextRetry = ""
+
+	if err := s.writeModConfig(configPath, config); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// RestoreModImage restores a missing mod image for a specific mod.
+func (s *Service) RestoreModImage(characterName, modName string, force bool) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	modPath, err := s.findModPath(characterName, modName)
+	if err != nil {
+		return false, err
+	}
+	configPath := filepath.Join(modPath, ".modconfig.json")
+	if _, err := os.Stat(configPath); err != nil {
+		return false, err
+	}
+
+	return s.restoreModImageAtPath(modPath, configPath, force)
+}
+
+// RestoreMissingImagesBatch scans mods with missing images and attempts restoration with bounded work.
+func (s *Service) RestoreMissingImagesBatch(characters []string, maxPerRun int, maxConcurrency int) (int, error) {
+	if maxPerRun <= 0 {
+		maxPerRun = 20
+	}
+	if maxConcurrency <= 0 {
+		maxConcurrency = 3
+	}
+
+	type restoreTarget struct {
+		character  string
+		modName    string
+		modPath    string
+		configPath string
+	}
+
+	var targets []restoreTarget
+	for _, charName := range characters {
+		if len(targets) >= maxPerRun {
+			break
+		}
+
+		mods, err := s.GetModsForCharacter(charName)
+		if err != nil {
+			continue
+		}
+
+		for _, currentMod := range mods {
+			if len(targets) >= maxPerRun {
+				break
+			}
+
+			configPath := filepath.Join(currentMod.FullPath, ".modconfig.json")
+			if _, err := os.Stat(configPath); err != nil {
+				continue
+			}
+
+			config, err := s.readModConfig(configPath)
+			if err != nil {
+				continue
+			}
+			if !isBrokenImageConfig(currentMod.FullPath, config) {
+				continue
+			}
+
+			targets = append(targets, restoreTarget{
+				character:  charName,
+				modName:    currentMod.Name,
+				modPath:    currentMod.FullPath,
+				configPath: configPath,
+			})
+		}
+	}
+
+	var (
+		wg       sync.WaitGroup
+		sem      = make(chan struct{}, maxConcurrency)
+		countMu  sync.Mutex
+		restored int
+	)
+
+	for _, target := range targets {
+		wg.Add(1)
+		go func(t restoreTarget) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			ok, err := s.restoreModImageAtPath(t.modPath, t.configPath, false)
+			if err != nil {
+				utils.LogWarn("[RestoreMissingImagesBatch] Failed for %s/%s: %v", t.character, t.modName, err)
+				return
+			}
+			if ok {
+				countMu.Lock()
+				restored++
+				countMu.Unlock()
+			}
+		}(target)
+	}
+
+	wg.Wait()
+	return restored, nil
 }
 
 // ToggleMod toggles a mod active/inactive
@@ -400,7 +650,7 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 
 	// 2. Clear mod contents but preserve .modconfig.json
 	utils.LogInfo("[UpdateMod] Clearing old mod contents (preserving config)...")
-	if err := s.clearModContents(targetPath, true); err != nil {
+	if err := s.clearModContents(targetPath, true, oldConfig.ImagePath); err != nil {
 		utils.LogError("[UpdateMod] Failed to clear mod contents: %v", err)
 		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
@@ -476,7 +726,7 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 
 	// 2. Clear mod contents but preserve .modconfig.json
 	utils.LogInfo("[UpdateModFromZip] Clearing old mod contents (preserving config)...")
-	if err := s.clearModContents(targetPath, true); err != nil {
+	if err := s.clearModContents(targetPath, true, oldConfig.ImagePath); err != nil {
 		utils.LogError("[UpdateModFromZip] Failed to clear mod contents: %v", err)
 		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
@@ -753,9 +1003,9 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 	return nil
 }
 
-// clearModContents removes all files and directories except .modconfig.json
+// clearModContents removes all files and directories except preserved files
 // This is used during mod updates to preserve the config while replacing mod files
-func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
+func (s *Service) clearModContents(modPath string, preserveConfig bool, preservedImagePath string) error {
 	utils.LogInfo("[clearModContents] Starting to clear: %s (preserveConfig: %v)", modPath, preserveConfig)
 
 	entries, err := os.ReadDir(modPath)
@@ -770,10 +1020,15 @@ func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
 	failedCount := 0
 
 	for _, entry := range entries {
-		// Skip .modconfig.json if preserveConfig is true
-		if preserveConfig && entry.Name() == ".modconfig.json" {
-			utils.LogDebug("[clearModContents] Skipping preserved file: %s", entry.Name())
-			continue
+		if preserveConfig {
+			// Preserve config and known cover image files during updates
+			if entry.Name() == ".modconfig.json" ||
+				entry.Name() == ".JASM_Cover.jpg" ||
+				strings.HasPrefix(entry.Name(), ".modCover") ||
+				entry.Name() == filepath.Base(filepath.Clean(strings.TrimSpace(preservedImagePath))) {
+				utils.LogDebug("[clearModContents] Skipping preserved file: %s", entry.Name())
+				continue
+			}
 		}
 
 		fullPath := filepath.Join(modPath, entry.Name())
