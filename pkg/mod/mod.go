@@ -400,7 +400,7 @@ func (s *Service) UpdateMod(characterName string, modName string, sourcePath str
 
 	// 2. Clear mod contents but preserve .modconfig.json
 	utils.LogInfo("[UpdateMod] Clearing old mod contents (preserving config)...")
-	if err := s.clearModContents(targetPath, true); err != nil {
+	if err := s.clearModContents(targetPath, true, oldConfig.ImagePath); err != nil {
 		utils.LogError("[UpdateMod] Failed to clear mod contents: %v", err)
 		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
@@ -476,7 +476,7 @@ func (s *Service) UpdateModFromZipWithRoot(characterName string, modName string,
 
 	// 2. Clear mod contents but preserve .modconfig.json
 	utils.LogInfo("[UpdateModFromZip] Clearing old mod contents (preserving config)...")
-	if err := s.clearModContents(targetPath, true); err != nil {
+	if err := s.clearModContents(targetPath, true, oldConfig.ImagePath); err != nil {
 		utils.LogError("[UpdateModFromZip] Failed to clear mod contents: %v", err)
 		return fmt.Errorf("error clearing mod contents: %v (Tip: Close any editors or programs that might have mod files open)", err)
 	}
@@ -753,9 +753,9 @@ func (s *Service) MoveMod(sourceCharacter string, modName string, targetCharacte
 	return nil
 }
 
-// clearModContents removes all files and directories except .modconfig.json
+// clearModContents removes all files and directories except preserved files
 // This is used during mod updates to preserve the config while replacing mod files
-func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
+func (s *Service) clearModContents(modPath string, preserveConfig bool, preservedImagePath string) error {
 	utils.LogInfo("[clearModContents] Starting to clear: %s (preserveConfig: %v)", modPath, preserveConfig)
 
 	entries, err := os.ReadDir(modPath)
@@ -770,10 +770,15 @@ func (s *Service) clearModContents(modPath string, preserveConfig bool) error {
 	failedCount := 0
 
 	for _, entry := range entries {
-		// Skip .modconfig.json if preserveConfig is true
-		if preserveConfig && entry.Name() == ".modconfig.json" {
-			utils.LogDebug("[clearModContents] Skipping preserved file: %s", entry.Name())
-			continue
+		if preserveConfig {
+			// Preserve config and known cover image files during updates
+			if entry.Name() == ".modconfig.json" ||
+				entry.Name() == ".JASM_Cover.jpg" ||
+				strings.HasPrefix(entry.Name(), ".modCover") ||
+				entry.Name() == filepath.Base(filepath.Clean(strings.TrimSpace(preservedImagePath))) {
+				utils.LogDebug("[clearModContents] Skipping preserved file: %s", entry.Name())
+				continue
+			}
 		}
 
 		fullPath := filepath.Join(modPath, entry.Name())
