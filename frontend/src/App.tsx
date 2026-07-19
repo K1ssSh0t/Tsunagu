@@ -31,6 +31,7 @@ import {
     OpenModFolder,
     OpenUrl,
     RemoveMod,
+    RestoreModImage,
     SelectDirectory,
     SelectExecutable,
     SelectFile,
@@ -763,6 +764,43 @@ const App: React.FC = () => {
         }
     };
 
+    const handleRestoreImage = async (
+        character: string,
+        modName: string,
+        force: boolean,
+    ) => {
+        try {
+            const restored = await RestoreModImage(character, modName, force);
+            if (restored) {
+                const currentFolder = selectedSkin
+                    ? selectedSkin.folder
+                    : selectedCharacter;
+                if (
+                    currentFolder &&
+                    currentFolder.toLowerCase() === character.toLowerCase()
+                ) {
+                    await loadCharacterMods(currentFolder);
+                }
+                if (force) {
+                    toast.success(`Imagen restaurada para ${modName}`);
+                }
+            } else if (force) {
+                toast.info(
+                    "No se restauró la imagen (ya existe o está en cooldown)",
+                );
+            }
+            return restored;
+        } catch (error) {
+            console.error("Error restoring mod image:", error);
+            if (force) {
+                toast.error(
+                    `Error al restaurar imagen: ${(error as Error).message}`,
+                );
+            }
+            return false;
+        }
+    };
+
     const handleUpdateGamePath = async () => {
         try {
             await UpdateGamePath(selectedGame, configPath);
@@ -1076,6 +1114,7 @@ const App: React.FC = () => {
                             onRemoveMod={handleRemoveModClick}
                             onSelectSkin={handleSkinSelect}
                             onMoveMod={handleMoveModClick}
+                            onRestoreImage={handleRestoreImage}
                         />
                     </div>
                 </div>

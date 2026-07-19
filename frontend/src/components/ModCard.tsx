@@ -38,6 +38,11 @@ interface ModCardProps {
     onOpenFolder: (path: string) => void;
     onRemove: (character: string, modName: string) => void;
     onMove: (character: string, modName: string) => void;
+    onRestoreImage: (
+        character: string,
+        modName: string,
+        force: boolean,
+    ) => Promise<boolean>;
 }
 
 export const ModCard: React.FC<ModCardProps> = ({
@@ -51,12 +56,14 @@ export const ModCard: React.FC<ModCardProps> = ({
     onOpenFolder,
     onRemove,
     onMove,
+    onRestoreImage,
 }) => {
     const [imageData, setImageData] = useState<string | null>(null);
     const [imageLoading, setImageLoading] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [isImageExpanded, setIsImageExpanded] = useState(false);
     const [isKeySwapsExpanded, setIsKeySwapsExpanded] = useState(false);
+    const [imageRestoring, setImageRestoring] = useState(false);
 
     const hasKeySwaps = mod.keySwaps && mod.keySwaps.length > 0;
 
@@ -70,6 +77,28 @@ export const ModCard: React.FC<ModCardProps> = ({
                     setImageData(base64);
                 } catch (err) {
                     console.error("Failed to load mod image:", err);
+                    if (mod.gameBananaUrl) {
+                        try {
+                            setImageRestoring(true);
+                            const restored = await onRestoreImage(
+                                mod.character,
+                                mod.name,
+                                false,
+                            );
+                            if (restored) {
+                                setImageData(null);
+                                setImageError(false);
+                                return;
+                            }
+                        } catch (restoreError) {
+                            console.error(
+                                "Failed to auto-restore mod image:",
+                                restoreError,
+                            );
+                        } finally {
+                            setImageRestoring(false);
+                        }
+                    }
                     setImageError(true);
                 } finally {
                     setImageLoading(false);
@@ -80,7 +109,7 @@ export const ModCard: React.FC<ModCardProps> = ({
             }
         };
         loadImage();
-    }, [mod.imagePath]);
+    }, [mod.imagePath, mod.gameBananaUrl, mod.character, mod.name]);
 
     return (
         <>
@@ -101,7 +130,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 }
                             }}
                         >
-                            {imageLoading ? (
+                            {imageLoading || imageRestoring ? (
                                 <div className="h-full w-full flex items-center justify-center">
                                     <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                 </div>
@@ -219,6 +248,19 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 >
                                     Abrir Carpeta
                                 </DropdownMenuItem>
+                                {mod.gameBananaUrl && (
+                                    <DropdownMenuItem
+                                        onClick={() =>
+                                            onRestoreImage(
+                                                mod.character,
+                                                mod.name,
+                                                true,
+                                            )
+                                        }
+                                    >
+                                        Restaurar imagen
+                                    </DropdownMenuItem>
+                                )}
                                 {hasUpdate && (
                                     <DropdownMenuItem
                                         onClick={() =>

@@ -350,6 +350,13 @@ func (a *App) CheckForUpdates() ([]mod.ModUpdate, error) {
 		}
 	}
 
+	// Attempt bounded background-like restoration for missing covers
+	if restored, err := a.modService.RestoreMissingImagesBatch(charNames, 20, 3); err != nil {
+		utils.LogWarn("[CheckForUpdates] Error restoring missing images: %v", err)
+	} else if restored > 0 {
+		utils.LogInfo("[CheckForUpdates] Restored %d missing mod covers", restored)
+	}
+
 	return a.modService.CheckForUpdates(charNames)
 }
 
@@ -392,6 +399,11 @@ func (a *App) GetModImageBase64(imagePath string) (string, error) {
 	// Encode to base64 with data URI prefix
 	base64Data := base64.StdEncoding.EncodeToString(data)
 	return fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data), nil
+}
+
+// RestoreModImage tries to restore a missing cover image for a mod.
+func (a *App) RestoreModImage(characterName string, modName string, force bool) (bool, error) {
+	return a.modService.RestoreModImage(characterName, modName, force)
 }
 
 func (a *App) Greet(name string) (string, error) {
