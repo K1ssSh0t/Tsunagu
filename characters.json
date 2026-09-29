@@ -546,6 +546,30 @@
     },
     {
       "name": "Dainsleif"
+    },
+    {
+      "name": "Vesna"
+    },
+    {
+      "name": "Vodyanitsa"
+    },
+    {
+      "name": "Alice"
+    },
+    {
+      "name": "Tsaritsa"
+    },
+    {
+      "name": "Danica"
+    },
+    {
+      "name": "Mitya"
+    },
+    {
+      "name": "Valeriy"
+    },
+    {
+      "name": "Noy"
     }
   ],
   "hsr": [
@@ -628,7 +652,13 @@
       "name": "Silver Wolf Lv.999"
     },
     {
-      "name": "Evanescia"
+      "name": "Evanescia",
+      "skins": [
+        {
+          "name": "Lunar Blossoming",
+          "folder": "Lunar"
+        }
+      ]
     },
     {
       "name": "Dan Heng • Permansor Terrae"
@@ -710,7 +740,13 @@
       "name": "Welt"
     },
     {
-      "name": "Hyacine"
+      "name": "Hyacine",
+      "skins": [
+        {
+          "name": "Warm Cotton Skies",
+          "folder": "Warm"
+        }
+      ]
     },
     {
       "name": "Dan Heng • Imbibitor Lunae"
@@ -852,6 +888,12 @@
     },
     {
       "name": "Pearl"
+    },
+    {
+      "name": "Astra Yao"
+    },
+    {
+      "name": "Ellen Joe"
     }
   ],
   "wuwa": [
@@ -1143,6 +1185,10 @@
         {
           "name": "Aria: Energetic Idol",
           "folder": "3115010"
+        },
+        {
+          "name": "Cuteness Loading",
+          "folder": "Cuteness"
         }
       ]
     },
@@ -1156,7 +1202,13 @@
       "name": "Billy"
     },
     {
-      "name": "Lucy"
+      "name": "Lucy",
+      "skins": [
+        {
+          "name": "Princess on Holiday",
+          "folder": "Princess"
+        }
+      ]
     },
     {
       "name": "Soukaku"
@@ -1292,6 +1344,10 @@
         {
           "name": "Afternoon Tea Break",
           "folder": "Succubus"
+        },
+        {
+          "name": "Delusions in Business",
+          "folder": "Delusions"
         }
       ]
     },
@@ -1363,6 +1419,10 @@
         {
           "name": "Rhapsody's Muse",
           "folder": "Rhapsody"
+        },
+        {
+          "name": "Heartfelt Support",
+          "folder": "Heartfelt"
         }
       ]
     },
@@ -1391,10 +1451,44 @@
       "name": "Pyrois"
     },
     {
-      "name": "Remielle Dan"
+      "name": "Remielle Dan",
+      "skins": [
+        {
+          "name": "Seashade Pas Seul",
+          "folder": "Seashade"
+        },
+        {
+          "name": "Moonlight Whispers",
+          "folder": "Moonlight"
+        }
+      ]
     },
     {
-      "name": "Sigrid"
+      "name": "Sigrid",
+      "skins": [
+        {
+          "name": "Majestic Wavechaser",
+          "folder": "Majestic"
+        }
+      ]
+    },
+    {
+      "name": "Claret"
+    },
+    {
+      "name": "Roxy"
+    },
+    {
+      "name": "Severian"
+    },
+    {
+      "name": "Sunbringer"
+    },
+    {
+      "name": "Phoenix"
+    },
+    {
+      "name": "Storyteller"
     }
   ],
   "endfield": [
@@ -1490,6 +1584,12 @@
     },
     {
       "name": "Liino"
+    },
+    {
+      "name": "Typhoeus"
+    },
+    {
+      "name": "Purrchena"
     }
   ]
 }
