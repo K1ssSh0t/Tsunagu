@@ -41,7 +41,7 @@ function formatDate(dateStr: string): string {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return "";
-    const formatted = date.toLocaleDateString("en-US", {
+    const formatted = date.toLocaleDateString("es", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -52,7 +52,7 @@ function formatDate(dateStr: string): string {
 function timeAgo(date: Date): string {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    if (diffMs < 0) return "just now";
+    if (diffMs < 0) return "ahora mismo";
 
     const minutes = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMs / 3600000);
@@ -61,19 +61,19 @@ function timeAgo(date: Date): string {
     if (days > 0) {
         const remainingHours = Math.floor((diffMs - days * 86400000) / 3600000);
         if (remainingHours > 0) {
-            return `${days}d ${remainingHours}h ago`;
+            return `hace ${days}d ${remainingHours}h`;
         }
-        return `${days}d ago`;
+        return `hace ${days}d`;
     }
     if (hours > 0) {
         const remainingMinutes = Math.floor((diffMs - hours * 3600000) / 60000);
         if (remainingMinutes > 0) {
-            return `${hours}h ${remainingMinutes}m ago`;
+            return `hace ${hours}h ${remainingMinutes}min`;
         }
-        return `${hours}h ago`;
+        return `hace ${hours}h`;
     }
-    if (minutes > 0) return `${minutes}m ago`;
-    return "just now";
+    if (minutes > 0) return `hace ${minutes}min`;
+    return "ahora mismo";
 }
 
 export function FileSelectionDialog({
@@ -109,17 +109,17 @@ export function FileSelectionDialog({
         <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle>Select File to Download</DialogTitle>
+                    <DialogTitle>Seleccionar archivo a descargar</DialogTitle>
                     <DialogDescription>
-                        Choose which file you want to download for this mod
-                        update.
+                        Elige qué archivo quieres descargar para actualizar este
+                        mod.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="py-4 pr-2 max-h-[50vh] overflow-y-auto">
                     {sortedFiles.length === 0 ? (
                         <div className="text-center text-muted-foreground py-8">
-                            No files available for download
+                            No hay archivos disponibles para descargar
                         </div>
                     ) : (
                         <RadioGroup
@@ -178,14 +178,14 @@ export function FileSelectionDialog({
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onCancel}>
-                        Cancel
+                        Cancelar
                     </Button>
                     <Button
                         onClick={handleSelect}
                         disabled={sortedFiles.length === 0}
                     >
                         <Download className="mr-2 h-4 w-4" />
-                        Download
+                        Descargar
                     </Button>
                 </DialogFooter>
             </DialogContent>

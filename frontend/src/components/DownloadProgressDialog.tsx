@@ -84,7 +84,7 @@ export function DownloadProgressDialog({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Download className="h-5 w-5 animate-pulse" />
-                        Downloading Update
+                        Descargando actualización
                     </DialogTitle>
                     <DialogDescription className="line-clamp-1">
                         {fileName}

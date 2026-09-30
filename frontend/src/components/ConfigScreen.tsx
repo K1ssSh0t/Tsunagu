@@ -20,6 +20,7 @@ interface ConfigScreenProps {
     selectedGame: string;
     configPath: string;
     executablePath: string;
+    gamesConfig?: Record<string, { modsPath?: string }>;
     onClose: () => void;
     onGameSelect: (game: string) => void;
     onConfigPathChange: (path: string) => void;
@@ -35,6 +36,7 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
     selectedGame,
     configPath,
     executablePath,
+    gamesConfig,
     onClose,
     onGameSelect,
     onConfigPathChange,
@@ -44,6 +46,14 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
     onSave,
 }) => {
     if (!(!isAppConfigured || showConfig)) return null;
+
+    const trimmedPath = configPath.trim();
+    const pathError = !trimmedPath
+        ? "La ruta de mods es obligatoria."
+        : trimmedPath.length < 4
+          ? "Esa ruta parece incompleta. Usa Examinar para elegirla."
+          : null;
+    const canSave = !pathError;
 
     const gameLabel =
         selectedGame === "genshin"
@@ -81,7 +91,7 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
             </div>
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-center">
+                    <CardTitle className="display-ink text-2xl text-center">
                         Configuración
                     </CardTitle>
                     <CardDescription className="text-center">
@@ -90,13 +100,22 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-6">
-                        <div className="flex justify-center">
-                            <GameSelector
-                                selectedGame={selectedGame}
-                                onGameSelect={(game) => {
-                                    onGameSelect(game);
-                                }}
-                            />
+                        <div className="space-y-2">
+                            <div className="flex justify-center">
+                                <GameSelector
+                                    selectedGame={selectedGame}
+                                    gamesConfig={gamesConfig}
+                                    showStatus
+                                    ariaLabel="Elegir juego a configurar"
+                                    onGameSelect={(game) => {
+                                        onGameSelect(game);
+                                    }}
+                                />
+                            </div>
+                            <p className="text-xs text-center text-muted-foreground">
+                                Editas las rutas de este juego. No cambia el
+                                juego activo hasta que guardes y vuelvas.
+                            </p>
                         </div>
 
                         <div className="space-y-2">
@@ -107,26 +126,43 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                                 <Input
                                     id="modsPath"
                                     type="text"
+                                    autoComplete="off"
+                                    aria-invalid={Boolean(pathError)}
+                                    aria-describedby="modsPath-hint modsPath-error"
                                     value={configPath}
                                     onChange={(e) =>
                                         onConfigPathChange(e.target.value)
                                     }
-                                    placeholder="Ej: C:\\Juegos\\Genshin Impact\\3DMigoto\\mods"
+                                    placeholder="Ej: C:\Juegos\...\Mods o /home/usuario/juegos/.../Mods"
                                     className="flex-1"
                                 />
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    aria-label="Examinar carpeta de mods"
                                     onClick={onSelectDirectory}
                                     className="px-3"
                                 >
                                     <Folder className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p
+                                id="modsPath-hint"
+                                className="text-sm text-muted-foreground"
+                            >
                                 Carpeta donde se encuentran los mods de{" "}
-                                {gameLabel}.
+                                {gameLabel}. Debería contener una carpeta por
+                                personaje.
                             </p>
+                            {pathError && (
+                                <p
+                                    id="modsPath-error"
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    {pathError}
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -138,25 +174,32 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                                 <Input
                                     id="executablePath"
                                     type="text"
+                                    autoComplete="off"
+                                    aria-describedby="exePath-hint"
                                     value={executablePath}
                                     onChange={(e) =>
                                         onExecutablePathChange(e.target.value)
                                     }
-                                    placeholder="Ej: C:\\Lanzadores\\3DMigoto\\3DMigoto.exe"
+                                    placeholder="Ej: C:\Lanzadores\...\GIMI.exe o /ruta/al/lanzador"
                                     className="flex-1"
                                 />
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    aria-label="Examinar lanzador"
                                     onClick={onSelectExecutable}
                                     className="px-3"
                                 >
                                     <Folder className="h-4 w-4" />
                                 </Button>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p
+                                id="exePath-hint"
+                                className="text-sm text-muted-foreground"
+                            >
                                 Archivo .exe o acceso directo (.lnk) del
-                                lanzador.
+                                lanzador. Opcional, pero sin él no verás el
+                                botón Lanzar.
                             </p>
                         </div>
                     </div>
@@ -164,7 +207,7 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                 <CardFooter>
                     <Button
                         onClick={onSave}
-                        disabled={!configPath}
+                        disabled={!canSave}
                         className="w-full"
                     >
                         Guardar Configuración

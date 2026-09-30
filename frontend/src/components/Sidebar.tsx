@@ -68,18 +68,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }, [filteredCharacters, sortBy]);
 
     return (
-        <Card className="md:col-span-1 h-[calc(100vh-200px)] flex flex-col">
+        <Card className="md:col-span-1 h-auto max-h-[52vh] md:max-h-none md:h-full md:min-h-0 flex flex-col min-h-0">
             <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Personajes</CardTitle>
+                <p className="spec-label text-muted-foreground">
+                    Índice · {String(characters.length).padStart(2, "0")}{" "}
+                    entradas
+                </p>
+                <CardTitle className="display-ink text-xl">
+                    Personajes
+                </CardTitle>
                 <div className="space-y-2">
+                    <label htmlFor="buscar-personaje" className="sr-only">
+                        Buscar personajes
+                    </label>
                     <Input
-                        placeholder="Buscar..."
-                        className="h-8"
+                        id="buscar-personaje"
+                        placeholder="Buscar personaje…"
+                        autoComplete="off"
+                        className="h-9"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <Select value={sortBy} onValueChange={handleSortChange}>
-                        <SelectTrigger className="h-8 w-full text-xs">
+                        <SelectTrigger
+                            className="h-9 w-full text-xs"
+                            aria-label="Ordenar personajes"
+                        >
                             <SelectValue placeholder="Ordenar por..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -105,10 +119,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </Select>
                 </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-2">
+            <CardContent className="flex-1 min-h-0 overflow-hidden p-2">
                 <ScrollArea className="h-full pr-4">
                     <div className="space-y-1">
-                        {sortedCharacters.map((char) => {
+                        {sortedCharacters.map((char, index) => {
                             // Check for updates in main character folder
                             const hasCharUpdate = updates.some(
                                 (u) => u.characterName === char.name,
@@ -131,17 +145,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                             ? "secondary"
                                             : "ghost"
                                     }
-                                    className="w-full justify-start capitalize relative"
+                                    aria-current={
+                                        selectedCharacter === char.name
+                                            ? "true"
+                                            : undefined
+                                    }
+                                    title={`${char.name} · ${char.mods ? char.mods.length : 0} mods`}
+                                    className="w-full justify-start capitalize relative min-h-11 rounded-[3px]"
                                     onClick={() => onSelectCharacter(char.name)}
                                 >
-                                    <span className="truncate">
+                                    {selectedCharacter === char.name && (
+                                        <span
+                                            aria-hidden="true"
+                                            className="game-accent-dot absolute left-1 top-1.5 bottom-1.5 w-[3px] rounded-[1px]"
+                                        />
+                                    )}
+                                    <span
+                                        aria-hidden="true"
+                                        className="font-mono text-[10px] text-muted-foreground tabular-nums w-6 flex-shrink-0 pl-2"
+                                    >
+                                        {String(index + 1).padStart(2, "0")}
+                                    </span>
+                                    <span className="truncate font-semibold">
                                         {char.name}
                                     </span>
-                                    <div className="ml-auto flex items-center gap-2">
+                                    <div className="ml-auto flex items-center gap-2 flex-shrink-0">
                                         {hasAnyUpdate && (
                                             <span className="relative flex h-2 w-2">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                                <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-60" />
+                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-600 dark:bg-green-400" />
+                                                <span className="sr-only">
+                                                    Tiene actualizaciones
+                                                </span>
                                             </span>
                                         )}
                                         {(char.hasFolder ||
@@ -149,6 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                 char.mods.length > 0)) && (
                                             <Badge
                                                 variant="outline"
+                                                aria-label={`${char.mods ? char.mods.length : 0} mods`}
                                                 className="text-xs"
                                             >
                                                 {char.mods
@@ -161,10 +197,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             );
                         })}
                         {sortedCharacters.length === 0 && (
-                            <div className="text-center text-muted-foreground py-4">
-                                {searchQuery
-                                    ? "No se encontraron personajes"
-                                    : "No hay personajes"}
+                            <div className="text-center text-muted-foreground py-4 space-y-1">
+                                <p className="font-medium text-foreground">
+                                    {searchQuery
+                                        ? "No se encontraron personajes"
+                                        : "No hay personajes"}
+                                </p>
+                                {!searchQuery && (
+                                    <p className="text-xs">
+                                        Revisa la ruta de mods en Configuración.
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

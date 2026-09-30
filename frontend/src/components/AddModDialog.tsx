@@ -58,7 +58,9 @@ export const AddModDialog: React.FC<AddModDialogProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <Card className="w-full max-w-lg">
                 <CardHeader>
-                    <CardTitle>Agregar Nuevo Mod</CardTitle>
+                    <CardTitle className="display-ink text-xl">
+                        Agregar Nuevo Mod
+                    </CardTitle>
                     <CardDescription>
                         Agrega un mod para {selectedCharacter}
                     </CardDescription>

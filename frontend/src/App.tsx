@@ -68,6 +68,22 @@ type Character = character.Character & {
 type Mod = mod.Mod;
 type ZipFile = utils.ZipFile;
 
+const GAME_LABELS: Record<string, string> = {
+    genshin: "Genshin Impact",
+    wuwa: "Wuthering Waves",
+    hsr: "Honkai: Star Rail",
+    zzz: "Zenless Zone Zero",
+    endfield: "Arknights: Endfield",
+};
+
+const LAUNCHER_LABELS: Record<string, string> = {
+    genshin: "GIMI",
+    wuwa: "WWMI",
+    hsr: "SRMI",
+    zzz: "ZZMI",
+    endfield: "EFMI",
+};
+
 const App: React.FC = () => {
     const [characters, setCharacters] = useState<Character[]>([]);
     const [selectedCharacter, setSelectedCharacter] = useState<string>("");
@@ -121,6 +137,7 @@ const App: React.FC = () => {
     const [showCleanupDialog, setShowCleanupDialog] = useState(false);
     const [cachedFilePath, setCachedFilePath] = useState("");
     const [cachedFileSize, setCachedFileSize] = useState(0);
+    const [pendingMods, setPendingMods] = useState<Set<string>>(new Set());
     const [downloadContext, setDownloadContext] = useState<{
         character: string;
         modName: string;
@@ -260,37 +277,49 @@ const App: React.FC = () => {
         }
     };
 
-    const handleToggleMod = async (_character: string, modName: string) => {
-        // If a skin is selected, 'character' argument coming from ModList might be the skin folder name
-        // or we should use the current context.
-        // Actually, ModList passes the selectedCharacter prop, which is the main character name.
-        // But for skins, we need to operate on the skin folder.
-        // So we should use selectedSkin.folder if it exists.
+    const setModPending = (key: string, pending: boolean) => {
+        setPendingMods((prev) => {
+            const next = new Set(prev);
+            if (pending) next.add(key);
+            else next.delete(key);
+            return next;
+        });
+    };
 
+    const handleToggleMod = async (_character: string, modName: string) => {
         const targetFolder = selectedSkin
             ? selectedSkin.folder
             : selectedCharacter;
+        if (!targetFolder) return;
 
-        setIsLoading(true);
-        setLoadingMessage("Actualizando estado del mod...");
+        const key = `${targetFolder}::${modName}`;
+        const previous = characterMods.find((m) => m.name === modName);
+        const wasActive = previous?.isActive ?? false;
+
+        setModPending(key, true);
         try {
+            setCharacterMods((prev) =>
+                prev.map((m) =>
+                    m.name === modName
+                        ? Object.assign(
+                              Object.create(Object.getPrototypeOf(m)),
+                              m,
+                              { isActive: !wasActive },
+                          )
+                        : m,
+                ),
+            );
             await ToggleMod(targetFolder, modName);
             await loadCharacterMods(targetFolder);
-            // We don't need to reload all characters unless we want to update the "HasFolder" status,
-            // but for toggling mods it's not strictly necessary and avoids flickering.
-            // await loadCharacters();
-            const mod = characterMods.find((m) => m.name === modName);
-            if (mod) {
-                toast.success(
-                    `Mod ${modName} ${mod.isActive ? "activado" : "desactivado"} correctamente`,
-                );
-            }
+            toast.success(
+                `Mod ${modName} ${wasActive ? "desactivado" : "activado"} correctamente`,
+            );
         } catch (error) {
             console.error("Error toggling mod:", error);
+            await loadCharacterMods(targetFolder);
             toast.error("Error al cambiar el estado del mod");
         } finally {
-            setIsLoading(false);
-            setLoadingMessage("");
+            setModPending(key, false);
         }
     };
 
@@ -301,9 +330,10 @@ const App: React.FC = () => {
         const targetFolder = selectedSkin
             ? selectedSkin.folder
             : selectedCharacter;
+        if (!targetFolder) return;
 
-        setIsLoading(true);
-        setLoadingMessage("Activando mod único...");
+        const key = `${targetFolder}::${modName}`;
+        setModPending(key, true);
         try {
             await ActivateSingleMod(targetFolder, modName);
             await loadCharacterMods(targetFolder);
@@ -312,8 +342,7 @@ const App: React.FC = () => {
             console.error("Error activating mod:", error);
             toast.error("Error al activar el mod");
         } finally {
-            setIsLoading(false);
-            setLoadingMessage("");
+            setModPending(key, false);
         }
     };
 
@@ -685,6 +714,7 @@ const App: React.FC = () => {
             setShowCleanupDialog(false);
             setCachedFilePath("");
             setCachedFileSize(0);
+            setDownloadingFileName("");
             setDownloadContext(null);
         }
     };
@@ -919,8 +949,21 @@ const App: React.FC = () => {
         (c) => c.name === selectedCharacter,
     );
 
+    const totalMods = characters.reduce(
+        (acc, c) => acc + (c.mods ? c.mods.length : 0),
+        0,
+    );
+    const totalActive = characters.reduce(
+        (acc, c) =>
+            acc + (c.mods ? c.mods.filter((m) => m.isActive).length : 0),
+        0,
+    );
+
     return (
-        <div className="min-h-screen bg-background p-6 relative">
+        <div
+            className="h-dvh overflow-hidden bg-background p-4 sm:p-6 relative flex flex-col"
+            data-game={selectedGame}
+        >
             <Toaster position="top-center" richColors closeButton />
 
             {isLoading && <LoadingOverlay message={loadingMessage} />}
@@ -963,6 +1006,7 @@ const App: React.FC = () => {
                 selectedGame={selectedGame}
                 configPath={configPath}
                 executablePath={executablePath}
+                gamesConfig={gamesConfig.games}
                 onClose={() => setShowConfig(false)}
                 onGameSelect={(game) => {
                     setSelectedGame(game);
@@ -1035,20 +1079,35 @@ const App: React.FC = () => {
 
             {/* Main Layout */}
             {!(!isAppConfigured || showConfig) && (
-                <div className="max-w-7xl mx-auto space-y-6">
+                <div className="mx-auto flex min-h-0 w-full max-w-[1760px] flex-1 flex-col space-y-4">
                     {/* Header */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="pb-2">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle className="text-3xl font-bold">
-                                        Mod Manager
+                    <Card className="border-0 shadow-none bg-transparent shrink-0">
+                        <CardHeader className="pb-4 px-1">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-end">
+                                <div className="min-w-0">
+                                    <p className="spec-label text-muted-foreground flex items-center gap-2 mb-2">
+                                        <span
+                                            aria-hidden="true"
+                                            className="game-accent-dot h-2.5 w-2.5 rounded-[1px] flex-shrink-0"
+                                        />
+                                        Edición ·{" "}
+                                        {GAME_LABELS[selectedGame] ||
+                                            "Mod Manager"}{" "}
+                                        — Catálogo Nº{" "}
+                                        {String(characters.length).padStart(
+                                            2,
+                                            "0",
+                                        )}
+                                    </p>
+                                    <CardTitle className="display-ink text-4xl sm:text-5xl">
+                                        Tsunagu
                                     </CardTitle>
-                                    <CardDescription>
-                                        Administra tus mods de 3DMigoto
+                                    <CardDescription className="mt-2 font-mono text-xs uppercase tracking-[0.08em] tabular-nums">
+                                        {characters.length} personajes ·{" "}
+                                        {totalMods} mods · {totalActive} activos
                                     </CardDescription>
                                 </div>
-                                <div className="flex items-center space-x-4">
+                                <div className="flex flex-wrap items-center gap-2">
                                     {executablePath && (
                                         <Button
                                             variant="default"
@@ -1057,22 +1116,15 @@ const App: React.FC = () => {
                                         >
                                             <Gamepad2 className="mr-2 h-4 w-4" />
                                             Lanzar{" "}
-                                            {selectedGame === "genshin"
-                                                ? "GIMI"
-                                                : selectedGame === "wuwa"
-                                                  ? "WWMI"
-                                                  : selectedGame === "hsr"
-                                                    ? "SRMI"
-                                                    : selectedGame === "zzz"
-                                                      ? "ZZMI"
-                                                      : selectedGame ===
-                                                          "endfield"
-                                                        ? "EFMI"
-                                                        : "Launcher"}
+                                            {LAUNCHER_LABELS[selectedGame] ||
+                                                "Launcher"}
                                         </Button>
                                     )}
                                     <GameSelector
                                         selectedGame={selectedGame}
+                                        gamesConfig={gamesConfig.games}
+                                        showStatus
+                                        ariaLabel="Cambiar juego activo"
                                         onGameSelect={handleGameSelect}
                                     />
 
@@ -1081,6 +1133,7 @@ const App: React.FC = () => {
                                         size="icon"
                                         onClick={() => setShowConfig(true)}
                                         title="Configuración"
+                                        aria-label="Abrir configuración"
                                     >
                                         <Settings className="h-4 w-4" />
                                     </Button>
@@ -1091,7 +1144,7 @@ const App: React.FC = () => {
                     </Card>
 
                     {/* Main Content */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto md:grid-cols-4 md:overflow-visible">
                         <Sidebar
                             characters={characters}
                             selectedCharacter={selectedCharacter}
@@ -1105,6 +1158,7 @@ const App: React.FC = () => {
                             skins={currentCharacterObj?.skins || []}
                             mods={characterMods}
                             updates={updates}
+                            pendingMods={pendingMods}
                             onAddMod={() => setShowAddMod(true)}
                             onToggleMod={handleToggleMod}
                             onUpdateModClick={handleUpdateModClick}

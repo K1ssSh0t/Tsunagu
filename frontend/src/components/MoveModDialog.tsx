@@ -60,7 +60,7 @@ export const MoveModDialog: React.FC<MoveModDialogProps> = ({
             // Add main character option
             options.push({
                 value: char.name,
-                label: `${char.name} (Default)`,
+                label: `${char.name} (Base)`,
                 isIndented: false,
             });
 

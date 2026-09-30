@@ -39,11 +39,11 @@ export function CleanupDialog({
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>
-                        Clean up downloaded file?
+                        ¿Eliminar archivo descargado?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                        The mod has been updated successfully. What would you
-                        like to do with the downloaded file?
+                        El mod se actualizó correctamente. ¿Qué quieres hacer
+                        con el archivo descargado?
                     </AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -55,7 +55,8 @@ export function CleanupDialog({
                                 {fileName}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                Size: {formatBytes(fileSize)}
+                                Tamaño: {formatBytes(fileSize)} · Se guarda en
+                                .cache si lo conservas
                             </p>
                         </div>
                     </div>
@@ -64,14 +65,14 @@ export function CleanupDialog({
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => onDecision(false)}>
                         <Archive className="mr-2 h-4 w-4" />
-                        Keep File
+                        Conservar
                     </AlertDialogCancel>
                     <AlertDialogAction
                         onClick={() => onDecision(true)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete File
+                        Eliminar
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

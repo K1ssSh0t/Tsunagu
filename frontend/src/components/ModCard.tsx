@@ -9,6 +9,7 @@ import {
     MoreVertical,
     MoveRight,
     X,
+    Zap,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -31,6 +32,8 @@ interface ModCardProps {
     mod: mod.Mod;
     hasUpdate: boolean;
     updateInfo?: mod.ModUpdate;
+    plateNo?: string;
+    pending?: boolean;
     onToggle: (character: string, modName: string) => void;
     onUpdateClick: (character: string, modName: string, url: string) => void;
     onOpenUrl: (url: string) => void;
@@ -49,6 +52,8 @@ export const ModCard: React.FC<ModCardProps> = ({
     mod,
     hasUpdate,
     updateInfo,
+    plateNo,
+    pending = false,
     onToggle,
     onUpdateClick,
     onOpenUrl,
@@ -67,6 +72,7 @@ export const ModCard: React.FC<ModCardProps> = ({
 
     const hasKeySwaps = mod.keySwaps && mod.keySwaps.length > 0;
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: onRestoreImage es wrapper estable del backend; añadirlo recargaría imágenes en cada render
     useEffect(() => {
         const loadImage = async () => {
             if (mod.imagePath) {
@@ -114,14 +120,15 @@ export const ModCard: React.FC<ModCardProps> = ({
     return (
         <>
             <div className="flex flex-col">
-                <div className="group relative flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 shadow-sm hover:shadow-md">
-                    <div className="flex items-center gap-3 overflow-hidden flex-1">
+                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200">
+                    <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                         {/* Mod Cover Image */}
                         <button
                             type="button"
-                            className={`relative h-16 w-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 border ${
+                            aria-label={`Ampliar imagen de ${mod.name}`}
+                            className={`relative h-20 w-20 rounded-[2px] overflow-hidden bg-muted flex-shrink-0 border ${
                                 imageData && !imageError
-                                    ? "cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                                    ? "cursor-pointer hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-ring transition-all"
                                     : ""
                             }`}
                             onClick={() => {
@@ -137,33 +144,43 @@ export const ModCard: React.FC<ModCardProps> = ({
                             ) : imageData && !imageError ? (
                                 <img
                                     src={imageData}
-                                    alt={mod.name}
-                                    className="h-full w-full object-cover"
+                                    alt={`Vista previa de ${mod.name}`}
+                                    loading="lazy"
+                                    draggable={false}
+                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                                 />
                             ) : (
                                 <div className="h-full w-full flex items-center justify-center text-muted-foreground">
                                     <ImageOff className="h-6 w-6" />
                                 </div>
                             )}
-                            {/* Active indicator overlay */}
+                            {/* Active indicator bar */}
                             <div
                                 className={`absolute bottom-0 left-0 right-0 h-1 ${
                                     mod.isActive
-                                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                                        ? "bg-green-600 dark:bg-green-400"
                                         : "bg-muted-foreground/30"
                                 }`}
                             />
                         </button>
 
-                        <div className="flex flex-col overflow-hidden flex-1">
-                            <div className="flex items-center gap-2">
-                                <h3 className="font-semibold truncate text-base">
+                        <div className="flex flex-col overflow-hidden flex-1 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                                {plateNo && (
+                                    <span
+                                        aria-hidden="true"
+                                        className="font-mono text-[10px] text-muted-foreground tabular-nums flex-shrink-0"
+                                    >
+                                        Nº {plateNo}
+                                    </span>
+                                )}
+                                <h3 className="font-bold tracking-tight truncate text-base text-balance">
                                     {mod.name}
                                 </h3>
                                 {hasUpdate && (
                                     <Badge
                                         variant="outline"
-                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-500 bg-green-500/10 animate-pulse cursor-pointer hover:bg-green-500/20"
+                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0"
                                         onClick={() =>
                                             onUpdateClick(
                                                 mod.character,
@@ -172,20 +189,26 @@ export const ModCard: React.FC<ModCardProps> = ({
                                             )
                                         }
                                     >
-                                        Update
+                                        Actualizar
                                     </Badge>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs text-muted-foreground truncate">
-                                    {mod.isActive
-                                        ? "Habilitado"
-                                        : "Deshabilitado"}
+                            <div className="flex items-center gap-2 min-w-0">
+                                <p
+                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate"
+                                    role="status"
+                                >
+                                    {pending
+                                        ? "Actualizando…"
+                                        : mod.isActive
+                                          ? "Habilitado"
+                                          : "Deshabilitado"}
                                 </p>
                                 {hasKeySwaps && (
                                     <Badge
                                         variant="outline"
-                                        className="h-5 px-1.5 text-[10px] border-blue-500/50 text-blue-500 bg-blue-500/10 cursor-pointer hover:bg-blue-500/20 flex-shrink-0"
+                                        aria-expanded={isKeySwapsExpanded}
+                                        className="h-5 px-1.5 text-[10px] border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-500/10 cursor-pointer hover:bg-blue-500/20 flex-shrink-0"
                                         onClick={() =>
                                             setIsKeySwapsExpanded(
                                                 !isKeySwapsExpanded,
@@ -195,8 +218,8 @@ export const ModCard: React.FC<ModCardProps> = ({
                                         <Keyboard className="h-3 w-3 mr-1" />
                                         {mod.keySwaps.length}{" "}
                                         {mod.keySwaps.length === 1
-                                            ? "Key"
-                                            : "Keys"}
+                                            ? "Tecla"
+                                            : "Teclas"}
                                         {isKeySwapsExpanded ? (
                                             <ChevronUp className="h-3 w-3 ml-1" />
                                         ) : (
@@ -208,13 +231,27 @@ export const ModCard: React.FC<ModCardProps> = ({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Activar solo este"
+                            aria-label={`Activar solo ${mod.name}`}
+                            disabled={pending}
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+                            onClick={() =>
+                                onActivateSingle(mod.character, mod.name)
+                            }
+                        >
+                            <Zap className="h-4 w-4" />
+                        </Button>
                         {mod.gameBananaUrl && (
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
                                 title="Ver en GameBanana"
+                                aria-label={`Ver ${mod.name} en GameBanana`}
                                 onClick={() => onOpenUrl(mod.gameBananaUrl)}
                             >
                                 <Globe className="h-4 w-4" />
@@ -226,7 +263,8 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                    aria-label={`Acciones para ${mod.name}`}
+                                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
                                 >
                                     <MoreVertical className="h-4 w-4" />
                                 </Button>
@@ -295,9 +333,22 @@ export const ModCard: React.FC<ModCardProps> = ({
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <div className="pl-2 border-l ml-1">
+                        <div className="pl-2 border-l ml-1 flex items-center gap-2">
+                            {pending && (
+                                <div
+                                    className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                                    role="status"
+                                    aria-label={`Actualizando ${mod.name}`}
+                                />
+                            )}
                             <Switch
                                 checked={mod.isActive}
+                                disabled={pending}
+                                aria-label={
+                                    mod.isActive
+                                        ? `Desactivar ${mod.name}`
+                                        : `Activar ${mod.name}`
+                                }
                                 onCheckedChange={() =>
                                     onToggle(mod.character, mod.name)
                                 }
@@ -308,7 +359,7 @@ export const ModCard: React.FC<ModCardProps> = ({
 
                 {/* KeySwaps Expandable Panel */}
                 {hasKeySwaps && isKeySwapsExpanded && (
-                    <div className="mt-1 mx-2 p-3 rounded-lg border bg-muted/30 space-y-2 animate-in slide-in-from-top-1 duration-200">
+                    <div className="mt-1 mx-2 p-3 rounded-[3px] border bg-muted/30 space-y-2 animate-in slide-in-from-top-1 duration-200">
                         <div className="flex items-center gap-2 mb-2">
                             <Keyboard className="h-3.5 w-3.5 text-blue-500" />
                             <span className="text-xs font-medium text-muted-foreground">
@@ -348,10 +399,10 @@ export const ModCard: React.FC<ModCardProps> = ({
                                         {swap.forwardKey && (
                                             <div
                                                 className="flex items-center gap-1"
-                                                title="Forward Key"
+                                                title="Tecla para avanzar"
                                             >
                                                 <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded border border-border shadow-sm">
+                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
                                                     {swap.forwardKey}
                                                 </kbd>
                                             </div>
@@ -359,10 +410,10 @@ export const ModCard: React.FC<ModCardProps> = ({
                                         {swap.backwardKey && (
                                             <div
                                                 className="flex items-center gap-1"
-                                                title="Backward Key"
+                                                title="Tecla para retroceder"
                                             >
                                                 <ArrowLeft className="h-3 w-3 text-muted-foreground" />
-                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded border border-border shadow-sm">
+                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
                                                     {swap.backwardKey}
                                                 </kbd>
                                             </div>
@@ -377,7 +428,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                                         : undefined
                                                 }
                                             >
-                                                {swap.variants} var
+                                                {swap.variants} var.
                                             </Badge>
                                         )}
                                     </div>
@@ -390,13 +441,14 @@ export const ModCard: React.FC<ModCardProps> = ({
 
             {/* Image Expand Dialog */}
             <Dialog open={isImageExpanded} onOpenChange={setIsImageExpanded}>
-                <DialogContent className="max-w-3xl p-0 overflow-hidden bg-background/95 backdrop-blur-sm border-0">
+                <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-[3px] border bg-card">
                     <DialogTitle className="sr-only">{mod.name}</DialogTitle>
                     <div className="relative">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-full bg-background/80 hover:bg-background"
+                            aria-label={`Cerrar vista previa de ${mod.name}`}
+                            className="absolute top-2 right-2 z-10 h-8 w-8 rounded-[2px] bg-card hover:bg-accent border"
                             onClick={() => setIsImageExpanded(false)}
                         >
                             <X className="h-4 w-4" />
@@ -404,16 +456,20 @@ export const ModCard: React.FC<ModCardProps> = ({
                         {imageData && (
                             <img
                                 src={imageData}
-                                alt={mod.name}
+                                alt={`Vista previa ampliada de ${mod.name}`}
                                 className="w-full h-auto max-h-[80vh] object-contain"
                             />
                         )}
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background/90 to-transparent">
-                            <h3 className="font-semibold text-lg">
+                        <div className="border-t p-4 bg-card">
+                            <h3 className="font-bold tracking-tight text-lg truncate">
                                 {mod.name}
                             </h3>
-                            <p className="text-sm text-muted-foreground">
-                                {mod.isActive ? "Habilitado" : "Deshabilitado"}
+                            <p className="spec-label text-muted-foreground mt-1">
+                                {pending
+                                    ? "Actualizando…"
+                                    : mod.isActive
+                                      ? "Habilitado"
+                                      : "Deshabilitado"}
                             </p>
                         </div>
                     </div>

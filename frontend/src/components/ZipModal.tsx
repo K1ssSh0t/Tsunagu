@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronRight, File, Folder } from "lucide-react";
-import React, { useState } from "react";
+import { ChevronDown, ChevronRight, File, Folder, Wand2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -21,6 +22,22 @@ interface ZipModalProps {
     onConfirm: () => void;
 }
 
+function collectDirs(files: utils.ZipFile[], out: utils.ZipFile[] = []) {
+    for (const f of files || []) {
+        if (f.isDir) {
+            out.push(f);
+            if (f.children) collectDirs(f.children, out);
+        }
+    }
+    return out;
+}
+
+function dirHasIni(dir: utils.ZipFile) {
+    return (dir.children || []).some(
+        (c) => !c.isDir && /\.ini$/i.test(c.name || c.path),
+    );
+}
+
 export const ZipModal: React.FC<ZipModalProps> = ({
     isOpen,
     zipStructure,
@@ -33,37 +50,58 @@ export const ZipModal: React.FC<ZipModalProps> = ({
         new Set(),
     );
 
-    // Initialize expanded folders when structure changes (handled in parent usually, but we can do it here too if we pass initial expanded)
-    // For now we'll manage local expansion state here or receive it.
-    // The original app managed it in App.tsx. Let's manage it here for encapsulation if possible,
-    // but the original app passed `expandedFolders` state.
-    // To simplify, let's manage it locally here.
+    const candidates = useMemo(() => {
+        const dirs = collectDirs(zipStructure);
+        return new Set(dirs.filter(dirHasIni).map((d) => d.path));
+    }, [zipStructure]);
 
     React.useEffect(() => {
         if (isOpen && zipStructure.length > 0) {
-            const initialExpanded = new Set<string>();
-            const traverse = (files: utils.ZipFile[]) => {
-                files.forEach((f) => {
-                    if (f.isDir) {
-                        initialExpanded.add(f.path);
-                        if (f.children) traverse(f.children);
+            const initial = new Set<string>();
+            const expandCandidates = (files: utils.ZipFile[]) => {
+                for (const f of files) {
+                    if (!f.isDir) continue;
+                    if (candidates.has(f.path)) {
+                        initial.add(f.path);
                     }
-                });
+                    if (f.children && f.children.length > 0) {
+                        const hasCandidateBelow = collectDirs(f.children).some(
+                            (d) => candidates.has(d.path),
+                        );
+                        if (
+                            hasCandidateBelow ||
+                            f.path.split("/").length <= 2
+                        ) {
+                            initial.add(f.path);
+                        }
+                        expandCandidates(f.children);
+                    }
+                }
             };
-            traverse(zipStructure);
-            setExpandedFolders(initialExpanded);
+            const topLevel = zipStructure.filter((f) => f.isDir);
+            if (candidates.size === 0) {
+                for (const f of topLevel.slice(0, 3)) initial.add(f.path);
+            } else {
+                expandCandidates(zipStructure);
+            }
+            setExpandedFolders(initial);
         }
-    }, [isOpen, zipStructure]);
+    }, [isOpen, zipStructure, candidates]);
 
     const toggleFolder = (path: string) => {
-        const newExpanded = new Set(expandedFolders);
-        if (newExpanded.has(path)) {
-            newExpanded.delete(path);
-        } else {
-            newExpanded.add(path);
-        }
-        setExpandedFolders(newExpanded);
+        const next = new Set(expandedFolders);
+        if (next.has(path)) next.delete(path);
+        else next.add(path);
+        setExpandedFolders(next);
     };
+
+    const firstCandidate = useMemo(() => {
+        const dirs = collectDirs(zipStructure);
+        return dirs.find((d) => candidates.has(d.path))?.path || "";
+    }, [zipStructure, candidates]);
+
+    const isValidSelection =
+        Boolean(selectedRoot) && selectedRoot !== "." && selectedRoot !== "";
 
     const ZipFileTree: React.FC<{ files: utils.ZipFile[]; level: number }> = ({
         files,
@@ -71,83 +109,120 @@ export const ZipModal: React.FC<ZipModalProps> = ({
     }) => {
         if (!files || files.length === 0) {
             return (
-                <div className="text-gray-500 text-sm p-2">
+                <div className="text-muted-foreground text-sm p-2">
                     No hay archivos para mostrar
                 </div>
             );
         }
 
         return (
-            <div key={`zip-tree-${level}-${Date.now()}`}>
-                {files.map((file) => (
-                    <div
-                        key={`${file.path}-${file.isDir}`}
-                        style={{ paddingLeft: `${level * 20}px` }}
-                    >
-                        {/* biome-ignore lint/a11y/useSemanticElements: contiene un botón anidado, un <button> real sería HTML inválido */}
+            <div key={`zip-tree-level-${level}`}>
+                {files.map((file) => {
+                    const isCandidate = file.isDir && candidates.has(file.path);
+                    const isSelected = selectedRoot === file.path;
+                    const expanded = expandedFolders.has(file.path);
+                    return (
                         <div
-                            className={`flex items-center py-1 px-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                                selectedRoot === file.path
-                                    ? "bg-blue-100 dark:bg-blue-900"
-                                    : ""
-                            }`}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                                if (file.isDir) {
-                                    onSelectRoot(file.path);
-                                }
-                            }}
-                            onKeyDown={(e) => {
-                                if (
-                                    (e.key === "Enter" || e.key === " ") &&
-                                    file.isDir
-                                ) {
-                                    e.preventDefault();
-                                    onSelectRoot(file.path);
-                                }
-                            }}
+                            key={`${file.path}-${file.isDir ? "d" : "f"}`}
+                            style={{ paddingLeft: `${level * 16}px` }}
                         >
-                            {file.isDir && (
+                            <div
+                                className={`flex items-center gap-1 py-1 px-2 rounded cursor-pointer hover:bg-accent focus-within:bg-accent ${
+                                    isSelected
+                                        ? "bg-accent border border-primary/40"
+                                        : "border border-transparent"
+                                }`}
+                            >
+                                {file.isDir ? (
+                                    <button
+                                        type="button"
+                                        aria-label={
+                                            expanded
+                                                ? `Contraer ${file.name}`
+                                                : `Expandir ${file.name}`
+                                        }
+                                        aria-expanded={expanded}
+                                        className="p-1 rounded hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleFolder(file.path);
+                                        }}
+                                    >
+                                        {expanded ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                        ) : (
+                                            <ChevronRight className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                ) : (
+                                    <span className="w-6" aria-hidden="true" />
+                                )}
                                 <button
                                     type="button"
-                                    className="mr-1 p-1"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleFolder(file.path);
+                                    disabled={!file.isDir}
+                                    aria-pressed={
+                                        file.isDir ? isSelected : undefined
+                                    }
+                                    onClick={() => {
+                                        if (file.isDir) onSelectRoot(file.path);
                                     }}
+                                    onKeyDown={(e) => {
+                                        if (
+                                            (e.key === "Enter" ||
+                                                e.key === " ") &&
+                                            file.isDir
+                                        ) {
+                                            e.preventDefault();
+                                            onSelectRoot(file.path);
+                                        }
+                                    }}
+                                    className="flex items-center gap-2 flex-1 min-w-0 text-left rounded focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
                                 >
-                                    {expandedFolders.has(file.path) ? (
-                                        <ChevronDown className="w-4 h-4" />
+                                    {file.isDir ? (
+                                        <Folder
+                                            className={`w-4 h-4 flex-shrink-0 ${isCandidate ? "text-green-600 dark:text-green-400" : "text-blue-500"}`}
+                                            aria-hidden="true"
+                                        />
                                     ) : (
-                                        <ChevronRight className="w-4 h-4" />
+                                        <File
+                                            className="w-4 h-4 mr-0 text-muted-foreground flex-shrink-0"
+                                            aria-hidden="true"
+                                        />
+                                    )}
+                                    <span className="text-sm truncate">
+                                        {file.name}
+                                    </span>
+                                    {file.isDir && (
+                                        <span className="ml-1 text-xs text-muted-foreground flex-shrink-0">
+                                            (
+                                            {file.children
+                                                ? file.children.length
+                                                : 0}
+                                            )
+                                        </span>
+                                    )}
+                                    {isCandidate && (
+                                        <Badge
+                                            variant="outline"
+                                            className="ml-1 h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 flex-shrink-0"
+                                        >
+                                            Contiene .ini
+                                        </Badge>
                                     )}
                                 </button>
-                            )}
-                            {file.isDir ? (
-                                <Folder className="w-4 h-4 mr-2 text-blue-500" />
-                            ) : (
-                                <File className="w-4 h-4 mr-2 text-gray-500" />
-                            )}
-                            <span className="text-sm">{file.name}</span>
-                            {file.isDir && (
-                                <span className="ml-2 text-xs text-gray-500">
-                                    ({file.children ? file.children.length : 0}{" "}
-                                    items)
-                                </span>
-                            )}
+                            </div>
+                            {file.isDir &&
+                                expanded &&
+                                file.children &&
+                                file.children.length > 0 && (
+                                    <ZipFileTree
+                                        files={file.children}
+                                        level={level + 1}
+                                    />
+                                )}
                         </div>
-                        {file.isDir &&
-                            expandedFolders.has(file.path) &&
-                            file.children &&
-                            file.children.length > 0 && (
-                                <ZipFileTree
-                                    files={file.children}
-                                    level={level + 1}
-                                />
-                            )}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
@@ -158,27 +233,58 @@ export const ZipModal: React.FC<ZipModalProps> = ({
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <Card className="w-full max-w-2xl h-[80vh] flex flex-col">
                 <CardHeader>
-                    <CardTitle>Estructura del ZIP</CardTitle>
+                    <CardTitle className="display-ink text-xl">
+                        Estructura del ZIP
+                    </CardTitle>
                     <CardDescription>
-                        Selecciona la carpeta raíz del mod dentro del archivo
-                        comprimido. Busca la carpeta que contiene los archivos
-                        .ini y .dds
+                        Elige la carpeta que contiene el .ini del mod
+                        {candidates.size > 0
+                            ? ` — detectamos ${candidates.size} candidata${candidates.size === 1 ? "" : "s"}.`
+                            : ". Busca archivos .ini y .dds."}
                     </CardDescription>
+                    {firstCandidate && (
+                        <div className="pt-2">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => onSelectRoot(firstCandidate)}
+                            >
+                                <Wand2 className="mr-2 h-4 w-4" />
+                                Seleccionar detectado
+                            </Button>
+                        </div>
+                    )}
                 </CardHeader>
-                <CardContent className="flex-1 overflow-hidden">
+                <CardContent className="flex-1 overflow-hidden min-h-0">
                     <ScrollArea className="h-full border rounded-md p-2">
                         <ZipFileTree files={zipStructure} level={0} />
                     </ScrollArea>
                 </CardContent>
-                <CardFooter className="flex justify-between border-t pt-4">
-                    <div className="text-sm text-muted-foreground truncate max-w-[50%]">
-                        Seleccionado: {selectedRoot || "Ninguno (Raíz del ZIP)"}
+                <CardFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center border-t pt-4">
+                    <div
+                        className="text-sm text-muted-foreground truncate max-w-full sm:max-w-[50%]"
+                        role="status"
+                    >
+                        {selectedRoot
+                            ? `Seleccionado: ${selectedRoot}`
+                            : "Sin selección — elige una carpeta con .ini"}
                     </div>
                     <div className="flex space-x-2">
                         <Button variant="outline" onClick={onCancel}>
                             Cancelar
                         </Button>
-                        <Button onClick={onConfirm}>Confirmar Selección</Button>
+                        <Button
+                            onClick={onConfirm}
+                            disabled={!isValidSelection}
+                            title={
+                                isValidSelection
+                                    ? "Confirmar carpeta raíz"
+                                    : "Elige una carpeta válida primero"
+                            }
+                        >
+                            Confirmar Selección
+                        </Button>
                     </div>
                 </CardFooter>
             </Card>
