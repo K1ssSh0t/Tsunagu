@@ -119,8 +119,8 @@ export const ModCard: React.FC<ModCardProps> = ({
 
     return (
         <>
-            <div className="flex flex-col">
-                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200">
+            <div className="flex flex-col h-full min-w-0">
+                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 h-full min-h-[108px] w-full">
                     <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                         {/* Mod Cover Image */}
                         <button
@@ -164,23 +164,26 @@ export const ModCard: React.FC<ModCardProps> = ({
                             />
                         </button>
 
-                        <div className="flex flex-col overflow-hidden flex-1 min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex flex-col justify-center overflow-hidden flex-1 min-w-0">
+                            <div className="flex items-start gap-2 min-w-0">
                                 {plateNo && (
                                     <span
                                         aria-hidden="true"
-                                        className="font-mono text-[10px] text-muted-foreground tabular-nums flex-shrink-0"
+                                        className="font-mono text-[10px] text-muted-foreground tabular-nums flex-shrink-0 pt-[3px]"
                                     >
                                         Nº {plateNo}
                                     </span>
                                 )}
-                                <h3 className="font-bold tracking-tight truncate text-base text-balance">
+                                <h3
+                                    title={mod.name}
+                                    className="flex-1 min-w-0 font-bold tracking-tight text-[15px] leading-[1.25] line-clamp-2 [text-wrap:pretty] break-words min-h-[2.5rem]"
+                                >
                                     {mod.name}
                                 </h3>
                                 {hasUpdate && (
                                     <Badge
                                         variant="outline"
-                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0"
+                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0 mt-[2px] whitespace-nowrap"
                                         onClick={() =>
                                             onUpdateClick(
                                                 mod.character,
@@ -193,9 +196,9 @@ export const ModCard: React.FC<ModCardProps> = ({
                                     </Badge>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 h-5 mt-1 overflow-hidden">
                                 <p
-                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate"
+                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate flex-shrink min-w-0"
                                     role="status"
                                 >
                                     {pending
@@ -208,7 +211,7 @@ export const ModCard: React.FC<ModCardProps> = ({
                                     <Badge
                                         variant="outline"
                                         aria-expanded={isKeySwapsExpanded}
-                                        className="h-5 px-1.5 text-[10px] border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-500/10 cursor-pointer hover:bg-blue-500/20 flex-shrink-0"
+                                        className="h-5 px-1.5 text-[10px] border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-500/10 cursor-pointer hover:bg-blue-500/20 flex-shrink-0 whitespace-nowrap"
                                         onClick={() =>
                                             setIsKeySwapsExpanded(
                                                 !isKeySwapsExpanded,
