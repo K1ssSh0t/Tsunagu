@@ -163,7 +163,7 @@ export const ModList: React.FC<ModListProps> = ({
                     </div>
                 ) : (
                     <ScrollArea className="h-full pr-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-fr items-stretch [&>*]:h-full [&>*]:min-w-0 [&>*]:min-h-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-auto items-start [&>*]:min-w-0 [&>*]:min-h-0">
                             {mods.map((mod, index) => {
                                 const hasUpdate = updates.some(
                                     (u) =>

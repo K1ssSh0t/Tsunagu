@@ -119,8 +119,8 @@ export const ModCard: React.FC<ModCardProps> = ({
 
     return (
         <>
-            <div className="flex flex-col h-full min-w-0">
-                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 h-full min-h-[108px] w-full">
+            <div className="flex flex-col h-auto min-w-0">
+                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 min-h-[108px] w-full">
                     <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
                         {/* Mod Cover Image */}
                         <button
@@ -180,10 +180,22 @@ export const ModCard: React.FC<ModCardProps> = ({
                                 >
                                     {mod.name}
                                 </h3>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0 h-5 mt-1 overflow-hidden">
+                                <p
+                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate flex-1 min-w-0"
+                                    role="status"
+                                >
+                                    {pending
+                                        ? "Actualizando…"
+                                        : mod.isActive
+                                          ? "Habilitado"
+                                          : "Deshabilitado"}
+                                </p>
                                 {hasUpdate && (
                                     <Badge
                                         variant="outline"
-                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0 mt-[2px] whitespace-nowrap"
+                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0 whitespace-nowrap"
                                         onClick={() =>
                                             onUpdateClick(
                                                 mod.character,
@@ -195,18 +207,6 @@ export const ModCard: React.FC<ModCardProps> = ({
                                         Actualizar
                                     </Badge>
                                 )}
-                            </div>
-                            <div className="flex items-center gap-2 min-w-0 h-5 mt-1 overflow-hidden">
-                                <p
-                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate flex-shrink min-w-0"
-                                    role="status"
-                                >
-                                    {pending
-                                        ? "Actualizando…"
-                                        : mod.isActive
-                                          ? "Habilitado"
-                                          : "Deshabilitado"}
-                                </p>
                                 {hasKeySwaps && (
                                     <Badge
                                         variant="outline"
@@ -360,85 +360,101 @@ export const ModCard: React.FC<ModCardProps> = ({
                     </div>
                 </div>
 
-                {/* KeySwaps Expandable Panel */}
-                {hasKeySwaps && isKeySwapsExpanded && (
-                    <div className="mt-1 mx-2 p-3 rounded-[3px] border bg-muted/30 space-y-2 animate-in slide-in-from-top-1 duration-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <Keyboard className="h-3.5 w-3.5 text-blue-500" />
-                            <span className="text-xs font-medium text-muted-foreground">
-                                Atajos de teclado en el juego
-                            </span>
-                        </div>
-                        {mod.keySwaps.map((swap) => {
-                            // Display name: strip "KeySwap" or "Key" prefix to get the descriptive part
-                            const displayName =
-                                swap.sectionName
-                                    .replace(/^KeySwap/i, "")
-                                    .replace(/^Key/i, "")
-                                    .trim() || swap.sectionName;
-
-                            return (
-                                <div
-                                    key={swap.sectionName}
-                                    className="flex items-center gap-3 px-2 py-1.5 rounded-md bg-background/60 border border-border/50"
-                                >
-                                    <div className="flex flex-col min-w-0 flex-shrink-0 max-w-[130px]">
-                                        <span
-                                            className="text-xs font-medium text-muted-foreground truncate"
-                                            title={swap.sectionName}
-                                        >
-                                            {displayName}
-                                        </span>
-                                        {swap.condition && (
-                                            <span
-                                                className="text-[10px] text-muted-foreground/60 truncate"
-                                                title={swap.condition}
-                                            >
-                                                {swap.condition}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2 flex-1 justify-end">
-                                        {swap.forwardKey && (
-                                            <div
-                                                className="flex items-center gap-1"
-                                                title="Tecla para avanzar"
-                                            >
-                                                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
-                                                    {swap.forwardKey}
-                                                </kbd>
-                                            </div>
-                                        )}
-                                        {swap.backwardKey && (
-                                            <div
-                                                className="flex items-center gap-1"
-                                                title="Tecla para retroceder"
-                                            >
-                                                <ArrowLeft className="h-3 w-3 text-muted-foreground" />
-                                                <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
-                                                    {swap.backwardKey}
-                                                </kbd>
-                                            </div>
-                                        )}
-                                        {swap.variants > 0 && (
-                                            <Badge
-                                                variant="secondary"
-                                                className="h-4 px-1 text-[10px]"
-                                                title={
-                                                    swap.variableName
-                                                        ? `${swap.variableName} = ${swap.variants} variantes`
-                                                        : undefined
-                                                }
-                                            >
-                                                {swap.variants} var.
-                                            </Badge>
-                                        )}
-                                    </div>
+                {/* KeySwaps Dialog - flotante, no mueve la grilla */}
+                {hasKeySwaps && (
+                    <Dialog
+                        open={isKeySwapsExpanded}
+                        onOpenChange={setIsKeySwapsExpanded}
+                    >
+                        <DialogContent className="max-w-md p-4 rounded-[3px] border bg-card">
+                            <div className="flex items-center gap-2 pr-8">
+                                <Keyboard className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                <div className="min-w-0">
+                                    <DialogTitle className="text-sm truncate">
+                                        {mod.name}
+                                    </DialogTitle>
+                                    <p className="text-xs text-muted-foreground">
+                                        {mod.keySwaps.length}{" "}
+                                        {mod.keySwaps.length === 1
+                                            ? "atajo"
+                                            : "atajos"}{" "}
+                                        de teclado en el juego
+                                    </p>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                            <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+                                {mod.keySwaps.map((swap) => {
+                                    // Display name: strip "KeySwap" or "Key" prefix to get the descriptive part
+                                    const displayName =
+                                        swap.sectionName
+                                            .replace(/^KeySwap/i, "")
+                                            .replace(/^Key/i, "")
+                                            .trim() || swap.sectionName;
+
+                                    return (
+                                        <div
+                                            key={swap.sectionName}
+                                            className="flex items-center gap-3 px-2 py-1.5 rounded-md bg-background/60 border border-border/50"
+                                        >
+                                            <div className="flex flex-col min-w-0 flex-shrink-0 max-w-[130px]">
+                                                <span
+                                                    className="text-xs font-medium text-muted-foreground truncate"
+                                                    title={swap.sectionName}
+                                                >
+                                                    {displayName}
+                                                </span>
+                                                {swap.condition && (
+                                                    <span
+                                                        className="text-[10px] text-muted-foreground/60 truncate"
+                                                        title={swap.condition}
+                                                    >
+                                                        {swap.condition}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 flex-1 justify-end">
+                                                {swap.forwardKey && (
+                                                    <div
+                                                        className="flex items-center gap-1"
+                                                        title="Tecla para avanzar"
+                                                    >
+                                                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                                                        <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
+                                                            {swap.forwardKey}
+                                                        </kbd>
+                                                    </div>
+                                                )}
+                                                {swap.backwardKey && (
+                                                    <div
+                                                        className="flex items-center gap-1"
+                                                        title="Tecla para retroceder"
+                                                    >
+                                                        <ArrowLeft className="h-3 w-3 text-muted-foreground" />
+                                                        <kbd className="px-1.5 py-0.5 text-[11px] font-mono bg-muted rounded-[2px] border border-border">
+                                                            {swap.backwardKey}
+                                                        </kbd>
+                                                    </div>
+                                                )}
+                                                {swap.variants > 0 && (
+                                                    <Badge
+                                                        variant="secondary"
+                                                        className="h-4 px-1 text-[10px]"
+                                                        title={
+                                                            swap.variableName
+                                                                ? `${swap.variableName} = ${swap.variants} variantes`
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        {swap.variants} var.
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 )}
             </div>
 
