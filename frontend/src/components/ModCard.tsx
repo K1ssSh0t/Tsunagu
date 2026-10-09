@@ -120,243 +120,273 @@ export const ModCard: React.FC<ModCardProps> = ({
     return (
         <>
             <div className="flex flex-col h-auto min-w-0">
-                <div className="group relative flex items-center justify-between gap-2 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 min-h-[108px] w-full">
-                    <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
-                        {/* Mod Cover Image */}
-                        <button
-                            type="button"
-                            aria-label={`Ampliar imagen de ${mod.name}`}
-                            className={`relative h-20 w-20 rounded-[2px] overflow-hidden bg-muted flex-shrink-0 border ${
-                                imageData && !imageError
-                                    ? "cursor-pointer hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-ring transition-all"
-                                    : ""
-                            }`}
-                            onClick={() => {
-                                if (imageData && !imageError) {
-                                    setIsImageExpanded(true);
-                                }
-                            }}
-                        >
-                            {imageLoading || imageRestoring ? (
-                                <div className="h-full w-full flex items-center justify-center">
-                                    <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                </div>
-                            ) : imageData && !imageError ? (
-                                <img
-                                    src={imageData}
-                                    alt={`Vista previa de ${mod.name}`}
-                                    loading="lazy"
-                                    draggable={false}
-                                    className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-                                />
-                            ) : (
-                                <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                                    <ImageOff className="h-6 w-6" />
-                                </div>
-                            )}
-                            {/* Active indicator bar */}
-                            <div
-                                className={`absolute bottom-0 left-0 right-0 h-1 ${
-                                    mod.isActive
-                                        ? "bg-green-600 dark:bg-green-400"
-                                        : "bg-muted-foreground/30"
-                                }`}
-                            />
-                        </button>
-
-                        <div className="flex flex-col justify-center overflow-hidden flex-1 min-w-0">
-                            <div className="flex items-start gap-2 min-w-0">
-                                {plateNo && (
-                                    <span
-                                        aria-hidden="true"
-                                        className="font-mono text-[10px] text-muted-foreground tabular-nums flex-shrink-0 pt-[3px]"
-                                    >
-                                        Nº {plateNo}
-                                    </span>
-                                )}
-                                <h3
-                                    title={mod.name}
-                                    className="flex-1 min-w-0 font-bold tracking-tight text-[15px] leading-[1.25] line-clamp-2 [text-wrap:pretty] break-words min-h-[2.5rem]"
-                                >
-                                    {mod.name}
-                                </h3>
+                <div className="group relative flex items-start gap-3 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 min-h-[108px] w-full min-w-0">
+                    {/* Mod Cover Image */}
+                    <button
+                        type="button"
+                        aria-label={`Ampliar imagen de ${mod.name}`}
+                        className={`relative h-20 w-20 rounded-[2px] overflow-hidden bg-muted flex-shrink-0 self-start border ${
+                            imageData && !imageError
+                                ? "cursor-pointer hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-ring transition-all"
+                                : ""
+                        }`}
+                        onClick={() => {
+                            if (imageData && !imageError) {
+                                setIsImageExpanded(true);
+                            }
+                        }}
+                    >
+                        {imageLoading || imageRestoring ? (
+                            <div className="h-full w-full flex items-center justify-center">
+                                <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                             </div>
-                            <div className="flex items-center gap-1.5 min-w-0 h-5 mt-1 overflow-hidden">
-                                <p
-                                    className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate flex-1 min-w-0"
-                                    role="status"
+                        ) : imageData && !imageError ? (
+                            <img
+                                src={imageData}
+                                alt={`Vista previa de ${mod.name}`}
+                                loading="lazy"
+                                draggable={false}
+                                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                            />
+                        ) : (
+                            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                                <ImageOff className="h-6 w-6" />
+                            </div>
+                        )}
+                        {/* Active indicator bar */}
+                        <div
+                            className={`absolute bottom-0 left-0 right-0 h-1 ${
+                                mod.isActive
+                                    ? "bg-green-600 dark:bg-green-400"
+                                    : "bg-muted-foreground/30"
+                            }`}
+                        />
+                    </button>
+
+                    <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0 self-center py-0.5">
+                        {/* Fila 1 — puro nombre, ancho completo */}
+                        <div className="flex items-start gap-2 min-w-0 w-full">
+                            {plateNo && (
+                                <span
+                                    aria-hidden="true"
+                                    className="font-mono text-[10px] text-muted-foreground tabular-nums flex-shrink-0 pt-[3px]"
                                 >
-                                    {pending
-                                        ? "Actualizando…"
-                                        : mod.isActive
-                                          ? "Habilitado"
-                                          : "Deshabilitado"}
-                                </p>
+                                    Nº {plateNo}
+                                </span>
+                            )}
+                            <h3
+                                title={mod.name}
+                                className="flex-1 min-w-0 font-bold tracking-tight text-[15px] leading-[1.25] line-clamp-2 [text-wrap:pretty] break-words min-h-[2.5rem]"
+                            >
+                                {mod.name}
+                            </h3>
+                        </div>
+                        {/* Fila 2 — estado + todas las acciones, con wrap: nunca se enciman ni se cortan */}
+                        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+                            <p
+                                className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground truncate w-full"
+                                role="status"
+                            >
+                                {pending
+                                    ? "Actualizando…"
+                                    : mod.isActive
+                                      ? "Habilitado"
+                                      : "Deshabilitado"}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0 w-full">
                                 {hasUpdate && (
                                     <Badge
+                                        asChild
                                         variant="outline"
-                                        className="h-5 px-1.5 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 cursor-pointer hover:bg-green-500/20 flex-shrink-0 whitespace-nowrap"
-                                        onClick={() =>
-                                            onUpdateClick(
-                                                mod.character,
-                                                mod.name,
-                                                updateInfo?.modUrl || "",
-                                            )
-                                        }
+                                        className="h-7 px-2 text-[10px] border-green-500/50 text-green-700 dark:text-green-400 bg-green-500/10 hover:bg-green-500/20 flex-shrink-0 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50"
                                     >
-                                        Actualizar
+                                        <button
+                                            type="button"
+                                            disabled={pending}
+                                            aria-label={`Actualizar ${mod.name}`}
+                                            onClick={() =>
+                                                onUpdateClick(
+                                                    mod.character,
+                                                    mod.name,
+                                                    updateInfo?.modUrl || "",
+                                                )
+                                            }
+                                        >
+                                            Actualizar
+                                        </button>
                                     </Badge>
                                 )}
                                 {hasKeySwaps && (
                                     <Badge
+                                        asChild
                                         variant="outline"
-                                        aria-expanded={isKeySwapsExpanded}
-                                        className="h-5 px-1.5 text-[10px] border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-500/10 cursor-pointer hover:bg-blue-500/20 flex-shrink-0 whitespace-nowrap"
+                                        className="h-7 px-2 text-[10px] border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 flex-shrink-0 whitespace-nowrap"
+                                    >
+                                        <button
+                                            type="button"
+                                            aria-expanded={isKeySwapsExpanded}
+                                            aria-label={`Ver ${mod.keySwaps.length} ${mod.keySwaps.length === 1 ? "tecla" : "teclas"} de ${mod.name}`}
+                                            onClick={() =>
+                                                setIsKeySwapsExpanded(
+                                                    !isKeySwapsExpanded,
+                                                )
+                                            }
+                                        >
+                                            <Keyboard className="h-3 w-3 shrink-0" />
+                                            {mod.keySwaps.length}{" "}
+                                            {mod.keySwaps.length === 1
+                                                ? "Tecla"
+                                                : "Teclas"}
+                                            {isKeySwapsExpanded ? (
+                                                <ChevronUp className="h-3 w-3 shrink-0" />
+                                            ) : (
+                                                <ChevronDown className="h-3 w-3 shrink-0" />
+                                            )}
+                                        </button>
+                                    </Badge>
+                                )}
+                                <Badge
+                                    asChild
+                                    variant="outline"
+                                    className="h-7 px-2 text-[10px] flex-shrink-0 whitespace-nowrap disabled:pointer-events-none disabled:opacity-50"
+                                >
+                                    <button
+                                        type="button"
+                                        title="Activar solo este"
+                                        aria-label={`Activar solo ${mod.name}`}
+                                        disabled={pending}
                                         onClick={() =>
-                                            setIsKeySwapsExpanded(
-                                                !isKeySwapsExpanded,
+                                            onActivateSingle(
+                                                mod.character,
+                                                mod.name,
                                             )
                                         }
                                     >
-                                        <Keyboard className="h-3 w-3 mr-1" />
-                                        {mod.keySwaps.length}{" "}
-                                        {mod.keySwaps.length === 1
-                                            ? "Tecla"
-                                            : "Teclas"}
-                                        {isKeySwapsExpanded ? (
-                                            <ChevronUp className="h-3 w-3 ml-1" />
-                                        ) : (
-                                            <ChevronDown className="h-3 w-3 ml-1" />
-                                        )}
-                                    </Badge>
+                                        <Zap className="h-3 w-3 shrink-0" />
+                                        Solo este
+                                    </button>
+                                </Badge>
+                                {mod.gameBananaUrl && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        className="h-7 w-7 rounded-[2px] flex-shrink-0 text-muted-foreground hover:text-primary"
+                                        title="Ver en GameBanana"
+                                        aria-label={`Ver ${mod.name} en GameBanana`}
+                                        onClick={() =>
+                                            onOpenUrl(mod.gameBananaUrl)
+                                        }
+                                    >
+                                        <Globe className="h-3.5 w-3.5" />
+                                    </Button>
                                 )}
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            aria-label={`Acciones para ${mod.name}`}
+                                            className="h-7 w-7 rounded-[2px] flex-shrink-0 text-muted-foreground hover:text-foreground"
+                                        >
+                                            <MoreVertical className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>
+                                            Acciones
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                onActivateSingle(
+                                                    mod.character,
+                                                    mod.name,
+                                                )
+                                            }
+                                        >
+                                            Activar Solo Este
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                onOpenFolder(mod.fullPath)
+                                            }
+                                        >
+                                            Abrir Carpeta
+                                        </DropdownMenuItem>
+                                        {mod.gameBananaUrl && (
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    onRestoreImage(
+                                                        mod.character,
+                                                        mod.name,
+                                                        true,
+                                                    )
+                                                }
+                                            >
+                                                Restaurar imagen
+                                            </DropdownMenuItem>
+                                        )}
+                                        {hasUpdate && (
+                                            <DropdownMenuItem
+                                                onClick={() =>
+                                                    onUpdateClick(
+                                                        mod.character,
+                                                        mod.name,
+                                                        updateInfo?.modUrl ||
+                                                            "",
+                                                    )
+                                                }
+                                            >
+                                                Actualizar Mod
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            onClick={() =>
+                                                onMove(mod.character, mod.name)
+                                            }
+                                        >
+                                            <MoveRight className="mr-2 h-4 w-4" />
+                                            Mover a...
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            className="text-red-600 focus:text-red-600"
+                                            onClick={() =>
+                                                onRemove(
+                                                    mod.character,
+                                                    mod.name,
+                                                )
+                                            }
+                                        >
+                                            Eliminar
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Activar solo este"
-                            aria-label={`Activar solo ${mod.name}`}
-                            disabled={pending}
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
-                            onClick={() =>
-                                onActivateSingle(mod.character, mod.name)
-                            }
-                        >
-                            <Zap className="h-4 w-4" />
-                        </Button>
-                        {mod.gameBananaUrl && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-primary opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
-                                title="Ver en GameBanana"
-                                aria-label={`Ver ${mod.name} en GameBanana`}
-                                onClick={() => onOpenUrl(mod.gameBananaUrl)}
-                            >
-                                <Globe className="h-4 w-4" />
-                            </Button>
-                        )}
-
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={`Acciones para ${mod.name}`}
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity"
-                                >
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem
-                                    onClick={() =>
-                                        onActivateSingle(
-                                            mod.character,
-                                            mod.name,
-                                        )
-                                    }
-                                >
-                                    Activar Solo Este
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => onOpenFolder(mod.fullPath)}
-                                >
-                                    Abrir Carpeta
-                                </DropdownMenuItem>
-                                {mod.gameBananaUrl && (
-                                    <DropdownMenuItem
-                                        onClick={() =>
-                                            onRestoreImage(
-                                                mod.character,
-                                                mod.name,
-                                                true,
-                                            )
-                                        }
-                                    >
-                                        Restaurar imagen
-                                    </DropdownMenuItem>
-                                )}
-                                {hasUpdate && (
-                                    <DropdownMenuItem
-                                        onClick={() =>
-                                            onUpdateClick(
-                                                mod.character,
-                                                mod.name,
-                                                updateInfo?.modUrl || "",
-                                            )
-                                        }
-                                    >
-                                        Actualizar Mod
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() =>
-                                        onMove(mod.character, mod.name)
-                                    }
-                                >
-                                    <MoveRight className="mr-2 h-4 w-4" />
-                                    Mover a...
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    className="text-red-600 focus:text-red-600"
-                                    onClick={() =>
-                                        onRemove(mod.character, mod.name)
-                                    }
-                                >
-                                    Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <div className="pl-2 border-l ml-1 flex items-center gap-2">
-                            {pending && (
-                                <div
-                                    className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
-                                    role="status"
-                                    aria-label={`Actualizando ${mod.name}`}
-                                />
-                            )}
-                            <Switch
-                                checked={mod.isActive}
-                                disabled={pending}
-                                aria-label={
-                                    mod.isActive
-                                        ? `Desactivar ${mod.name}`
-                                        : `Activar ${mod.name}`
-                                }
-                                onCheckedChange={() =>
-                                    onToggle(mod.character, mod.name)
-                                }
+                    <div className="pl-2 border-l ml-1 flex self-stretch items-center gap-2 flex-shrink-0">
+                        {pending && (
+                            <div
+                                className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+                                role="status"
+                                aria-label={`Actualizando ${mod.name}`}
                             />
-                        </div>
+                        )}
+                        <Switch
+                            checked={mod.isActive}
+                            disabled={pending}
+                            aria-label={
+                                mod.isActive
+                                    ? `Desactivar ${mod.name}`
+                                    : `Activar ${mod.name}`
+                            }
+                            onCheckedChange={() =>
+                                onToggle(mod.character, mod.name)
+                            }
+                        />
                     </div>
                 </div>
 
