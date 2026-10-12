@@ -120,12 +120,12 @@ export const ModCard: React.FC<ModCardProps> = ({
     return (
         <>
             <div className="flex flex-col h-auto min-w-0">
-                <div className="group relative flex items-start gap-3 p-3 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 min-h-[108px] w-full min-w-0">
+                <div className="group relative flex items-start gap-4 p-4 rounded-[3px] border bg-card hover:bg-accent/50 hover:border-foreground/30 focus-within:bg-accent/50 focus-within:border-foreground/30 transition-colors duration-200 min-h-[124px] w-full min-w-0">
                     {/* Mod Cover Image */}
                     <button
                         type="button"
                         aria-label={`Ampliar imagen de ${mod.name}`}
-                        className={`relative h-20 w-20 rounded-[2px] overflow-hidden bg-muted flex-shrink-0 self-start border ${
+                        className={`relative h-24 w-24 rounded-[2px] overflow-hidden bg-muted flex-shrink-0 self-start border ${
                             imageData && !imageError
                                 ? "cursor-pointer hover:ring-2 hover:ring-primary focus-visible:ring-2 focus-visible:ring-ring transition-all"
                                 : ""
