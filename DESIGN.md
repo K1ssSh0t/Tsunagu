@@ -23,6 +23,14 @@ Game seals (`--game-accent` under `[data-game]` on the app root): genshin amber 
 
 System stacks only (offline Wails app, no webfonts): `--font-sans` system-ui stack, `--font-mono` ui-monospace stack. Two voices: `.display-ink` (800, -0.03em, balanced) for Tsunagu, character name, dialog titles; `.spec-label` (11px mono, uppercase, 0.12em, tabular) for kickers, stats, states. Body 14–16px sans. Counts always `tabular-nums`.
 
+## Marca
+
+El símbolo son dos cabos que llegan desde esquinas opuestas y se encuentran en un sello cuadrado: el juego y el mod reunidos en el catálogo. Tinta plana, sin degradados.
+
+- **En la UI**: `<TsunaguMark />` (`frontend/src/components/TsunaguMark.tsx`), dibujado con `currentColor`. 40–48 px en el header, 36 px en Configuración. Monocromo, hereda tinta/papel del tema.
+- **Icono de app**: `build/appicon.svg` es el master (papel `#F4F1EC`, tinta `#26221D`, radio 176/1024). `build/appicon.png` (1024) y `build/windows/icon.ico` (16–256) se generan desde ahí; Wails deriva el `.icns` al compilar en macOS. Mantener la geometría sincronizada con el componente.
+- **Reglas**: no recolorear por juego, no rotar, no añadir sombra ni usarlo sobre fotos; mínimo 16 px (el sello central sigue legible). El wordmark es `Tsunagu` en `.display-ink`, sin tracking añadido.
+
 ## Shape and depth
 
 `--radius: 0.25rem` → sm 0, md 2px, lg 4px. Plates, switches, badges, bars are 0–3px sharp; pills survive only where the control is inherently round (radio). 1px hairline borders; zero shadows on surfaces and controls; `shadow-lg` reserved for floating menus and modals. No glass, no gradients, no glow halos.

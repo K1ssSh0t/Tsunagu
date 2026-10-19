@@ -14,6 +14,14 @@ export function AddModFromZipWithRoot(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['AddModFromZipWithRoot'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function ApplyAppUpdate() {
+  return window['go']['main']['App']['ApplyAppUpdate']();
+}
+
+export function CheckAppUpdate() {
+  return window['go']['main']['App']['CheckAppUpdate']();
+}
+
 export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
@@ -26,8 +34,20 @@ export function CleanupTempDirectory() {
   return window['go']['main']['App']['CleanupTempDirectory']();
 }
 
+export function DownloadAppUpdate() {
+  return window['go']['main']['App']['DownloadAppUpdate']();
+}
+
 export function DownloadModUpdate(arg1, arg2) {
   return window['go']['main']['App']['DownloadModUpdate'](arg1, arg2);
+}
+
+export function GetAppVersion() {
+  return window['go']['main']['App']['GetAppVersion']();
+}
+
+export function GetAutoCheckUpdates() {
+  return window['go']['main']['App']['GetAutoCheckUpdates']();
 }
 
 export function GetCharacters() {
@@ -104,6 +124,10 @@ export function SelectExecutable() {
 
 export function SelectFile() {
   return window['go']['main']['App']['SelectFile']();
+}
+
+export function SetAutoCheckUpdates(arg1) {
+  return window['go']['main']['App']['SetAutoCheckUpdates'](arg1);
 }
 
 export function SetGame(arg1) {

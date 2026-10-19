@@ -1,4 +1,4 @@
-import { Folder } from "lucide-react";
+import { Folder, Loader2, RefreshCw } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,8 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { GameSelector } from "./game-selector";
 import { ModeToggle } from "./mode-toggle";
+import { TsunaguMark } from "./TsunaguMark";
 
 interface ConfigScreenProps {
     isAppConfigured: boolean | null;
@@ -21,12 +24,17 @@ interface ConfigScreenProps {
     configPath: string;
     executablePath: string;
     gamesConfig?: Record<string, { modsPath?: string }>;
+    appVersion: string;
+    autoCheckUpdates: boolean;
+    checkingUpdate: boolean;
     onClose: () => void;
     onGameSelect: (game: string) => void;
     onConfigPathChange: (path: string) => void;
     onExecutablePathChange: (path: string) => void;
     onSelectDirectory: () => void;
     onSelectExecutable: () => void;
+    onAutoCheckUpdatesChange: (enabled: boolean) => void;
+    onCheckUpdates: () => void;
     onSave: () => void;
 }
 
@@ -37,12 +45,17 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
     configPath,
     executablePath,
     gamesConfig,
+    appVersion,
+    autoCheckUpdates,
+    checkingUpdate,
     onClose,
     onGameSelect,
     onConfigPathChange,
     onExecutablePathChange,
     onSelectDirectory,
     onSelectExecutable,
+    onAutoCheckUpdatesChange,
+    onCheckUpdates,
     onSave,
 }) => {
     if (!(!isAppConfigured || showConfig)) return null;
@@ -91,9 +104,12 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
             </div>
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle className="display-ink text-2xl text-center">
-                        Configuración
-                    </CardTitle>
+                    <div className="flex items-center justify-center gap-3">
+                        <TsunaguMark className="h-9 w-9 text-foreground" />
+                        <CardTitle className="display-ink text-2xl">
+                            Configuración
+                        </CardTitle>
+                    </div>
                     <CardDescription className="text-center">
                         Configura las rutas de mods y lanzadores para tus juegos
                     </CardDescription>
@@ -201,6 +217,56 @@ export const ConfigScreen: React.FC<ConfigScreenProps> = ({
                                 lanzador. Opcional, pero sin él no verás el
                                 botón Lanzar.
                             </p>
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium">
+                                        Tsunagu{" "}
+                                        <span className="font-mono text-muted-foreground">
+                                            v{appVersion}
+                                        </span>
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Actualizaciones desde GitHub
+                                    </p>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="shrink-0"
+                                    onClick={onCheckUpdates}
+                                    disabled={checkingUpdate}
+                                >
+                                    {checkingUpdate ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <RefreshCw className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-2">
+                                        {checkingUpdate
+                                            ? "Buscando…"
+                                            : "Buscar actualizaciones"}
+                                    </span>
+                                </Button>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <Label
+                                    htmlFor="autoCheckUpdates"
+                                    className="text-sm font-normal"
+                                >
+                                    Buscar actualizaciones al iniciar
+                                </Label>
+                                <Switch
+                                    id="autoCheckUpdates"
+                                    checked={autoCheckUpdates}
+                                    onCheckedChange={onAutoCheckUpdatesChange}
+                                />
+                            </div>
                         </div>
                     </div>
                 </CardContent>

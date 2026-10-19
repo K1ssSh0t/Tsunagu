@@ -15,10 +15,15 @@ import {
     ActivateSingleMod,
     AddMod,
     AddModFromZipWithRoot,
+    ApplyAppUpdate,
+    CheckAppUpdate,
     CheckForUpdates,
     CleanupCachedFile,
     CleanupTempDirectory,
+    DownloadAppUpdate,
     DownloadModUpdate,
+    GetAppVersion,
+    GetAutoCheckUpdates,
     GetCharacters,
     GetCurrentGame,
     GetGamesConfig,
@@ -35,6 +40,7 @@ import {
     SelectDirectory,
     SelectExecutable,
     SelectFile,
+    SetAutoCheckUpdates,
     SetGame,
     ToggleMod,
     UpdateGameExecutable,
@@ -42,8 +48,9 @@ import {
     UpdateMod,
     UpdateModFromZipWithRoot,
 } from "../wailsjs/go/main/App";
-import type { character, mod, utils } from "../wailsjs/go/models";
+import type { character, mod, updater, utils } from "../wailsjs/go/models";
 import { AddModDialog } from "./components/AddModDialog";
+import { AppUpdateDialog } from "./components/AppUpdateDialog";
 import { CleanupDialog } from "./components/CleanupDialog";
 import { ConfigScreen } from "./components/ConfigScreen";
 import { DeleteAlertDialog } from "./components/DeleteAlertDialog";
@@ -59,6 +66,7 @@ import { ModList } from "./components/ModList";
 import { MoveModDialog } from "./components/MoveModDialog";
 import { ModeToggle } from "./components/mode-toggle";
 import { Sidebar } from "./components/Sidebar";
+import { TsunaguMark } from "./components/TsunaguMark";
 import { UpdateModDialog } from "./components/UpdateModDialog";
 import { ZipModal } from "./components/ZipModal";
 
@@ -143,11 +151,112 @@ const App: React.FC = () => {
         modName: string;
     } | null>(null);
 
+    // App update state
+    const [appVersion, setAppVersion] = useState("");
+    const [autoCheckUpdates, setAutoCheckUpdates] = useState(true);
+    const [checkingUpdate, setCheckingUpdate] = useState(false);
+    const [appUpdate, setAppUpdate] = useState<updater.UpdateInfo | null>(null);
+    const [showAppUpdate, setShowAppUpdate] = useState(false);
+    const [updatingApp, setUpdatingApp] = useState(false);
+    const [restartingApp, setRestartingApp] = useState(false);
+
     const hasCheckedConfig = React.useRef(false);
 
     const deriveNameFromPath = (path: string, isZip: boolean): string => {
         const basename = path.replace(/[\\/]/g, "/").split("/").pop() || "";
         return isZip ? basename.replace(/\.(zip|rar|7z)$/i, "") : basename;
+    };
+
+    const checkForAppUpdate = async (manual = false) => {
+        if (manual) setCheckingUpdate(true);
+        try {
+            const info = await CheckAppUpdate();
+            if (info.available) {
+                setAppUpdate(info);
+                setShowAppUpdate(true);
+            } else if (manual) {
+                toast.success("Ya tienes la última versión de Tsunagu.");
+            }
+        } catch (error) {
+            if (manual) {
+                toast.error("No se pudo comprobar si hay actualizaciones", {
+                    description: String(error),
+                });
+            }
+        } finally {
+            if (manual) setCheckingUpdate(false);
+        }
+    };
+
+    // biome-ignore lint/correctness/useExhaustiveDependencies: solo debe correr al montar
+    useEffect(() => {
+        let cancelled = false;
+        let timer: number | undefined;
+
+        (async () => {
+            try {
+                const [version, auto] = await Promise.all([
+                    GetAppVersion(),
+                    GetAutoCheckUpdates(),
+                ]);
+                if (cancelled) return;
+                setAppVersion(version.version);
+                setAutoCheckUpdates(auto);
+                if (auto) {
+                    // Let the first render settle before hitting the network.
+                    timer = window.setTimeout(() => {
+                        if (!cancelled) void checkForAppUpdate(false);
+                    }, 2500);
+                }
+            } catch {
+                // Version info is best-effort; the app works without it.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            if (timer) window.clearTimeout(timer);
+        };
+    }, []);
+
+    const handleAutoCheckUpdatesChange = async (enabled: boolean) => {
+        setAutoCheckUpdates(enabled);
+        try {
+            await SetAutoCheckUpdates(enabled);
+        } catch (error) {
+            setAutoCheckUpdates(!enabled);
+            toast.error("No se pudo guardar la preferencia", {
+                description: String(error),
+            });
+        }
+    };
+
+    const handleInstallAppUpdate = async () => {
+        if (!appUpdate) return;
+        setUpdatingApp(true);
+        setRestartingApp(false);
+        try {
+            await DownloadAppUpdate();
+            await ApplyAppUpdate();
+            setRestartingApp(true);
+        } catch (error) {
+            setUpdatingApp(false);
+            toast.error("No se pudo aplicar la actualización", {
+                description: String(error),
+            });
+        }
+    };
+
+    const handleOpenAppRelease = () => {
+        if (appUpdate?.releaseUrl) {
+            void OpenUrl(appUpdate.releaseUrl);
+        }
+    };
+
+    const handleAppUpdateLater = () => {
+        setShowAppUpdate(false);
+        setUpdatingApp(false);
+        setRestartingApp(false);
     };
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: solo debe correr al montar
@@ -1007,6 +1116,9 @@ const App: React.FC = () => {
                 configPath={configPath}
                 executablePath={executablePath}
                 gamesConfig={gamesConfig.games}
+                appVersion={appVersion || "dev"}
+                autoCheckUpdates={autoCheckUpdates}
+                checkingUpdate={checkingUpdate}
                 onClose={() => setShowConfig(false)}
                 onGameSelect={(game) => {
                     setSelectedGame(game);
@@ -1024,6 +1136,8 @@ const App: React.FC = () => {
                 onExecutablePathChange={setExecutablePath}
                 onSelectDirectory={handleSelectDirectory}
                 onSelectExecutable={handleSelectExecutable}
+                onAutoCheckUpdatesChange={handleAutoCheckUpdatesChange}
+                onCheckUpdates={() => void checkForAppUpdate(true)}
                 onSave={handleUpdateGamePath}
             />
 
@@ -1070,6 +1184,16 @@ const App: React.FC = () => {
                 fileName={downloadingFileName}
             />
 
+            <AppUpdateDialog
+                open={showAppUpdate}
+                info={appUpdate}
+                busy={updatingApp}
+                restarting={restartingApp}
+                onUpdate={handleInstallAppUpdate}
+                onLater={handleAppUpdateLater}
+                onOpenRelease={handleOpenAppRelease}
+            />
+
             <CleanupDialog
                 open={showCleanupDialog}
                 fileName={downloadingFileName}
@@ -1099,9 +1223,12 @@ const App: React.FC = () => {
                                             "0",
                                         )}
                                     </p>
-                                    <CardTitle className="display-ink text-4xl sm:text-5xl">
-                                        Tsunagu
-                                    </CardTitle>
+                                    <div className="flex items-center gap-3">
+                                        <TsunaguMark className="h-10 w-10 text-foreground sm:h-12 sm:w-12" />
+                                        <CardTitle className="display-ink text-4xl sm:text-5xl">
+                                            Tsunagu
+                                        </CardTitle>
+                                    </div>
                                     <CardDescription className="mt-2 font-mono text-xs uppercase tracking-[0.08em] tabular-nums">
                                         {characters.length} personajes ·{" "}
                                         {totalMods} mods · {totalActive} activos

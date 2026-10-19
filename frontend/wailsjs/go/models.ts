@@ -72,6 +72,7 @@ export namespace config {
 	export class Config {
 	    games: Record<string, GameConfig>;
 	    selectedGame: string;
+	    autoCheckUpdates?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -81,6 +82,7 @@ export namespace config {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.games = this.convertValues(source["games"], GameConfig, true);
 	        this.selectedGame = source["selectedGame"];
+	        this.autoCheckUpdates = source["autoCheckUpdates"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -240,6 +242,59 @@ export namespace mod {
 	        this.modUrl = source["modUrl"];
 	        this.localDate = source["localDate"];
 	        this.remoteDate = source["remoteDate"];
+	    }
+	}
+
+}
+
+export namespace updater {
+	
+	export class UpdateInfo {
+	    available: boolean;
+	    currentVersion: string;
+	    latestVersion: string;
+	    releaseName: string;
+	    notes: string;
+	    releaseUrl: string;
+	    assetName: string;
+	    assetUrl: string;
+	    assetSize: number;
+	    publishedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.available = source["available"];
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.releaseName = source["releaseName"];
+	        this.notes = source["notes"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.assetName = source["assetName"];
+	        this.assetUrl = source["assetUrl"];
+	        this.assetSize = source["assetSize"];
+	        this.publishedAt = source["publishedAt"];
+	    }
+	}
+	export class VersionInfo {
+	    version: string;
+	    buildTime: string;
+	    platform: string;
+	    repo: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VersionInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.version = source["version"];
+	        this.buildTime = source["buildTime"];
+	        this.platform = source["platform"];
+	        this.repo = source["repo"];
 	    }
 	}
 

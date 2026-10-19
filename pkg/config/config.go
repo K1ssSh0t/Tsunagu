@@ -14,6 +14,8 @@ type GameConfig struct {
 type Config struct {
 	Games        map[string]GameConfig `json:"games"`
 	SelectedGame string                `json:"selectedGame"`
+	// AutoCheckUpdates is a pointer so an unset value defaults to true.
+	AutoCheckUpdates *bool `json:"autoCheckUpdates,omitempty"`
 }
 
 type Service struct {
@@ -122,4 +124,19 @@ func (s *Service) CurrentModsPath() string {
 		return config.ModsPath
 	}
 	return ""
+}
+
+// AutoCheckUpdates reports whether the app should look for updates on
+// startup. Defaults to true when the user never changed the setting.
+func (s *Service) AutoCheckUpdates() bool {
+	if s.config.AutoCheckUpdates == nil {
+		return true
+	}
+	return *s.config.AutoCheckUpdates
+}
+
+// SetAutoCheckUpdates persists the startup update-check preference.
+func (s *Service) SetAutoCheckUpdates(enabled bool) error {
+	s.config.AutoCheckUpdates = &enabled
+	return s.SaveConfig()
 }

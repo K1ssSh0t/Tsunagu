@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -14,6 +15,7 @@ import (
 	"tsunagu/pkg/config"
 	"tsunagu/pkg/gamebanana"
 	"tsunagu/pkg/mod"
+	"tsunagu/pkg/updater"
 	"tsunagu/pkg/utils"
 )
 
@@ -22,6 +24,7 @@ type App struct {
 	configService    *config.Service
 	modService       *mod.Service
 	characterService *character.Service
+	updateService    *updater.Service
 	tempZipDir       string
 	gameBananaClient *gamebanana.Client
 }
@@ -35,6 +38,7 @@ func NewApp() *App {
 		configService:    configSvc,
 		modService:       modSvc,
 		characterService: charSvc,
+		updateService:    updater.NewService(filepath.Join(".", ".cache")),
 	}
 }
 
@@ -59,6 +63,9 @@ func (a *App) startup(ctx context.Context) {
 
 	// Initialize GameBanana client
 	a.gameBananaClient = gamebanana.NewClient(cacheDir)
+
+	// Remove leftovers from previous app updates (staged payloads, .old exe)
+	a.updateService.Cleanup()
 
 	// Start watching mods path for changes (with ability to disable during operations)
 	if err := a.modService.StartWatchingModsPath(); err != nil {
@@ -475,4 +482,54 @@ func (a *App) CleanupCachedFile(filePath string) error {
 	}
 
 	return nil
+}
+
+// GetAppVersion returns the version information of the running build.
+func (a *App) GetAppVersion() updater.VersionInfo {
+	return a.updateService.VersionInfo()
+}
+
+// GetAutoCheckUpdates reports whether the app checks for updates on startup.
+func (a *App) GetAutoCheckUpdates() bool {
+	return a.configService.AutoCheckUpdates()
+}
+
+// SetAutoCheckUpdates persists the startup update-check preference.
+func (a *App) SetAutoCheckUpdates(enabled bool) error {
+	return a.configService.SetAutoCheckUpdates(enabled)
+}
+
+// CheckAppUpdate asks GitHub for the latest release of the app.
+func (a *App) CheckAppUpdate() (updater.UpdateInfo, error) {
+	ctx, cancel := context.WithTimeout(a.ctx, 45*time.Second)
+	defer cancel()
+
+	info, err := a.updateService.Check(ctx)
+	if err != nil {
+		return updater.UpdateInfo{}, err
+	}
+	return *info, nil
+}
+
+// DownloadAppUpdate downloads and verifies the pending release asset.
+func (a *App) DownloadAppUpdate() error {
+	return a.updateService.Download(a.ctx, a.emitUpdateProgress)
+}
+
+// ApplyAppUpdate installs the downloaded update and restarts the app.
+func (a *App) ApplyAppUpdate() error {
+	if err := a.updateService.Apply(a.ctx, a.emitUpdateProgress); err != nil {
+		return err
+	}
+
+	// Give the frontend a moment to show the restart notice, then quit.
+	// The helper (Windows) or the relaunched process (Linux) takes over.
+	time.AfterFunc(900*time.Millisecond, func() {
+		wailsruntime.Quit(a.ctx)
+	})
+	return nil
+}
+
+func (a *App) emitUpdateProgress(progress updater.Progress) {
+	wailsruntime.EventsEmit(a.ctx, "update:progress", progress)
 }

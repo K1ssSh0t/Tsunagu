@@ -30,7 +30,7 @@ Restricción de rediseño (decisión del dueño): se reemplaza el mundo visual d
 
 ## Brand Commitments
 
-Nombre Tsunagu. Compromiso explícito: no verse como una app genérica de plantilla shadcn. Sin logo, tipografía ni assets confirmados.
+Nombre Tsunagu. Compromiso explícito: no verse como una app genérica de plantilla shadcn. Marca definida: dos cabos que se encuentran en un sello (juego + mod), en tinta plana; icono de app generado desde `build/appicon.svg` y reglas en `DESIGN.md`.
 
 ## Evidence on Hand
 
