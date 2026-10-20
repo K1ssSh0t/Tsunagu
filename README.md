@@ -45,3 +45,29 @@ Linux, empaqueta `<binario> + characters.json` y publica un release con tag
 
 El auto-update desde la app requiere que el repositorio sea público (la API
 de releases responde 404 a peticiones sin credenciales en repos privados).
+
+## Publicar una versión
+
+1. Actualiza `VERSION` (por ejemplo, `1.9.1`) y sincroniza la metadata de
+   Windows: `make sync-version`. El workflow también lo hace por su cuenta.
+2. Haz commit de `VERSION` (y de `wails.json` si cambió) y súbelo a `main`.
+   También puedes lanzar el workflow **Release** a mano desde Actions.
+3. Espera a que termine y comprueba en **Releases** que el tag `build-...`
+   tenga los dos zips y `checksums.sha256`.
+4. En una instalación 1.9.0 o superior, la app lo detecta al arrancar (unos
+   2,5 s después) o desde **Configuración → Buscar actualizaciones**.
+
+Notas:
+
+- **Sube `VERSION` en cada release.** El workflow se ejecuta en cada push a
+  `main` aunque no cambies la versión; la app se actualizaría igual y
+  seguiría mostrando el número anterior.
+- La detección no compara semver: considera más nuevo cualquier release
+  creado después de la build y con tag distinto. Por eso **no reemplaces
+  assets en un release ya publicado** (su `created_at` no cambia): publica
+  uno nuevo.
+- Solo se publican y aceptan builds **amd64** de Windows y Linux. En ARM o
+  macOS no hay actualización automática.
+- Las instalaciones anteriores a 1.9.0 (releases `manual-*`) **no tienen
+  auto-update**: hay que instalar 1.9.0 o superior una vez a mano. A partir
+  de ahí las siguientes versiones se reciben solas.
