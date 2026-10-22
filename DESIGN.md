@@ -25,11 +25,11 @@ System stacks only (offline Wails app, no webfonts): `--font-sans` system-ui sta
 
 ## Marca
 
-El símbolo son dos cabos que llegan desde esquinas opuestas y se encuentran en un sello cuadrado: el juego y el mod reunidos en el catálogo. Tinta plana, sin degradados.
+El símbolo es un sello cuadrado con una T tallada y una regla interior, como un hanko: la marca que certifica cada edición del catálogo. Tinta plana, sin degradados.
 
 - **En la UI**: `<TsunaguMark />` (`frontend/src/components/TsunaguMark.tsx`), dibujado con `currentColor`. 40–48 px en el header, 36 px en Configuración. Monocromo, hereda tinta/papel del tema.
 - **Icono de app**: `build/appicon.svg` es el master (papel `#F4F1EC`, tinta `#26221D`, radio 176/1024). `build/appicon.png` (1024) y `build/windows/icon.ico` (16–256) se generan desde ahí; Wails deriva el `.icns` al compilar en macOS. Mantener la geometría sincronizada con el componente.
-- **Reglas**: no recolorear por juego, no rotar, no añadir sombra ni usarlo sobre fotos; mínimo 16 px (el sello central sigue legible). El wordmark es `Tsunagu` en `.display-ink`, sin tracking añadido.
+- **Reglas**: no recolorear por juego, no rotar, no añadir sombra ni usarlo sobre fotos; mínimo 16 px (la T sigue legible; la regla interior es un detalle a partir de 32 px). El wordmark es `Tsunagu` en `.display-ink`, sin tracking añadido.
 
 ## Shape and depth
 
